@@ -1,4 +1,4 @@
------------------------BACKEND----------------------------
+-------------------------------------BACKEND---------------------------------------------
 
 El archivo principal es app.js. En él se configuran las sesiones, los archivos estáticos, 
 el control de inactividad, las rutas y el manejo de errores.
@@ -7,21 +7,21 @@ Ya con el archivo principal de nuestra app detectado procedo a listar las rutas,
 con su funcion las cuales son las siguientes:
 
 
-ARCHIVO/CARPETA 			FUNCION 
-app.js					Inicio y configuración del servidor Express
-database/db.js				Conexión y consultas a MySQL
-middlewares/auth.js			Autenticación y autorización
-middlewares/validate.js			Validación de entradas
-routes/auth.routes.js			Inicio y gestión de autenticación
-routes/pacientes.routes.js		Módulo de pacientes
-routes/doctores.routes.js		Módulo de doctores
-routes/usuarios.routes.js		Administración de usuarios
-routes/productos.routes.js		Inventario, productos y proveedores
-routes/pagos.routes.js	Pagos
-routes/cotizaciones.routes.js		Cotizaciones
-routes/configuracion.routes.js		Configuración del sistema
-routes/dashboard.routes.js		Panel principal
-routes/notificaciones.routes.js		Notificaciones
-routes/perfil.routes.js			Perfil de usuario
-routes/portafolio.routes.js		Portafolio e imágenes
-utils/					Permisos, sesiones y otras funciones auxiliares
+ARCHIVO/CARPETA 			              FUNCION 
+app.js					                    Inicio y configuración del servidor Express
+database/db.js				              Conexión y consultas a MySQL
+middlewares/auth.js			            Autenticación y autorización
+middlewares/validate.js			        Validación de entradas
+routes/auth.routes.js			          Inicio y gestión de autenticación
+routes/pacientes.routes.js	      	Módulo de pacientes
+routes/doctores.routes.js		        Módulo de doctores
+routes/usuarios.routes.js		        Administración de usuarios
+routes/productos.routes.js		      Inventario, productos y proveedores
+routes/pagos.routes.js	            Pagos
+routes/cotizaciones.routes.js		    Cotizaciones
+routes/configuracion.routes.js		  Configuración del sistema
+routes/dashboard.routes.js		      Panel principal
+routes/notificaciones.routes.js		  Notificaciones
+routes/perfil.routes.js			        Perfil de usuario
+routes/portafolio.routes.js	      	Portafolio e imágenes
+utils/					                    Permisos, sesiones y otras funciones auxiliares
