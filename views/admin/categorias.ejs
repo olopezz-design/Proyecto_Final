@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Categorias -  C&C Dental Studio</title>
+    <link rel="shortcut icon" type="image/svg+xml" href="/images/cnc-favicon.svg">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <style>
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            color: #007bff;
+            background-color: transparent;
+            border: none;
+            padding: 0;
+            margin: 0 5px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            font-weight: bold;
+            color: white;
+            background-color: #007bff;
+            border: none;
+            border-radius: 4px;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+            color: white;
+            background-color: #0056b3;
+            border: none;
+            border-radius: 4px;
+        }
+        .dataTables_filter {
+          display: none;
+        }
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        #page-content-wrapper {
+            flex: 1;
+        }
+        footer {
+            position: relative;
+            bottom: 0;
+            width: 100%;
+            background-color: #343a40;
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+        }
+        .modal-body {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body class="d-flex flex-column min-vh-100">
+    <div class="d-flex flex-grow-1" id="wrapper">
+        <!-- Sidebar -->
+        <div class="bg-dark border-right" id="sidebar-wrapper">
+            <div class="sidebar-heading text-center py-4">
+                <img src="/images/cnc-logo-alt.svg" alt="Logo" class="img-fluid mb-2" style="max-width: 50px;">
+                <h4 class="text-white font-weight-bold">C&C Dental Studio</h4>
+            </div>
+            <div class="list-group list-group-flush">
+                
+                <!-- Pacientes -->
+                <a href="#clientes-pacientes-submenu" class="list-group-item list-group-item-action bg-dark text-white d-flex justify-content-between align-items-center" data-toggle="collapse">
+                    <i class="fas fa-user mr-2"></i> Pacientes
+                    <i class="fas fa-chevron-down"></i>
+                </a>
+                <div id="clientes-pacientes-submenu" class="collapse">
+                    <a href="/admin/pacientes" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-user-friends"></i> Lista de Pacientes
+                    </a>
+                    <a href="/admin/citas" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-calendar-alt"></i> Citas
+                    </a>
+                    <a href="/admin/historial" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-file-medical-alt"></i> Historial Tratamiento
+                    </a>
+                    <a href="/admin/pago" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-wallet"></i> Control de Pago
+                    </a>
+                    <a href="/admin/archivados" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-archive"></i> Pacientes Archivados
+                    </a>
+                </div>
+
+                <!-- Doctores -->
+                <a href="#doctores-submenu" class="list-group-item list-group-item-action bg-dark text-white d-flex justify-content-between align-items-center" data-toggle="collapse">
+                    <i class="fas fa-user-md mr-2"></i> Doctores
+                    <i class="fas fa-chevron-down"></i>
+                </a>
+                <div id="doctores-submenu" class="collapse">
+                    <a href="/admin/doctores" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-user-check"></i> Doctores Activos
+                    </a>
+                    <a href="/admin/doctores/inactivos" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-user-slash"></i> Doctores Inactivos
+                    </a>
+                </div>
+
+                <!-- Inventario -->
+                <a href="#inventario-submenu" class="list-group-item list-group-item-action bg-dark text-white d-flex justify-content-between align-items-center" data-toggle="collapse">
+                    <i class="fas fa-box mr-2"></i> Inventario
+                    <i class="fas fa-chevron-down"></i>
+                </a>
+                <div id="inventario-submenu" class="collapse">
+                    <a href="/admin/marcas" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-tags"></i> Marcas
+                    </a>
+                    <a href="/admin/categorias" class="list-group-item list-group-item-action bg-dark text-white pl-5 active">
+                        <i class="fas fa-th-large"></i> Categorías
+                    </a>
+                    <a href="/admin/proveedores" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-truck"></i> Proveedores
+                    </a>
+                    <a href="/admin/productos" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-boxes"></i> Productos
+                    </a>
+                    <a href="/admin/comprasProductos" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-shopping-cart"></i> Compras
+                    </a>
+                    <a href="/admin/salidasProductos" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-dolly"></i> Salidas
+                    </a>
+                </div>
+
+                <a href="/admin/cotizaciones" class="list-group-item list-group-item-action bg-dark text-white">
+                    <i class="fas fa-file-invoice"></i> Generar Cotización
+                </a>
+                <a href="/admin/dashboard" class="list-group-item list-group-item-action bg-dark text-white">
+                    <i class="fas fa-arrow-circle-left"></i> Regresar al Panel
+                </a>
+                <a href="/logout" class="list-group-item list-group-item-action bg-danger text-white">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                </a>
+            </div>
+        </div>
+        
+        
+        <!-- Contenido de la Página -->
+        <div id="page-content-wrapper">
+            <div class="container-fluid">
+                <h1 class="mt-4">Categorias</h1>
+
+
+
+
+
+
+
+
+                <div class="text-left mb-3">
+
+                    <a href="/admin/dashboard" class="btn btn-secondary">&larr; Regresar al Panel de Control</a>
+
+
+
+                                            
+                        <% if (can('configuracion:catalogos:crear')) { %>
+                            <!-- Botón para abrir el modal -->
+                            <button class="btn btn-primary" data-toggle="modal" data-target="#addCategoriaModal">Agregar Categoria</button>
+                        <% } %>
+
+
+                </div>
+
+
+
+
+                <!-- Tabla de Categorías -->
+<div class="card">
+    <div class="card-header">Listado de Categorías</div>
+    <div class="card-body">
+        <table id="categoriaTable" class="table table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Descripción</th>
+                    <th>Símbolo</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% categorias.forEach(function(categoria) { %>
+                    <tr>
+                        <td><%= categoria.idcategoria %></td>
+                        <td><%= categoria.nombre %></td>
+                        <td><%= categoria.descripcion %></td>
+                        <td><%= categoria.simbolo || '' %></td>
+
+
+                        <td class="d-flex justify-content-around">
+
+
+                           <!-- Botón para ver la información completa de la categoría -->
+                            <form onsubmit="event.preventDefault(); verInformacionCategoria('<%= categoria.idcategoria %>', '<%= categoria.nombre %>', '<%= categoria.descripcion %>', '<%= categoria.simbolo || '' %>')">
+                                <button class="btn btn-primary btn-sm mr-2" type="submit" title="Ver Información">
+                                    <i class="fas fa-info-circle fa-lg"></i>
+                                </button>
+                            </form>
+
+
+                            <% if (can('configuracion:catalogos:editar')) { %>
+                                <!-- Botón para editar la información de la categoría -->
+                                <form onsubmit="event.preventDefault(); editarCategoria('<%= categoria.idcategoria %>', '<%= categoria.nombre %>', '<%= categoria.descripcion %>', '<%= categoria.simbolo || '' %>')">
+                                    <button class="btn btn-warning btn-sm mr-2" type="submit" title="Editar">
+                                        <i class="fas fa-edit fa-lg"></i>
+                                    </button>
+                                </form>
+                            <% } %>
+
+
+                            <% if (can('configuracion:catalogos:eliminar')) { %>
+                                <!-- Botón para eliminar la categoría -->
+                                <form onsubmit="event.preventDefault(); eliminarCategoria('<%= categoria.idcategoria %>')">
+                                    <button class="btn btn-danger btn-sm" type="submit" title="Eliminar">
+                                        <i class="fas fa-trash fa-lg"></i>
+                                    </button>
+                                </form>
+                            <% } %>
+
+
+
+                        </td>
+                    </tr>
+                <% }) %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+
+
+
+
+<% if (can('configuracion:catalogos:crear')) { %>
+    <%- include('Categorias/modals/addCategoria') %>
+<% } %>
+
+
+
+<script>
+    const submitCategoriaBtn = document.getElementById('submitCategoriaBtn');
+    if (submitCategoriaBtn) submitCategoriaBtn.addEventListener('click', function() {
+        var nombre = document.getElementById('categoriaNombre').value;
+        var descripcion = document.getElementById('categoriaDescripcion').value;
+        var simbolo = document.getElementById('categoriaSimbolo').value;
+    
+        // Verificar si los campos están vacíos
+        if (!nombre || !descripcion) {
+            showUiMessage('Todos los campos son obligatorios.', 'warning');
+            return;
+        }
+    
+        // Realizar la solicitud para agregar la categoría al servidor
+        fetch('/admin/categorias', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ nombre: nombre, descripcion: descripcion, simbolo: simbolo })
+        })
+        .then(response => {
+            // Verificar si la respuesta es exitosa
+            if (!response.ok) {
+                throw new Error('Error al agregar la categoría');
+            }
+            return response.text();  // Puedes cambiar esto a .json() si el backend devuelve JSON
+        })
+        .then(data => {
+            // Aquí puedes manejar la respuesta, como mostrar un mensaje de éxito y cerrar el modal.
+            showUiMessage('Categoría agregada con éxito.', 'success');
+            location.reload(); // Recarga la página para actualizar la lista
+            $('#addCategoriaModal').modal('hide');
+            // También puedes actualizar la lista de categorías sin recargar la página
+            // Aquí podrías hacer una actualización dinámica si lo deseas (por ejemplo, recargando la tabla)
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showUiMessage('Hubo un problema al agregar la categoría.', 'danger');
+        });
+    });
+    </script>
+    
+
+
+
+<% if (can('configuracion:catalogos:editar')) { %>
+    <%- include('Categorias/modals/editCategoria') %>
+<% } %>
+
+
+<script>
+    function editarCategoria(id, nombre, descripcion, simbolo) {
+        // Rellenar los campos del modal con la información de la categoría a editar
+        document.getElementById('categoriaId').value = id;
+        document.getElementById('editCategoriaNombre').value = nombre;
+        document.getElementById('editCategoriaDescripcion').value = descripcion;
+        document.getElementById('editCategoriaSimbolo').value = simbolo || '';
+    
+        // Mostrar el modal
+        $('#editCategoriaModal').modal('show');
+    }
+    
+    const submitEditCategoriaBtn = document.getElementById('submitEditCategoriaBtn');
+    if (submitEditCategoriaBtn) submitEditCategoriaBtn.addEventListener('click', function() {
+        var id = document.getElementById('categoriaId').value;
+        var nombre = document.getElementById('editCategoriaNombre').value;
+        var descripcion = document.getElementById('editCategoriaDescripcion').value;
+        var simbolo = document.getElementById('editCategoriaSimbolo').value;
+    
+        // Verificar si los campos están vacíos
+        if (!nombre || !descripcion) {
+            showUiMessage('Todos los campos son obligatorios.', 'warning');
+            return;
+        }
+    
+        // Realizar la solicitud para actualizar la categoría en el servidor
+        fetch('/admin/categorias/' + id, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ nombre: nombre, descripcion: descripcion, simbolo: simbolo })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error al editar la categoría');
+            }
+            return response.text();  // Puedes cambiar esto a .json() si el backend devuelve JSON
+        })
+        .then(data => {
+            // Aquí puedes manejar la respuesta, como mostrar un mensaje de éxito y cerrar el modal
+            showUiMessage('Categoría actualizada con éxito.', 'success');
+            location.reload(); // Recarga la página para actualizar la lista
+            $('#editCategoriaModal').modal('hide');
+            // Puedes actualizar la lista de categorías o recargar la tabla aquí
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showUiMessage('Hubo un problema al actualizar la categoría.', 'danger');
+        });
+    });
+    </script>
+    
+
+
+
+
+<%- include('Categorias/modals/verCategoria') %>
+
+
+
+
+
+
+<script>
+    function verInformacionCategoria(id, nombre, descripcion, simbolo) {
+        // Rellenar los campos del modal con la información de la categoría
+        document.getElementById('idCategoriaInfo').innerText = id;
+        document.getElementById('nombreCategoriaInfo').innerText = nombre;
+        document.getElementById('descripcionCategoriaInfo').innerText = descripcion;
+        document.getElementById('simboloCategoriaInfo').innerText = simbolo || 'Sin símbolo';
+    
+        // Mostrar el modal
+        $('#verCategoriaModal').modal('show');
+    }
+    </script>
+    
+    
+
+
+
+
+
+
+
+<script>
+function eliminarCategoria(id) {
+    confirmUiAction('¿Estás seguro de que deseas eliminar esta categoría? Esta acción no se puede deshacer.', function () {
+        // Realizar la solicitud DELETE para eliminar la categoría
+        fetch(`/admin/categorias/${id}`, {
+            method: 'DELETE'
+        })
+        .then(response => {
+            if (response.ok) {
+                showUiMessage('Categoría eliminada con éxito.', 'success');
+                window.location.reload(); // Recargar la página para actualizar la lista de categorías
+            } else {
+                showUiMessage('Error al eliminar la categoría.', 'danger');
+            }
+        })
+        .catch(error => console.error('Error:', error));
+    }, { title: 'Eliminar categoría', confirmText: 'Eliminar', confirmType: 'danger' });
+}
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- jQuery y Bootstrap JS (colocar antes de </body>) -->
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+<%- include('partials/uiFeedback') %>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+<%- include('partials/pageLoader') %>
+</body>
+</html>

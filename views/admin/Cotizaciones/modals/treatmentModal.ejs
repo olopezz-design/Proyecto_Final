@@ -1,0 +1,69 @@
+<!-- Tratamientos -->
+<div class="modal fade" id="treatmentModal" tabindex="-1" role="dialog" aria-labelledby="treatmentModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="treatmentModalLabel">Agregar Tratamiento al Diente</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="treatmentForm" action="/api/admin/cotizaciones" method="POST">
+
+                    <div class="form-group">
+                        <label for="paciente">Paciente:</label>
+                        <select id="paciente" name="paciente" class="form-control" required>
+                            <option value="">Seleccionar Paciente</option>
+                            <% pacientes.forEach(function(paciente) { %>
+                                <option value="<%= paciente.idPaciente %>">
+                                    <%= paciente.nombre %> <%= paciente.apellido %>
+                                </option>
+                            <% }); %>
+                        </select>
+                        <div id="quotePatientSearch"></div>
+                    </div>
+
+                    <!-- Tipo de Servicio -->
+                    <div class="form-group">
+                        <label for="tipoServicio">Tipo de Servicio:</label>
+                        <select class="form-control" id="tipoServicio" name="tipoServicio">
+                            <option value="">Seleccionar Tipo de Servicio</option>
+                            <% tiposServicios.forEach(function(tipo) { %>
+                                <option value="<%= tipo.idtiposervicio %>"><%= tipo.nombre %></option>
+                            <% }); %>
+                        </select>
+                        <div id="quoteTreatmentSearch"></div>
+                    </div>
+
+                    <!-- Servicio -->
+                    <div class="form-group">
+                        <label for="buscarServicio">Servicio:</label>
+                        <select class="form-control" id="buscarServicio" name="buscarServicio">
+                            <option value="">Seleccionar Servicio</option>
+                            <% servicios.forEach(function(servicio) { %>
+                                <option value="<%= servicio.idservicio %>"><%= servicio.nombre %></option>
+                            <% }); %>
+                        </select>
+                        <div id="quoteServiceSearch"></div>
+                    </div>
+
+                    <!-- Costo Estimado del Servicio -->
+                    <div class="form-group">
+                        <label for="costoServicio">Costo Estimado del Servicio:</label>
+                        <input type="number" class="form-control" id="costoServicio" name="costoServicio" min="1">
+                    </div>
+
+                    <!-- Notas Adicionales -->
+                    <div class="form-group">
+                        <label for="notas">Notas Adicionales:</label>
+                        <textarea class="form-control" id="notas" name="notas" rows="4"></textarea>
+                    </div>
+
+                    <!-- Botón Guardar -->
+                    <button type="submit" id="guardarCotizacion" class="btn btn-primary">Guardar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

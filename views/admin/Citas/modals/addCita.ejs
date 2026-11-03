@@ -1,0 +1,527 @@
+<%
+  const bookingInitialDate = typeof selectedDate !== 'undefined' && selectedDate ? selectedDate : '';
+%>
+<style>
+  .appointment-booking-modal .modal-dialog {
+    max-width: 980px;
+  }
+  .appointment-booking-shell {
+    background: #f7f9fc;
+  }
+  .booking-step-track {
+    background: #ffffff;
+    border: 1px solid #dfe5f0;
+    border-radius: 8px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    overflow: hidden;
+  }
+  .booking-step-pill {
+    align-items: center;
+    color: #536072;
+    display: inline-flex;
+    font-weight: 700;
+    justify-content: center;
+    min-height: 46px;
+    padding: .6rem 1rem;
+  }
+  .booking-step-pill.active {
+    background: linear-gradient(135deg, #33c7d0, #7367f0);
+    color: #ffffff;
+  }
+  .booking-date-strip {
+    display: grid;
+    gap: .65rem;
+    grid-auto-columns: minmax(86px, 1fr);
+    grid-auto-flow: column;
+    overflow-x: auto;
+    padding-bottom: .25rem;
+  }
+  .booking-date-chip,
+  .booking-slot-btn {
+    background: #ffffff;
+    border: 1px solid #d8deeb;
+    border-radius: 8px;
+    color: #253858;
+    min-height: 52px;
+    transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+  }
+  .booking-date-chip {
+    display: grid;
+    gap: .1rem;
+    min-width: 86px;
+    padding: .55rem .65rem;
+    text-align: center;
+  }
+  .booking-date-chip .weekday {
+    color: #7367f0;
+    font-size: .72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+  .booking-date-chip .day {
+    font-size: 1.25rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+  .booking-date-chip .month {
+    color: #6c7480;
+    font-size: .72rem;
+  }
+  .booking-date-chip.active,
+  .booking-slot-btn.active {
+    background: #f4f1ff;
+    border-color: #7367f0;
+    box-shadow: 0 8px 20px rgba(115, 103, 240, .15);
+    color: #5b50d6;
+  }
+  .booking-date-chip:hover,
+  .booking-slot-btn:hover {
+    border-color: #7367f0;
+    transform: translateY(-1px);
+  }
+  .booking-slot-card {
+    background: #ffffff;
+    border: 1px solid #dfe5f0;
+    border-radius: 8px;
+    box-shadow: 0 8px 20px rgba(30, 41, 59, .06);
+  }
+  .booking-slot-card[hidden],
+  .booking-pane[hidden] {
+    display: none !important;
+  }
+  .booking-slot-group {
+    border-top: 1px solid #eef2f8;
+    padding-top: .85rem;
+  }
+  .booking-slot-group:first-child {
+    border-top: 0;
+    padding-top: 0;
+  }
+  .booking-slot-grid {
+    display: grid;
+    gap: .65rem;
+    grid-template-columns: repeat(auto-fit, minmax(116px, 1fr));
+  }
+  .booking-slot-btn {
+    font-weight: 700;
+    padding: .75rem .8rem;
+  }
+  .booking-summary {
+    background: #ffffff;
+    border: 1px solid #dfe5f0;
+    border-radius: 8px;
+  }
+  @media (max-width: 575.98px) {
+    .appointment-booking-modal .modal-dialog {
+      margin: .75rem;
+    }
+    .booking-step-pill {
+      font-size: .9rem;
+      min-height: 42px;
+    }
+  }
+</style>
+
+<div class="modal fade appointment-booking-modal" id="addcitaModal" tabindex="-1" aria-labelledby="addcitaModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="addcitaModalLabel">Agendar cita</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" data-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body appointment-booking-shell">
+        <form id="formAgregarCita" action="/admin/citas/agregar" method="POST">
+          <input type="hidden" id="fechaCita" name="fechaCita" value="<%= bookingInitialDate %>">
+          <input type="hidden" id="horaCita" name="horaCita">
+
+          <div class="booking-step-track mb-4">
+            <div class="booking-step-pill active" data-booking-step-pill="schedule">Fecha y horario</div>
+            <div class="booking-step-pill" data-booking-step-pill="details">Detalles</div>
+          </div>
+
+          <section class="booking-pane" id="appointmentScheduleStep">
+            <div class="row gx-3">
+              <div class="col-lg-6 mb-3">
+                <label for="doctor" class="form-label">Doctor</label>
+                <select id="doctor" name="doctor_iddoctor" class="form-select" required>
+                  <option value="">Seleccione un Doctor</option>
+                  <% doctores.forEach(function(doctor) { %>
+                    <option value="<%= doctor.iddoctor %>"><%= doctor.nombre %> <%= doctor.apellido %></option>
+                  <% }); %>
+                </select>
+                <div id="appointmentDoctorSearch"></div>
+              </div>
+            </div>
+
+            <div class="d-flex flex-wrap align-items-end gap-2 mb-3">
+              <div>
+                <label class="form-label mb-1" for="appointmentCustomDate">Selecciona fecha</label>
+                <input type="date" class="form-control" id="appointmentCustomDate">
+              </div>
+              <div class="ms-auto text-muted small" id="selectedDateLabel"></div>
+            </div>
+
+            <div class="booking-date-strip mb-4" id="appointmentDateStrip"></div>
+
+            <div class="booking-slot-card p-3 mb-4" id="doctorSchedulePanel" hidden>
+              <div class="d-flex flex-wrap align-items-start gap-2 mb-3">
+                <div>
+                  <h5 class="mb-1" id="doctorScheduleTitle">Doctor</h5>
+                  <div class="text-muted" id="doctorScheduleRanges">Selecciona doctor y fecha.</div>
+                </div>
+                <span class="badge bg-primary-subtle text-primary ms-auto" id="doctorScheduleDay"></span>
+              </div>
+              <div class="d-grid gap-3" id="availableSlotList"></div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-dismiss="modal">Cancelar</button>
+              <button type="button" class="btn btn-primary" id="continueAppointmentDetails" disabled>Continuar</button>
+            </div>
+          </section>
+
+          <section class="booking-pane" id="appointmentDetailsStep" hidden>
+            <div class="booking-summary p-3 mb-4">
+              <div class="row gx-3">
+                <div class="col-md-4 mb-2 mb-md-0">
+                  <span class="text-muted d-block">Doctor</span>
+                  <strong id="summaryDoctor">-</strong>
+                </div>
+                <div class="col-md-4 mb-2 mb-md-0">
+                  <span class="text-muted d-block">Fecha</span>
+                  <strong id="summaryDate">-</strong>
+                </div>
+                <div class="col-md-4">
+                  <span class="text-muted d-block">Hora</span>
+                  <strong id="summaryTime">-</strong>
+                </div>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label for="paciente" class="form-label">Paciente</label>
+              <select id="paciente" name="paciente_idPaciente" class="form-select" required>
+                <option value="">Seleccionar Paciente</option>
+                <% pacientes.forEach(function(paciente) { %>
+                  <option value="<%= paciente.idPaciente %>"><%= paciente.nombre %> <%= paciente.apellido %></option>
+                <% }); %>
+              </select>
+              <div id="appointmentPatientSearch"></div>
+            </div>
+            <div class="mb-3">
+              <label for="motivoCita" class="form-label">Motivo de la cita</label>
+              <input type="text" class="form-control" id="motivoCita" name="motivoCita" required>
+            </div>
+            <div class="mb-4">
+              <label for="notasAdicionales" class="form-label">Notas adicionales</label>
+              <textarea class="form-control" id="notasAdicionales" name="notasAdicionales" rows="3"></textarea>
+            </div>
+
+            <div class="d-flex justify-content-between gap-2">
+              <button type="button" class="btn btn-outline-primary" id="backToAppointmentSchedule">Cambiar horario</button>
+              <div class="d-flex gap-2">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" data-dismiss="modal">Cancelar</button>
+                <button type="submit" class="btn btn-primary" id="guardarCita">Guardar cita</button>
+              </div>
+            </div>
+          </section>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const modal = document.getElementById('addcitaModal');
+    const form = document.getElementById('formAgregarCita');
+    const patientSelect = document.getElementById('paciente');
+    const doctorSelect = document.getElementById('doctor');
+    const dateInput = document.getElementById('fechaCita');
+    const timeInput = document.getElementById('horaCita');
+    const customDateInput = document.getElementById('appointmentCustomDate');
+    const dateStrip = document.getElementById('appointmentDateStrip');
+    const selectedDateLabel = document.getElementById('selectedDateLabel');
+    const panel = document.getElementById('doctorSchedulePanel');
+    const dayLabel = document.getElementById('doctorScheduleDay');
+    const title = document.getElementById('doctorScheduleTitle');
+    const ranges = document.getElementById('doctorScheduleRanges');
+    const slots = document.getElementById('availableSlotList');
+    const continueButton = document.getElementById('continueAppointmentDetails');
+    const scheduleStep = document.getElementById('appointmentScheduleStep');
+    const detailsStep = document.getElementById('appointmentDetailsStep');
+    const backButton = document.getElementById('backToAppointmentSchedule');
+    const summaryDoctor = document.getElementById('summaryDoctor');
+    const summaryDate = document.getElementById('summaryDate');
+    const summaryTime = document.getElementById('summaryTime');
+    const stepPills = document.querySelectorAll('[data-booking-step-pill]');
+    const initialDate = <%- JSON.stringify(bookingInitialDate || '') %>;
+    const doctorSearch = window.initSearchableNativeSelect?.(doctorSelect, 'appointmentDoctorSearch', {
+      placeholder: 'Seleccione un doctor',
+      searchPlaceholder: 'Buscar doctor',
+    });
+    const patientSearch = window.initSearchableNativeSelect?.(patientSelect, 'appointmentPatientSearch', {
+      placeholder: 'Seleccionar paciente',
+      searchPlaceholder: 'Buscar paciente',
+    });
+    let availabilityRequest = 0;
+
+    if (!modal || !form || !patientSelect || !doctorSelect || !dateInput || !timeInput || !customDateInput || !dateStrip || !panel || !slots) return;
+
+    function notify(message, type) {
+      if (typeof showUiMessage === 'function') {
+        showUiMessage(message, type || 'warning');
+      } else {
+        alert(message);
+      }
+    }
+
+    function startOfDay(date) {
+      return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    }
+
+    function sqlDate(date) {
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    }
+
+    function parseSqlDate(value) {
+      const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (!match) return null;
+      return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+    }
+
+    function displayDate(value) {
+      const date = parseSqlDate(value);
+      return date ? date.toLocaleDateString('es-GT', { weekday: 'long', day: '2-digit', month: 'long' }) : '-';
+    }
+
+    function displayTime(value) {
+      const [hours, minutes] = String(value || '').split(':').map(Number);
+      if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return value || '--:--';
+      const suffix = hours >= 12 ? 'PM' : 'AM';
+      const displayHours = hours % 12 || 12;
+      return `${String(displayHours).padStart(2, '0')}:${String(minutes).padStart(2, '0')} ${suffix}`;
+    }
+
+    function selectedOptionText(select) {
+      return select.options[select.selectedIndex]?.textContent?.trim() || '-';
+    }
+
+    function setStep(step) {
+      const isDetails = step === 'details';
+      scheduleStep.hidden = isDetails;
+      detailsStep.hidden = !isDetails;
+      stepPills.forEach(item => item.classList.toggle('active', item.dataset.bookingStepPill === step));
+    }
+
+    function clearSlots(message) {
+      slots.innerHTML = `<div class="text-muted small">${message}</div>`;
+      continueButton.disabled = true;
+      timeInput.value = '';
+    }
+
+    function clearActiveDates() {
+      dateStrip.querySelectorAll('.booking-date-chip').forEach(button => button.classList.remove('active'));
+    }
+
+    function selectDate(value, options = {}) {
+      dateInput.value = value;
+      customDateInput.value = value;
+      selectedDateLabel.textContent = value ? displayDate(value) : '';
+      timeInput.value = '';
+      continueButton.disabled = true;
+
+      clearActiveDates();
+      const activeButton = dateStrip.querySelector(`[data-booking-date="${value}"]`);
+      if (activeButton) activeButton.classList.add('active');
+
+      if (options.refresh !== false) refreshAvailability();
+    }
+
+    function renderDateStrip() {
+      const today = startOfDay(new Date());
+      customDateInput.min = sqlDate(today);
+      dateStrip.innerHTML = '';
+
+      for (let index = 0; index < 10; index += 1) {
+        const date = new Date(today);
+        date.setDate(today.getDate() + index);
+        const value = sqlDate(date);
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'booking-date-chip';
+        button.dataset.bookingDate = value;
+        button.innerHTML = `
+          <span class="weekday">${index === 0 ? 'Hoy' : date.toLocaleDateString('es-GT', { weekday: 'short' })}</span>
+          <span class="day">${String(date.getDate()).padStart(2, '0')}</span>
+          <span class="month">${date.toLocaleDateString('es-GT', { month: 'short' })}</span>
+        `;
+        button.addEventListener('click', () => selectDate(value));
+        dateStrip.appendChild(button);
+      }
+    }
+
+    function slotGroupName(slot) {
+      const hour = Number(String(slot).slice(0, 2));
+      if (hour < 12) return 'Mañana';
+      if (hour < 18) return 'Tarde';
+      return 'Noche';
+    }
+
+    function renderSlots(data) {
+      panel.hidden = false;
+      title.textContent = selectedOptionText(doctorSelect);
+      dayLabel.textContent = data.dia_semana || '';
+      ranges.textContent = data.horarios && data.horarios.length
+        ? data.horarios.map(item => `${displayTime(item.hora_inicio)} - ${displayTime(item.hora_fin)}`).join(' / ')
+        : 'Sin horario configurado para esta fecha.';
+
+      slots.innerHTML = '';
+      continueButton.disabled = true;
+      timeInput.value = '';
+
+      if (!data.horarios || !data.horarios.length) {
+        clearSlots('No hay horario laboral para este día.');
+        return;
+      }
+      if (!data.disponibles || !data.disponibles.length) {
+        clearSlots('No quedan espacios disponibles para esta fecha.');
+        return;
+      }
+
+      const groups = data.disponibles.reduce((items, slot) => {
+        const group = slotGroupName(slot);
+        if (!items[group]) items[group] = [];
+        items[group].push(slot);
+        return items;
+      }, {});
+
+      ['Mañana', 'Tarde', 'Noche'].forEach(groupName => {
+        if (!groups[groupName]) return;
+        const group = document.createElement('div');
+        group.className = 'booking-slot-group';
+        group.innerHTML = `<div class="text-muted fw-semibold mb-2">${groupName}</div><div class="booking-slot-grid"></div>`;
+        const grid = group.querySelector('.booking-slot-grid');
+
+        groups[groupName].forEach(slot => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = 'booking-slot-btn';
+          button.textContent = displayTime(slot);
+          button.dataset.slot = slot;
+          button.addEventListener('click', () => {
+            timeInput.value = slot;
+            slots.querySelectorAll('.booking-slot-btn').forEach(item => item.classList.remove('active'));
+            button.classList.add('active');
+            continueButton.disabled = false;
+          });
+          grid.appendChild(button);
+        });
+
+        slots.appendChild(group);
+      });
+    }
+
+    async function refreshAvailability() {
+      const doctorId = doctorSelect.value;
+      const fecha = dateInput.value;
+      timeInput.value = '';
+      continueButton.disabled = true;
+
+      if (!doctorId || !fecha) {
+        panel.hidden = true;
+        return;
+      }
+
+      panel.hidden = false;
+      title.textContent = selectedOptionText(doctorSelect);
+      dayLabel.textContent = '';
+      ranges.textContent = 'Cargando horario...';
+      clearSlots('Buscando espacios disponibles...');
+
+      const requestId = ++availabilityRequest;
+      try {
+        const response = await fetch(`/api/admin/doctores/${encodeURIComponent(doctorId)}/disponibilidad?fecha=${encodeURIComponent(fecha)}`);
+        const data = await response.json();
+        if (requestId !== availabilityRequest) return;
+        if (!response.ok) throw new Error(data.message || 'No se pudo cargar la disponibilidad.');
+        renderSlots(data);
+      } catch (error) {
+        if (requestId !== availabilityRequest) return;
+        ranges.textContent = 'No se pudo cargar la disponibilidad.';
+        clearSlots(error.message || 'Intenta nuevamente.');
+      }
+    }
+
+    function showDetails() {
+      if (!doctorSelect.value) {
+        notify('Selecciona un doctor antes de continuar.');
+        doctorSelect.focus();
+        return;
+      }
+      if (!dateInput.value || !timeInput.value) {
+        notify('Selecciona fecha y horario disponible.');
+        return;
+      }
+
+      summaryDoctor.textContent = selectedOptionText(doctorSelect);
+      summaryDate.textContent = displayDate(dateInput.value);
+      summaryTime.textContent = displayTime(timeInput.value);
+      setStep('details');
+    }
+
+    function resetFlow() {
+      form.reset();
+      doctorSearch?.setValue(doctorSelect.value || '');
+      patientSearch?.setValue(patientSelect.value || '');
+      timeInput.value = '';
+      panel.hidden = true;
+      continueButton.disabled = true;
+      setStep('schedule');
+      const defaultDate = initialDate || sqlDate(startOfDay(new Date()));
+      selectDate(defaultDate, { refresh: false });
+    }
+
+    function setSelectValue(select, controller, value) {
+      if (!select || value === undefined || value === null || value === '') return;
+      select.value = String(value);
+      controller?.setValue(select.value || '');
+    }
+
+    window.prefillAppointmentModal = function prefillAppointmentModal(prefill = {}) {
+      resetFlow();
+      setSelectValue(doctorSelect, doctorSearch, prefill.doctorId || prefill.doctor_iddoctor);
+      setSelectValue(patientSelect, patientSearch, prefill.pacienteId || prefill.paciente_idPaciente);
+
+      const targetDate = prefill.fechaCita || prefill.fecha || dateInput.value || sqlDate(startOfDay(new Date()));
+      selectDate(targetDate, { refresh: false });
+
+      const motive = document.getElementById('motivoCita');
+      const notes = document.getElementById('notasAdicionales');
+      if (motive && prefill.motivoCita) motive.value = prefill.motivoCita;
+      if (notes && prefill.notasAdicionales) notes.value = prefill.notasAdicionales;
+
+      if (doctorSelect.value && targetDate) refreshAvailability();
+      setStep('schedule');
+      if (window.bootstrap) bootstrap.Modal.getOrCreateInstance(modal).show();
+    };
+
+    renderDateStrip();
+    selectDate(initialDate || sqlDate(startOfDay(new Date())), { refresh: false });
+
+    customDateInput.addEventListener('change', () => selectDate(customDateInput.value));
+    doctorSelect.addEventListener('change', refreshAvailability);
+    continueButton.addEventListener('click', showDetails);
+    backButton.addEventListener('click', () => setStep('schedule'));
+    modal.addEventListener('shown.bs.modal', refreshAvailability);
+    modal.addEventListener('hidden.bs.modal', resetFlow);
+    form.addEventListener('submit', event => {
+      if (!dateInput.value || !timeInput.value) {
+        event.preventDefault();
+        setStep('schedule');
+        notify('Selecciona fecha y horario disponible.');
+      }
+    });
+  })();
+</script>

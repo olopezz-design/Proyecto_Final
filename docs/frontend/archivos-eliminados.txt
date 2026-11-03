@@ -1,0 +1,1491 @@
+# Archivos eliminados en la rama frontend
+# Responsable: Danny Omar Estrada González
+# Total: 1478 archivos
+# Cómo se verificó cada grupo: ver docs/frontend/INVENTARIO_FRONTEND.md, sección 4.
+
+## Eliminar páginas de demostración de la plantilla admin (41 archivos)
+views/admin/Staff/modals/deleteStaff.ejs
+views/admin/accordions.ejs
+views/admin/add-doctors.ejs
+views/admin/add-staff.ejs
+views/admin/advanced-cards.ejs
+views/admin/alerts.ejs
+views/admin/appointment-success.ejs
+views/admin/appointments-details.ejs
+views/admin/appointments-list.ejs
+views/admin/badges.ejs
+views/admin/book-appointment.ejs
+views/admin/button-groups.ejs
+views/admin/buttons.ejs
+views/admin/cards.ejs
+views/admin/carousel.ejs
+views/admin/create-invoice.ejs
+views/admin/dashboard3.ejs
+views/admin/doctors-cards.ejs
+views/admin/doctors-grid.ejs
+views/admin/dropdowns.ejs
+views/admin/edit-staff.ejs
+views/admin/expenses.ejs
+views/admin/full-post.ejs
+views/admin/icons.ejs
+views/admin/income.ejs
+views/admin/index.ejs
+views/admin/invoice-details.ejs
+views/admin/invoices.ejs
+views/admin/list-items.ejs
+views/admin/login-copy.ejs
+views/admin/maintenance.ejs
+views/admin/maps.ejs
+views/admin/patient-profile.ejs
+views/admin/payments.ejs
+views/admin/placeholders.ejs
+views/admin/progress.ejs
+views/admin/spinners.ejs
+views/admin/staff.ejs
+views/admin/tables.ejs
+views/admin/tabs.ejs
+views/admin/typography.ejs
+
+## Eliminar vistas obsoletas y modales que no se incluyen (22 archivos)
+views/admin/ComprasProductos/modals/addCompraProducto.ejs
+views/admin/ComprasProductos/modals/informacionFactura.ejs
+views/admin/Pacientes/modals/addPaciente.ejs
+views/admin/Pacientes/modals/editPaciente.ejs
+views/admin/Pacientes/modals/fichaMedica.ejs
+views/admin/Pacientes/modals/infoPaciente.ejs
+views/admin/Pagos/modals/addAbono.ejs
+views/admin/Pagos/modals/addPago.ejs
+views/admin/Pagos/modals/verPago.ejs
+views/admin/Productos/modals/addProducto.ejs
+views/admin/Productos/modals/editarProducto.ejs
+views/admin/Productos/modals/infoProducto.ejs
+views/admin/Proveedores/modals/addProveedor.ejs
+views/admin/Proveedores/modals/editarProveedor.ejs
+views/admin/Proveedores/modals/verProveedor.ejs
+views/admin/SalidasProductos/modals/addSalidaProducto.ejs
+views/admin/SalidasProductos/modals/informacionMovimiento.ejs
+views/admin/citas.ejs
+views/admin/dashboard.ejs
+views/admin/my-patients.ejs
+views/admin/pacientes.ejs
+views/admin/verPaciente.ejs
+
+## Corregir errores de consola en páginas públicas y perfil (1 archivos)
+public/js/google-map.js
+
+## Eliminar recursos públicos sin uso de la plantilla (1414 archivos)
+assets/css/bootstrap/_accordion.scss
+assets/css/bootstrap/_alert.scss
+assets/css/bootstrap/_badge.scss
+assets/css/bootstrap/_breadcrumb.scss
+assets/css/bootstrap/_button-group.scss
+assets/css/bootstrap/_buttons.scss
+assets/css/bootstrap/_card.scss
+assets/css/bootstrap/_carousel.scss
+assets/css/bootstrap/_close.scss
+assets/css/bootstrap/_containers.scss
+assets/css/bootstrap/_dropdown.scss
+assets/css/bootstrap/_forms.scss
+assets/css/bootstrap/_functions.scss
+assets/css/bootstrap/_grid.scss
+assets/css/bootstrap/_helpers.scss
+assets/css/bootstrap/_images.scss
+assets/css/bootstrap/_list-group.scss
+assets/css/bootstrap/_maps.scss
+assets/css/bootstrap/_mixins.scss
+assets/css/bootstrap/_modal.scss
+assets/css/bootstrap/_nav.scss
+assets/css/bootstrap/_navbar.scss
+assets/css/bootstrap/_offcanvas.scss
+assets/css/bootstrap/_pagination.scss
+assets/css/bootstrap/_placeholders.scss
+assets/css/bootstrap/_popover.scss
+assets/css/bootstrap/_progress.scss
+assets/css/bootstrap/_reboot.scss
+assets/css/bootstrap/_root.scss
+assets/css/bootstrap/_spinners.scss
+assets/css/bootstrap/_tables.scss
+assets/css/bootstrap/_toasts.scss
+assets/css/bootstrap/_tooltip.scss
+assets/css/bootstrap/_transitions.scss
+assets/css/bootstrap/_type.scss
+assets/css/bootstrap/_utilities.scss
+assets/css/bootstrap/_variables-dark.scss
+assets/css/bootstrap/_variables.scss
+assets/css/bootstrap/bootstrap-grid.scss
+assets/css/bootstrap/bootstrap-reboot.scss
+assets/css/bootstrap/bootstrap-utilities.scss
+assets/css/bootstrap/bootstrap.scss
+assets/css/bootstrap/forms/_floating-labels.scss
+assets/css/bootstrap/forms/_form-check.scss
+assets/css/bootstrap/forms/_form-control.scss
+assets/css/bootstrap/forms/_form-range.scss
+assets/css/bootstrap/forms/_form-select.scss
+assets/css/bootstrap/forms/_form-text.scss
+assets/css/bootstrap/forms/_input-group.scss
+assets/css/bootstrap/forms/_labels.scss
+assets/css/bootstrap/forms/_validation.scss
+assets/css/bootstrap/helpers/_clearfix.scss
+assets/css/bootstrap/helpers/_color-bg.scss
+assets/css/bootstrap/helpers/_colored-links.scss
+assets/css/bootstrap/helpers/_focus-ring.scss
+assets/css/bootstrap/helpers/_icon-link.scss
+assets/css/bootstrap/helpers/_position.scss
+assets/css/bootstrap/helpers/_ratio.scss
+assets/css/bootstrap/helpers/_stacks.scss
+assets/css/bootstrap/helpers/_stretched-link.scss
+assets/css/bootstrap/helpers/_text-truncation.scss
+assets/css/bootstrap/helpers/_visually-hidden.scss
+assets/css/bootstrap/helpers/_vr.scss
+assets/css/bootstrap/mixins/_alert.scss
+assets/css/bootstrap/mixins/_backdrop.scss
+assets/css/bootstrap/mixins/_banner.scss
+assets/css/bootstrap/mixins/_border-radius.scss
+assets/css/bootstrap/mixins/_box-shadow.scss
+assets/css/bootstrap/mixins/_breakpoints.scss
+assets/css/bootstrap/mixins/_buttons.scss
+assets/css/bootstrap/mixins/_caret.scss
+assets/css/bootstrap/mixins/_clearfix.scss
+assets/css/bootstrap/mixins/_color-mode.scss
+assets/css/bootstrap/mixins/_color-scheme.scss
+assets/css/bootstrap/mixins/_container.scss
+assets/css/bootstrap/mixins/_deprecate.scss
+assets/css/bootstrap/mixins/_forms.scss
+assets/css/bootstrap/mixins/_gradients.scss
+assets/css/bootstrap/mixins/_grid.scss
+assets/css/bootstrap/mixins/_image.scss
+assets/css/bootstrap/mixins/_list-group.scss
+assets/css/bootstrap/mixins/_lists.scss
+assets/css/bootstrap/mixins/_pagination.scss
+assets/css/bootstrap/mixins/_reset-text.scss
+assets/css/bootstrap/mixins/_resize.scss
+assets/css/bootstrap/mixins/_table-variants.scss
+assets/css/bootstrap/mixins/_text-truncate.scss
+assets/css/bootstrap/mixins/_transition.scss
+assets/css/bootstrap/mixins/_utilities.scss
+assets/css/bootstrap/mixins/_visually-hidden.scss
+assets/css/bootstrap/tests/jasmine.js
+assets/css/bootstrap/tests/mixins/_auto-import-of-variables-dark.test.scss
+assets/css/bootstrap/tests/mixins/_color-modes.test.scss
+assets/css/bootstrap/tests/mixins/_media-query-color-mode-full.test.scss
+assets/css/bootstrap/tests/mixins/_utilities.test.scss
+assets/css/bootstrap/tests/sass-true/register.js
+assets/css/bootstrap/tests/sass-true/runner.js
+assets/css/bootstrap/tests/utilities/_api.test.scss
+assets/css/bootstrap/utilities/_api.scss
+assets/css/bootstrap/vendor/_rfs.scss
+assets/css/main.css
+assets/css/main.scss
+assets/fonts/remix/index.html
+assets/images/award/award.svg
+assets/images/award/award1.svg
+assets/images/award/award2.svg
+assets/images/banner.jpg
+assets/images/banner.svg
+assets/images/bg.jpg
+assets/images/cards/american-express.png
+assets/images/cards/diners.png
+assets/images/cards/discover.png
+assets/images/cards/jcb.png
+assets/images/cards/mastercard.png
+assets/images/cards/visa.png
+assets/images/doctor.png
+assets/images/doctor.svg
+assets/images/doctor1.png
+assets/images/doctor2.png
+assets/images/doctor3.png
+assets/images/doctor4.png
+assets/images/doctor5.jpg
+assets/images/doctor5.png
+assets/images/doctor6.png
+assets/images/doctor7.png
+assets/images/doctors/1.jpg
+assets/images/doctors/10.jpg
+assets/images/doctors/11.jpg
+assets/images/doctors/12.jpg
+assets/images/doctors/13.jpg
+assets/images/doctors/14.jpg
+assets/images/doctors/2.jpg
+assets/images/doctors/3.jpg
+assets/images/doctors/4.jpg
+assets/images/doctors/5.jpg
+assets/images/doctors/6.jpg
+assets/images/doctors/7.jpg
+assets/images/doctors/8.jpg
+assets/images/doctors/9.jpg
+assets/images/ellipse-bg.svg
+assets/images/favicon.svg
+assets/images/flags/1x1/ad.svg
+assets/images/flags/1x1/ae.svg
+assets/images/flags/1x1/af.svg
+assets/images/flags/1x1/ag.svg
+assets/images/flags/1x1/ai.svg
+assets/images/flags/1x1/al.svg
+assets/images/flags/1x1/am.svg
+assets/images/flags/1x1/ao.svg
+assets/images/flags/1x1/aq.svg
+assets/images/flags/1x1/ar.svg
+assets/images/flags/1x1/as.svg
+assets/images/flags/1x1/at.svg
+assets/images/flags/1x1/au.svg
+assets/images/flags/1x1/aw.svg
+assets/images/flags/1x1/ax.svg
+assets/images/flags/1x1/az.svg
+assets/images/flags/1x1/ba.svg
+assets/images/flags/1x1/bb.svg
+assets/images/flags/1x1/bd.svg
+assets/images/flags/1x1/be.svg
+assets/images/flags/1x1/bf.svg
+assets/images/flags/1x1/bg.svg
+assets/images/flags/1x1/bh.svg
+assets/images/flags/1x1/bi.svg
+assets/images/flags/1x1/bj.svg
+assets/images/flags/1x1/bl.svg
+assets/images/flags/1x1/bm.svg
+assets/images/flags/1x1/bn.svg
+assets/images/flags/1x1/bo.svg
+assets/images/flags/1x1/bq.svg
+assets/images/flags/1x1/br.svg
+assets/images/flags/1x1/bs.svg
+assets/images/flags/1x1/bt.svg
+assets/images/flags/1x1/bv.svg
+assets/images/flags/1x1/bw.svg
+assets/images/flags/1x1/by.svg
+assets/images/flags/1x1/bz.svg
+assets/images/flags/1x1/ca.svg
+assets/images/flags/1x1/cc.svg
+assets/images/flags/1x1/cd.svg
+assets/images/flags/1x1/cf.svg
+assets/images/flags/1x1/cg.svg
+assets/images/flags/1x1/ch.svg
+assets/images/flags/1x1/ci.svg
+assets/images/flags/1x1/ck.svg
+assets/images/flags/1x1/cl.svg
+assets/images/flags/1x1/cm.svg
+assets/images/flags/1x1/cn.svg
+assets/images/flags/1x1/co.svg
+assets/images/flags/1x1/cr.svg
+assets/images/flags/1x1/cu.svg
+assets/images/flags/1x1/cv.svg
+assets/images/flags/1x1/cw.svg
+assets/images/flags/1x1/cx.svg
+assets/images/flags/1x1/cy.svg
+assets/images/flags/1x1/cz.svg
+assets/images/flags/1x1/de.svg
+assets/images/flags/1x1/dj.svg
+assets/images/flags/1x1/dk.svg
+assets/images/flags/1x1/dm.svg
+assets/images/flags/1x1/do.svg
+assets/images/flags/1x1/dz.svg
+assets/images/flags/1x1/ec.svg
+assets/images/flags/1x1/ee.svg
+assets/images/flags/1x1/eg.svg
+assets/images/flags/1x1/eh.svg
+assets/images/flags/1x1/er.svg
+assets/images/flags/1x1/es-ct.svg
+assets/images/flags/1x1/es.svg
+assets/images/flags/1x1/et.svg
+assets/images/flags/1x1/eu.svg
+assets/images/flags/1x1/fi.svg
+assets/images/flags/1x1/fj.svg
+assets/images/flags/1x1/fk.svg
+assets/images/flags/1x1/fm.svg
+assets/images/flags/1x1/fo.svg
+assets/images/flags/1x1/fr.svg
+assets/images/flags/1x1/ga.svg
+assets/images/flags/1x1/gb-eng.svg
+assets/images/flags/1x1/gb-nir.svg
+assets/images/flags/1x1/gb-sct.svg
+assets/images/flags/1x1/gb-wls.svg
+assets/images/flags/1x1/gb.svg
+assets/images/flags/1x1/gd.svg
+assets/images/flags/1x1/ge.svg
+assets/images/flags/1x1/gf.svg
+assets/images/flags/1x1/gg.svg
+assets/images/flags/1x1/gh.svg
+assets/images/flags/1x1/gi.svg
+assets/images/flags/1x1/gl.svg
+assets/images/flags/1x1/gm.svg
+assets/images/flags/1x1/gn.svg
+assets/images/flags/1x1/gp.svg
+assets/images/flags/1x1/gq.svg
+assets/images/flags/1x1/gr.svg
+assets/images/flags/1x1/gs.svg
+assets/images/flags/1x1/gt.svg
+assets/images/flags/1x1/gu.svg
+assets/images/flags/1x1/gw.svg
+assets/images/flags/1x1/gy.svg
+assets/images/flags/1x1/hk.svg
+assets/images/flags/1x1/hm.svg
+assets/images/flags/1x1/hn.svg
+assets/images/flags/1x1/hr.svg
+assets/images/flags/1x1/ht.svg
+assets/images/flags/1x1/hu.svg
+assets/images/flags/1x1/id.svg
+assets/images/flags/1x1/ie.svg
+assets/images/flags/1x1/il.svg
+assets/images/flags/1x1/im.svg
+assets/images/flags/1x1/in.svg
+assets/images/flags/1x1/io.svg
+assets/images/flags/1x1/iq.svg
+assets/images/flags/1x1/ir.svg
+assets/images/flags/1x1/is.svg
+assets/images/flags/1x1/it.svg
+assets/images/flags/1x1/je.svg
+assets/images/flags/1x1/jm.svg
+assets/images/flags/1x1/jo.svg
+assets/images/flags/1x1/jp.svg
+assets/images/flags/1x1/ke.svg
+assets/images/flags/1x1/kg.svg
+assets/images/flags/1x1/kh.svg
+assets/images/flags/1x1/ki.svg
+assets/images/flags/1x1/km.svg
+assets/images/flags/1x1/kn.svg
+assets/images/flags/1x1/kp.svg
+assets/images/flags/1x1/kr.svg
+assets/images/flags/1x1/kw.svg
+assets/images/flags/1x1/ky.svg
+assets/images/flags/1x1/kz.svg
+assets/images/flags/1x1/la.svg
+assets/images/flags/1x1/lb.svg
+assets/images/flags/1x1/lc.svg
+assets/images/flags/1x1/li.svg
+assets/images/flags/1x1/lk.svg
+assets/images/flags/1x1/lr.svg
+assets/images/flags/1x1/ls.svg
+assets/images/flags/1x1/lt.svg
+assets/images/flags/1x1/lu.svg
+assets/images/flags/1x1/lv.svg
+assets/images/flags/1x1/ly.svg
+assets/images/flags/1x1/ma.svg
+assets/images/flags/1x1/mc.svg
+assets/images/flags/1x1/md.svg
+assets/images/flags/1x1/me.svg
+assets/images/flags/1x1/mf.svg
+assets/images/flags/1x1/mg.svg
+assets/images/flags/1x1/mh.svg
+assets/images/flags/1x1/mk.svg
+assets/images/flags/1x1/ml.svg
+assets/images/flags/1x1/mm.svg
+assets/images/flags/1x1/mn.svg
+assets/images/flags/1x1/mo.svg
+assets/images/flags/1x1/mp.svg
+assets/images/flags/1x1/mq.svg
+assets/images/flags/1x1/mr.svg
+assets/images/flags/1x1/ms.svg
+assets/images/flags/1x1/mt.svg
+assets/images/flags/1x1/mu.svg
+assets/images/flags/1x1/mv.svg
+assets/images/flags/1x1/mw.svg
+assets/images/flags/1x1/mx.svg
+assets/images/flags/1x1/my.svg
+assets/images/flags/1x1/mz.svg
+assets/images/flags/1x1/na.svg
+assets/images/flags/1x1/nc.svg
+assets/images/flags/1x1/ne.svg
+assets/images/flags/1x1/nf.svg
+assets/images/flags/1x1/ng.svg
+assets/images/flags/1x1/ni.svg
+assets/images/flags/1x1/nl.svg
+assets/images/flags/1x1/no.svg
+assets/images/flags/1x1/np.svg
+assets/images/flags/1x1/nr.svg
+assets/images/flags/1x1/nu.svg
+assets/images/flags/1x1/nz.svg
+assets/images/flags/1x1/om.svg
+assets/images/flags/1x1/pa.svg
+assets/images/flags/1x1/pe.svg
+assets/images/flags/1x1/pf.svg
+assets/images/flags/1x1/pg.svg
+assets/images/flags/1x1/ph.svg
+assets/images/flags/1x1/pk.svg
+assets/images/flags/1x1/pl.svg
+assets/images/flags/1x1/pm.svg
+assets/images/flags/1x1/pn.svg
+assets/images/flags/1x1/pr.svg
+assets/images/flags/1x1/ps.svg
+assets/images/flags/1x1/pt.svg
+assets/images/flags/1x1/pw.svg
+assets/images/flags/1x1/py.svg
+assets/images/flags/1x1/qa (2).svg
+assets/images/flags/1x1/qa.svg
+assets/images/flags/1x1/re (2).svg
+assets/images/flags/1x1/re.svg
+assets/images/flags/1x1/ro (2).svg
+assets/images/flags/1x1/ro.svg
+assets/images/flags/1x1/rs (2).svg
+assets/images/flags/1x1/rs.svg
+assets/images/flags/1x1/ru (2).svg
+assets/images/flags/1x1/ru.svg
+assets/images/flags/1x1/rw (2).svg
+assets/images/flags/1x1/rw.svg
+assets/images/flags/1x1/sa (2).svg
+assets/images/flags/1x1/sa.svg
+assets/images/flags/1x1/sb (2).svg
+assets/images/flags/1x1/sb.svg
+assets/images/flags/1x1/sc (2).svg
+assets/images/flags/1x1/sc.svg
+assets/images/flags/1x1/sd (2).svg
+assets/images/flags/1x1/sd.svg
+assets/images/flags/1x1/se (2).svg
+assets/images/flags/1x1/se.svg
+assets/images/flags/1x1/sg (2).svg
+assets/images/flags/1x1/sg.svg
+assets/images/flags/1x1/sh (2).svg
+assets/images/flags/1x1/sh.svg
+assets/images/flags/1x1/si (2).svg
+assets/images/flags/1x1/si.svg
+assets/images/flags/1x1/sj (2).svg
+assets/images/flags/1x1/sj.svg
+assets/images/flags/1x1/sk (2).svg
+assets/images/flags/1x1/sk.svg
+assets/images/flags/1x1/sl (2).svg
+assets/images/flags/1x1/sl.svg
+assets/images/flags/1x1/sm (2).svg
+assets/images/flags/1x1/sm.svg
+assets/images/flags/1x1/sn (2).svg
+assets/images/flags/1x1/sn.svg
+assets/images/flags/1x1/so (2).svg
+assets/images/flags/1x1/so.svg
+assets/images/flags/1x1/sr (2).svg
+assets/images/flags/1x1/sr.svg
+assets/images/flags/1x1/ss (2).svg
+assets/images/flags/1x1/ss.svg
+assets/images/flags/1x1/st (2).svg
+assets/images/flags/1x1/st.svg
+assets/images/flags/1x1/sv (2).svg
+assets/images/flags/1x1/sv.svg
+assets/images/flags/1x1/sx (2).svg
+assets/images/flags/1x1/sx.svg
+assets/images/flags/1x1/sy (2).svg
+assets/images/flags/1x1/sy.svg
+assets/images/flags/1x1/sz (2).svg
+assets/images/flags/1x1/sz.svg
+assets/images/flags/1x1/tc (2).svg
+assets/images/flags/1x1/tc.svg
+assets/images/flags/1x1/td (2).svg
+assets/images/flags/1x1/td.svg
+assets/images/flags/1x1/tf (2).svg
+assets/images/flags/1x1/tf.svg
+assets/images/flags/1x1/tg (2).svg
+assets/images/flags/1x1/tg.svg
+assets/images/flags/1x1/th (2).svg
+assets/images/flags/1x1/th.svg
+assets/images/flags/1x1/tj (2).svg
+assets/images/flags/1x1/tj.svg
+assets/images/flags/1x1/tk (2).svg
+assets/images/flags/1x1/tk.svg
+assets/images/flags/1x1/tl (2).svg
+assets/images/flags/1x1/tl.svg
+assets/images/flags/1x1/tm (2).svg
+assets/images/flags/1x1/tm.svg
+assets/images/flags/1x1/tn (2).svg
+assets/images/flags/1x1/tn.svg
+assets/images/flags/1x1/to (2).svg
+assets/images/flags/1x1/to.svg
+assets/images/flags/1x1/tr (2).svg
+assets/images/flags/1x1/tr.svg
+assets/images/flags/1x1/tt (2).svg
+assets/images/flags/1x1/tt.svg
+assets/images/flags/1x1/tv (2).svg
+assets/images/flags/1x1/tv.svg
+assets/images/flags/1x1/tw (2).svg
+assets/images/flags/1x1/tw.svg
+assets/images/flags/1x1/tz (2).svg
+assets/images/flags/1x1/tz.svg
+assets/images/flags/1x1/ua (2).svg
+assets/images/flags/1x1/ua.svg
+assets/images/flags/1x1/ug (2).svg
+assets/images/flags/1x1/ug.svg
+assets/images/flags/1x1/um (2).svg
+assets/images/flags/1x1/um.svg
+assets/images/flags/1x1/un (2).svg
+assets/images/flags/1x1/un.svg
+assets/images/flags/1x1/us (2).svg
+assets/images/flags/1x1/us.svg
+assets/images/flags/1x1/uy (2).svg
+assets/images/flags/1x1/uy.svg
+assets/images/flags/1x1/uz (2).svg
+assets/images/flags/1x1/uz.svg
+assets/images/flags/1x1/va (2).svg
+assets/images/flags/1x1/va.svg
+assets/images/flags/1x1/vc (2).svg
+assets/images/flags/1x1/vc.svg
+assets/images/flags/1x1/ve (2).svg
+assets/images/flags/1x1/ve.svg
+assets/images/flags/1x1/vg (2).svg
+assets/images/flags/1x1/vg.svg
+assets/images/flags/1x1/vi (2).svg
+assets/images/flags/1x1/vi.svg
+assets/images/flags/1x1/vn (2).svg
+assets/images/flags/1x1/vn.svg
+assets/images/flags/1x1/vu (2).svg
+assets/images/flags/1x1/vu.svg
+assets/images/flags/1x1/wf (2).svg
+assets/images/flags/1x1/wf.svg
+assets/images/flags/1x1/ws (2).svg
+assets/images/flags/1x1/ws.svg
+assets/images/flags/1x1/xk (2).svg
+assets/images/flags/1x1/xk.svg
+assets/images/flags/1x1/ye (2).svg
+assets/images/flags/1x1/ye.svg
+assets/images/flags/1x1/yt (2).svg
+assets/images/flags/1x1/yt.svg
+assets/images/flags/1x1/za (2).svg
+assets/images/flags/1x1/za.svg
+assets/images/flags/1x1/zm (2).svg
+assets/images/flags/1x1/zm.svg
+assets/images/flags/1x1/zw (2).svg
+assets/images/flags/1x1/zw.svg
+assets/images/flags/4x3/ad (2).svg
+assets/images/flags/4x3/ad.svg
+assets/images/flags/4x3/ae (2).svg
+assets/images/flags/4x3/ae.svg
+assets/images/flags/4x3/af (2).svg
+assets/images/flags/4x3/af.svg
+assets/images/flags/4x3/ag (2).svg
+assets/images/flags/4x3/ag.svg
+assets/images/flags/4x3/ai (2).svg
+assets/images/flags/4x3/ai.svg
+assets/images/flags/4x3/al (2).svg
+assets/images/flags/4x3/al.svg
+assets/images/flags/4x3/am (2).svg
+assets/images/flags/4x3/am.svg
+assets/images/flags/4x3/ao (2).svg
+assets/images/flags/4x3/ao.svg
+assets/images/flags/4x3/aq (2).svg
+assets/images/flags/4x3/aq.svg
+assets/images/flags/4x3/ar (2).svg
+assets/images/flags/4x3/ar.svg
+assets/images/flags/4x3/as (2).svg
+assets/images/flags/4x3/as.svg
+assets/images/flags/4x3/at (2).svg
+assets/images/flags/4x3/at.svg
+assets/images/flags/4x3/au (2).svg
+assets/images/flags/4x3/au.svg
+assets/images/flags/4x3/aw (2).svg
+assets/images/flags/4x3/aw.svg
+assets/images/flags/4x3/ax (2).svg
+assets/images/flags/4x3/ax.svg
+assets/images/flags/4x3/az (2).svg
+assets/images/flags/4x3/az.svg
+assets/images/flags/4x3/ba (2).svg
+assets/images/flags/4x3/ba.svg
+assets/images/flags/4x3/bb (2).svg
+assets/images/flags/4x3/bb.svg
+assets/images/flags/4x3/bd (2).svg
+assets/images/flags/4x3/bd.svg
+assets/images/flags/4x3/be (2).svg
+assets/images/flags/4x3/be.svg
+assets/images/flags/4x3/bf (2).svg
+assets/images/flags/4x3/bf.svg
+assets/images/flags/4x3/bg (2).svg
+assets/images/flags/4x3/bg.svg
+assets/images/flags/4x3/bh (2).svg
+assets/images/flags/4x3/bh.svg
+assets/images/flags/4x3/bi (2).svg
+assets/images/flags/4x3/bi.svg
+assets/images/flags/4x3/bj (2).svg
+assets/images/flags/4x3/bj.svg
+assets/images/flags/4x3/bl (2).svg
+assets/images/flags/4x3/bl.svg
+assets/images/flags/4x3/bm (2).svg
+assets/images/flags/4x3/bm.svg
+assets/images/flags/4x3/bn (2).svg
+assets/images/flags/4x3/bn.svg
+assets/images/flags/4x3/bo (2).svg
+assets/images/flags/4x3/bo.svg
+assets/images/flags/4x3/bq (2).svg
+assets/images/flags/4x3/bq.svg
+assets/images/flags/4x3/br (2).svg
+assets/images/flags/4x3/br.svg
+assets/images/flags/4x3/bs (2).svg
+assets/images/flags/4x3/bs.svg
+assets/images/flags/4x3/bt (2).svg
+assets/images/flags/4x3/bt.svg
+assets/images/flags/4x3/bv (2).svg
+assets/images/flags/4x3/bv.svg
+assets/images/flags/4x3/bw (2).svg
+assets/images/flags/4x3/bw.svg
+assets/images/flags/4x3/by (2).svg
+assets/images/flags/4x3/by.svg
+assets/images/flags/4x3/bz (2).svg
+assets/images/flags/4x3/bz.svg
+assets/images/flags/4x3/ca (2).svg
+assets/images/flags/4x3/ca.svg
+assets/images/flags/4x3/cc (2).svg
+assets/images/flags/4x3/cc.svg
+assets/images/flags/4x3/cd (2).svg
+assets/images/flags/4x3/cd.svg
+assets/images/flags/4x3/cf (2).svg
+assets/images/flags/4x3/cf.svg
+assets/images/flags/4x3/cg (2).svg
+assets/images/flags/4x3/cg.svg
+assets/images/flags/4x3/ch (2).svg
+assets/images/flags/4x3/ch.svg
+assets/images/flags/4x3/ci (2).svg
+assets/images/flags/4x3/ci.svg
+assets/images/flags/4x3/ck (2).svg
+assets/images/flags/4x3/ck.svg
+assets/images/flags/4x3/cl (2).svg
+assets/images/flags/4x3/cl.svg
+assets/images/flags/4x3/cm (2).svg
+assets/images/flags/4x3/cm.svg
+assets/images/flags/4x3/cn (2).svg
+assets/images/flags/4x3/cn.svg
+assets/images/flags/4x3/co (2).svg
+assets/images/flags/4x3/co.svg
+assets/images/flags/4x3/cr (2).svg
+assets/images/flags/4x3/cr.svg
+assets/images/flags/4x3/cu (2).svg
+assets/images/flags/4x3/cu.svg
+assets/images/flags/4x3/cv (2).svg
+assets/images/flags/4x3/cv.svg
+assets/images/flags/4x3/cw (2).svg
+assets/images/flags/4x3/cw.svg
+assets/images/flags/4x3/cx (2).svg
+assets/images/flags/4x3/cx.svg
+assets/images/flags/4x3/cy (2).svg
+assets/images/flags/4x3/cy.svg
+assets/images/flags/4x3/cz (2).svg
+assets/images/flags/4x3/cz.svg
+assets/images/flags/4x3/de (2).svg
+assets/images/flags/4x3/de.svg
+assets/images/flags/4x3/dj (2).svg
+assets/images/flags/4x3/dj.svg
+assets/images/flags/4x3/dk (2).svg
+assets/images/flags/4x3/dk.svg
+assets/images/flags/4x3/dm (2).svg
+assets/images/flags/4x3/dm.svg
+assets/images/flags/4x3/do (2).svg
+assets/images/flags/4x3/do.svg
+assets/images/flags/4x3/dz (2).svg
+assets/images/flags/4x3/dz.svg
+assets/images/flags/4x3/ec (2).svg
+assets/images/flags/4x3/ec.svg
+assets/images/flags/4x3/ee (2).svg
+assets/images/flags/4x3/ee.svg
+assets/images/flags/4x3/eg (2).svg
+assets/images/flags/4x3/eg.svg
+assets/images/flags/4x3/eh (2).svg
+assets/images/flags/4x3/eh.svg
+assets/images/flags/4x3/er (2).svg
+assets/images/flags/4x3/er.svg
+assets/images/flags/4x3/es (2).svg
+assets/images/flags/4x3/es-ct (2).svg
+assets/images/flags/4x3/es-ct.svg
+assets/images/flags/4x3/es.svg
+assets/images/flags/4x3/et (2).svg
+assets/images/flags/4x3/et.svg
+assets/images/flags/4x3/eu (2).svg
+assets/images/flags/4x3/eu.svg
+assets/images/flags/4x3/fi (2).svg
+assets/images/flags/4x3/fi.svg
+assets/images/flags/4x3/fj (2).svg
+assets/images/flags/4x3/fj.svg
+assets/images/flags/4x3/fk (2).svg
+assets/images/flags/4x3/fk.svg
+assets/images/flags/4x3/fm (2).svg
+assets/images/flags/4x3/fm.svg
+assets/images/flags/4x3/fo (2).svg
+assets/images/flags/4x3/fo.svg
+assets/images/flags/4x3/fr (2).svg
+assets/images/flags/4x3/fr.svg
+assets/images/flags/4x3/ga (2).svg
+assets/images/flags/4x3/ga.svg
+assets/images/flags/4x3/gb (2).svg
+assets/images/flags/4x3/gb-eng (2).svg
+assets/images/flags/4x3/gb-eng.svg
+assets/images/flags/4x3/gb-nir (2).svg
+assets/images/flags/4x3/gb-nir.svg
+assets/images/flags/4x3/gb-sct (2).svg
+assets/images/flags/4x3/gb-sct.svg
+assets/images/flags/4x3/gb-wls (2).svg
+assets/images/flags/4x3/gb-wls.svg
+assets/images/flags/4x3/gb.svg
+assets/images/flags/4x3/gd (2).svg
+assets/images/flags/4x3/gd.svg
+assets/images/flags/4x3/ge (2).svg
+assets/images/flags/4x3/ge.svg
+assets/images/flags/4x3/gf (2).svg
+assets/images/flags/4x3/gf.svg
+assets/images/flags/4x3/gg (2).svg
+assets/images/flags/4x3/gg.svg
+assets/images/flags/4x3/gh (2).svg
+assets/images/flags/4x3/gh.svg
+assets/images/flags/4x3/gi (2).svg
+assets/images/flags/4x3/gi.svg
+assets/images/flags/4x3/gl (2).svg
+assets/images/flags/4x3/gl.svg
+assets/images/flags/4x3/gm (2).svg
+assets/images/flags/4x3/gm.svg
+assets/images/flags/4x3/gn (2).svg
+assets/images/flags/4x3/gn.svg
+assets/images/flags/4x3/gp (2).svg
+assets/images/flags/4x3/gp.svg
+assets/images/flags/4x3/gq (2).svg
+assets/images/flags/4x3/gq.svg
+assets/images/flags/4x3/gr (2).svg
+assets/images/flags/4x3/gr.svg
+assets/images/flags/4x3/gs (2).svg
+assets/images/flags/4x3/gs.svg
+assets/images/flags/4x3/gt (2).svg
+assets/images/flags/4x3/gt.svg
+assets/images/flags/4x3/gu (2).svg
+assets/images/flags/4x3/gu.svg
+assets/images/flags/4x3/gw (2).svg
+assets/images/flags/4x3/gw.svg
+assets/images/flags/4x3/gy (2).svg
+assets/images/flags/4x3/gy.svg
+assets/images/flags/4x3/hk (2).svg
+assets/images/flags/4x3/hk.svg
+assets/images/flags/4x3/hm (2).svg
+assets/images/flags/4x3/hm.svg
+assets/images/flags/4x3/hn (2).svg
+assets/images/flags/4x3/hn.svg
+assets/images/flags/4x3/hr (2).svg
+assets/images/flags/4x3/hr.svg
+assets/images/flags/4x3/ht (2).svg
+assets/images/flags/4x3/ht.svg
+assets/images/flags/4x3/hu (2).svg
+assets/images/flags/4x3/hu.svg
+assets/images/flags/4x3/id (2).svg
+assets/images/flags/4x3/id.svg
+assets/images/flags/4x3/ie (2).svg
+assets/images/flags/4x3/ie.svg
+assets/images/flags/4x3/il (2).svg
+assets/images/flags/4x3/il.svg
+assets/images/flags/4x3/im (2).svg
+assets/images/flags/4x3/im.svg
+assets/images/flags/4x3/in (2).svg
+assets/images/flags/4x3/in.svg
+assets/images/flags/4x3/io (2).svg
+assets/images/flags/4x3/io.svg
+assets/images/flags/4x3/iq (2).svg
+assets/images/flags/4x3/iq.svg
+assets/images/flags/4x3/ir (2).svg
+assets/images/flags/4x3/ir.svg
+assets/images/flags/4x3/is (2).svg
+assets/images/flags/4x3/is.svg
+assets/images/flags/4x3/it (2).svg
+assets/images/flags/4x3/it.svg
+assets/images/flags/4x3/je (2).svg
+assets/images/flags/4x3/je.svg
+assets/images/flags/4x3/jm (2).svg
+assets/images/flags/4x3/jm.svg
+assets/images/flags/4x3/jo (2).svg
+assets/images/flags/4x3/jo.svg
+assets/images/flags/4x3/jp (2).svg
+assets/images/flags/4x3/jp.svg
+assets/images/flags/4x3/ke (2).svg
+assets/images/flags/4x3/ke.svg
+assets/images/flags/4x3/kg (2).svg
+assets/images/flags/4x3/kg.svg
+assets/images/flags/4x3/kh (2).svg
+assets/images/flags/4x3/kh.svg
+assets/images/flags/4x3/ki (2).svg
+assets/images/flags/4x3/ki.svg
+assets/images/flags/4x3/km (2).svg
+assets/images/flags/4x3/km.svg
+assets/images/flags/4x3/kn (2).svg
+assets/images/flags/4x3/kn.svg
+assets/images/flags/4x3/kp (2).svg
+assets/images/flags/4x3/kp.svg
+assets/images/flags/4x3/kr (2).svg
+assets/images/flags/4x3/kr.svg
+assets/images/flags/4x3/kw (2).svg
+assets/images/flags/4x3/kw.svg
+assets/images/flags/4x3/ky (2).svg
+assets/images/flags/4x3/ky.svg
+assets/images/flags/4x3/kz (2).svg
+assets/images/flags/4x3/kz.svg
+assets/images/flags/4x3/la (2).svg
+assets/images/flags/4x3/la.svg
+assets/images/flags/4x3/lb (2).svg
+assets/images/flags/4x3/lb.svg
+assets/images/flags/4x3/lc (2).svg
+assets/images/flags/4x3/lc.svg
+assets/images/flags/4x3/li (2).svg
+assets/images/flags/4x3/li.svg
+assets/images/flags/4x3/lk (2).svg
+assets/images/flags/4x3/lk.svg
+assets/images/flags/4x3/lr (2).svg
+assets/images/flags/4x3/lr.svg
+assets/images/flags/4x3/ls (2).svg
+assets/images/flags/4x3/ls.svg
+assets/images/flags/4x3/lt (2).svg
+assets/images/flags/4x3/lt.svg
+assets/images/flags/4x3/lu (2).svg
+assets/images/flags/4x3/lu.svg
+assets/images/flags/4x3/lv (2).svg
+assets/images/flags/4x3/lv.svg
+assets/images/flags/4x3/ly (2).svg
+assets/images/flags/4x3/ly.svg
+assets/images/flags/4x3/ma (2).svg
+assets/images/flags/4x3/ma.svg
+assets/images/flags/4x3/mc (2).svg
+assets/images/flags/4x3/mc.svg
+assets/images/flags/4x3/md (2).svg
+assets/images/flags/4x3/md.svg
+assets/images/flags/4x3/me (2).svg
+assets/images/flags/4x3/me.svg
+assets/images/flags/4x3/mf (2).svg
+assets/images/flags/4x3/mf.svg
+assets/images/flags/4x3/mg (2).svg
+assets/images/flags/4x3/mg.svg
+assets/images/flags/4x3/mh (2).svg
+assets/images/flags/4x3/mh.svg
+assets/images/flags/4x3/mk (2).svg
+assets/images/flags/4x3/mk.svg
+assets/images/flags/4x3/ml (2).svg
+assets/images/flags/4x3/ml.svg
+assets/images/flags/4x3/mm (2).svg
+assets/images/flags/4x3/mm.svg
+assets/images/flags/4x3/mn (2).svg
+assets/images/flags/4x3/mn.svg
+assets/images/flags/4x3/mo (2).svg
+assets/images/flags/4x3/mo.svg
+assets/images/flags/4x3/mp (2).svg
+assets/images/flags/4x3/mp.svg
+assets/images/flags/4x3/mq (2).svg
+assets/images/flags/4x3/mq.svg
+assets/images/flags/4x3/mr (2).svg
+assets/images/flags/4x3/mr.svg
+assets/images/flags/4x3/ms (2).svg
+assets/images/flags/4x3/ms.svg
+assets/images/flags/4x3/mt (2).svg
+assets/images/flags/4x3/mt.svg
+assets/images/flags/4x3/mu (2).svg
+assets/images/flags/4x3/mu.svg
+assets/images/flags/4x3/mv (2).svg
+assets/images/flags/4x3/mv.svg
+assets/images/flags/4x3/mw (2).svg
+assets/images/flags/4x3/mw.svg
+assets/images/flags/4x3/mx (2).svg
+assets/images/flags/4x3/mx.svg
+assets/images/flags/4x3/my (2).svg
+assets/images/flags/4x3/my.svg
+assets/images/flags/4x3/mz (2).svg
+assets/images/flags/4x3/mz.svg
+assets/images/flags/4x3/na (2).svg
+assets/images/flags/4x3/na.svg
+assets/images/flags/4x3/nc (2).svg
+assets/images/flags/4x3/nc.svg
+assets/images/flags/4x3/ne (2).svg
+assets/images/flags/4x3/ne.svg
+assets/images/flags/4x3/nf (2).svg
+assets/images/flags/4x3/nf.svg
+assets/images/flags/4x3/ng (2).svg
+assets/images/flags/4x3/ng.svg
+assets/images/flags/4x3/ni (2).svg
+assets/images/flags/4x3/ni.svg
+assets/images/flags/4x3/nl (2).svg
+assets/images/flags/4x3/nl.svg
+assets/images/flags/4x3/no (2).svg
+assets/images/flags/4x3/no.svg
+assets/images/flags/4x3/np (2).svg
+assets/images/flags/4x3/np.svg
+assets/images/flags/4x3/nr (2).svg
+assets/images/flags/4x3/nr.svg
+assets/images/flags/4x3/nu (2).svg
+assets/images/flags/4x3/nu.svg
+assets/images/flags/4x3/nz (2).svg
+assets/images/flags/4x3/nz.svg
+assets/images/flags/4x3/om (2).svg
+assets/images/flags/4x3/om.svg
+assets/images/flags/4x3/pa (2).svg
+assets/images/flags/4x3/pa.svg
+assets/images/flags/4x3/pe (2).svg
+assets/images/flags/4x3/pe.svg
+assets/images/flags/4x3/pf (2).svg
+assets/images/flags/4x3/pf.svg
+assets/images/flags/4x3/pg (2).svg
+assets/images/flags/4x3/pg.svg
+assets/images/flags/4x3/ph (2).svg
+assets/images/flags/4x3/ph.svg
+assets/images/flags/4x3/pk (2).svg
+assets/images/flags/4x3/pk.svg
+assets/images/flags/4x3/pl (2).svg
+assets/images/flags/4x3/pl.svg
+assets/images/flags/4x3/pm (2).svg
+assets/images/flags/4x3/pm.svg
+assets/images/flags/4x3/pn (2).svg
+assets/images/flags/4x3/pn.svg
+assets/images/flags/4x3/pr (2).svg
+assets/images/flags/4x3/pr.svg
+assets/images/flags/4x3/ps (2).svg
+assets/images/flags/4x3/ps.svg
+assets/images/flags/4x3/pt (2).svg
+assets/images/flags/4x3/pt.svg
+assets/images/flags/4x3/pw (2).svg
+assets/images/flags/4x3/pw.svg
+assets/images/flags/4x3/py (2).svg
+assets/images/flags/4x3/py.svg
+assets/images/flags/4x3/qa (2).svg
+assets/images/flags/4x3/qa.svg
+assets/images/flags/4x3/re (2).svg
+assets/images/flags/4x3/re.svg
+assets/images/flags/4x3/ro (2).svg
+assets/images/flags/4x3/ro.svg
+assets/images/flags/4x3/rs (2).svg
+assets/images/flags/4x3/rs.svg
+assets/images/flags/4x3/ru (2).svg
+assets/images/flags/4x3/ru.svg
+assets/images/flags/4x3/rw (2).svg
+assets/images/flags/4x3/rw.svg
+assets/images/flags/4x3/sa (2).svg
+assets/images/flags/4x3/sa.svg
+assets/images/flags/4x3/sb (2).svg
+assets/images/flags/4x3/sb.svg
+assets/images/flags/4x3/sc (2).svg
+assets/images/flags/4x3/sc.svg
+assets/images/flags/4x3/sd (2).svg
+assets/images/flags/4x3/sd.svg
+assets/images/flags/4x3/se (2).svg
+assets/images/flags/4x3/se.svg
+assets/images/flags/4x3/sg (2).svg
+assets/images/flags/4x3/sg.svg
+assets/images/flags/4x3/sh (2).svg
+assets/images/flags/4x3/sh.svg
+assets/images/flags/4x3/si (2).svg
+assets/images/flags/4x3/si.svg
+assets/images/flags/4x3/sj (2).svg
+assets/images/flags/4x3/sj.svg
+assets/images/flags/4x3/sk (2).svg
+assets/images/flags/4x3/sk.svg
+assets/images/flags/4x3/sl (2).svg
+assets/images/flags/4x3/sl.svg
+assets/images/flags/4x3/sm (2).svg
+assets/images/flags/4x3/sm.svg
+assets/images/flags/4x3/sn (2).svg
+assets/images/flags/4x3/sn.svg
+assets/images/flags/4x3/so (2).svg
+assets/images/flags/4x3/so.svg
+assets/images/flags/4x3/sr (2).svg
+assets/images/flags/4x3/sr.svg
+assets/images/flags/4x3/ss (2).svg
+assets/images/flags/4x3/ss.svg
+assets/images/flags/4x3/st (2).svg
+assets/images/flags/4x3/st.svg
+assets/images/flags/4x3/sv (2).svg
+assets/images/flags/4x3/sv.svg
+assets/images/flags/4x3/sx (2).svg
+assets/images/flags/4x3/sx.svg
+assets/images/flags/4x3/sy (2).svg
+assets/images/flags/4x3/sy.svg
+assets/images/flags/4x3/sz (2).svg
+assets/images/flags/4x3/sz.svg
+assets/images/flags/4x3/tc (2).svg
+assets/images/flags/4x3/tc.svg
+assets/images/flags/4x3/td (2).svg
+assets/images/flags/4x3/td.svg
+assets/images/flags/4x3/tf (2).svg
+assets/images/flags/4x3/tf.svg
+assets/images/flags/4x3/tg (2).svg
+assets/images/flags/4x3/tg.svg
+assets/images/flags/4x3/th (2).svg
+assets/images/flags/4x3/th.svg
+assets/images/flags/4x3/tj (2).svg
+assets/images/flags/4x3/tj.svg
+assets/images/flags/4x3/tk (2).svg
+assets/images/flags/4x3/tk.svg
+assets/images/flags/4x3/tl (2).svg
+assets/images/flags/4x3/tl.svg
+assets/images/flags/4x3/tm (2).svg
+assets/images/flags/4x3/tm.svg
+assets/images/flags/4x3/tn (2).svg
+assets/images/flags/4x3/tn.svg
+assets/images/flags/4x3/to (2).svg
+assets/images/flags/4x3/to.svg
+assets/images/flags/4x3/tr (2).svg
+assets/images/flags/4x3/tr.svg
+assets/images/flags/4x3/tt (2).svg
+assets/images/flags/4x3/tt.svg
+assets/images/flags/4x3/tv (2).svg
+assets/images/flags/4x3/tv.svg
+assets/images/flags/4x3/tw (2).svg
+assets/images/flags/4x3/tw.svg
+assets/images/flags/4x3/tz (2).svg
+assets/images/flags/4x3/tz.svg
+assets/images/flags/4x3/ua (2).svg
+assets/images/flags/4x3/ua.svg
+assets/images/flags/4x3/ug (2).svg
+assets/images/flags/4x3/ug.svg
+assets/images/flags/4x3/um (2).svg
+assets/images/flags/4x3/um.svg
+assets/images/flags/4x3/un (2).svg
+assets/images/flags/4x3/un.svg
+assets/images/flags/4x3/us (2).svg
+assets/images/flags/4x3/us.svg
+assets/images/flags/4x3/uy (2).svg
+assets/images/flags/4x3/uy.svg
+assets/images/flags/4x3/uz (2).svg
+assets/images/flags/4x3/uz.svg
+assets/images/flags/4x3/va (2).svg
+assets/images/flags/4x3/va.svg
+assets/images/flags/4x3/vc (2).svg
+assets/images/flags/4x3/vc.svg
+assets/images/flags/4x3/ve (2).svg
+assets/images/flags/4x3/ve.svg
+assets/images/flags/4x3/vg (2).svg
+assets/images/flags/4x3/vg.svg
+assets/images/flags/4x3/vi (2).svg
+assets/images/flags/4x3/vi.svg
+assets/images/flags/4x3/vn (2).svg
+assets/images/flags/4x3/vn.svg
+assets/images/flags/4x3/vu (2).svg
+assets/images/flags/4x3/vu.svg
+assets/images/flags/4x3/wf (2).svg
+assets/images/flags/4x3/wf.svg
+assets/images/flags/4x3/ws (2).svg
+assets/images/flags/4x3/ws.svg
+assets/images/flags/4x3/xk (2).svg
+assets/images/flags/4x3/xk.svg
+assets/images/flags/4x3/ye (2).svg
+assets/images/flags/4x3/ye.svg
+assets/images/flags/4x3/yt (2).svg
+assets/images/flags/4x3/yt.svg
+assets/images/flags/4x3/za (2).svg
+assets/images/flags/4x3/za.svg
+assets/images/flags/4x3/zm (2).svg
+assets/images/flags/4x3/zm.svg
+assets/images/flags/4x3/zw (2).svg
+assets/images/flags/4x3/zw.svg
+assets/images/icons/bacteria (2).svg
+assets/images/icons/bacteria.svg
+assets/images/icons/blood (2).svg
+assets/images/icons/blood.svg
+assets/images/icons/bone (2).svg
+assets/images/icons/bone.svg
+assets/images/icons/emergency (2).svg
+assets/images/icons/emergency.svg
+assets/images/icons/infusion (2).svg
+assets/images/icons/infusion.svg
+assets/images/icons/kidney (2).svg
+assets/images/icons/kidney.svg
+assets/images/icons/liver (2).svg
+assets/images/icons/liver.svg
+assets/images/icons/lungs (2).svg
+assets/images/icons/lungs.svg
+assets/images/icons/medicine (2).svg
+assets/images/icons/medicine.svg
+assets/images/icons/microscope (2).svg
+assets/images/icons/microscope.svg
+assets/images/icons/pharmacy (2).svg
+assets/images/icons/pharmacy.svg
+assets/images/icons/stomach (2).svg
+assets/images/icons/stomach.svg
+assets/images/icons/wheel-chair (2).svg
+assets/images/icons/wheel-chair.svg
+assets/images/login-bg copy.svg
+assets/images/login-bg.jpg
+assets/images/logo-alt.svg
+assets/images/logo-light.svg
+assets/images/logo-sm.svg
+assets/images/logo.jpg
+assets/images/logo.svg
+assets/images/logos.svg
+assets/images/lungs.png
+assets/images/patient.png
+assets/images/patient1.png
+assets/images/patient2.png
+assets/images/patient3.png
+assets/images/patient4.png
+assets/images/patient5.png
+assets/images/patient6.png
+assets/images/patient7.png
+assets/images/patient8.png
+assets/images/placeholder.svg
+assets/images/products/1 (2).jpg
+assets/images/products/1.jpg
+assets/images/products/10 (2).jpg
+assets/images/products/10.jpg
+assets/images/products/11 (2).jpg
+assets/images/products/11.jpg
+assets/images/products/12 (2).jpg
+assets/images/products/12.jpg
+assets/images/products/2 (2).jpg
+assets/images/products/2.jpg
+assets/images/products/3 (2).jpg
+assets/images/products/3.jpg
+assets/images/products/4 (2).jpg
+assets/images/products/4.jpg
+assets/images/products/5 (2).jpg
+assets/images/products/5.jpg
+assets/images/products/6 (2).jpg
+assets/images/products/6.jpg
+assets/images/products/7 (2).jpg
+assets/images/products/7.jpg
+assets/images/products/8 (2).jpg
+assets/images/products/8.jpg
+assets/images/products/9 (2).jpg
+assets/images/products/9.jpg
+assets/images/report.svg
+assets/images/reports.svg
+assets/images/reset-password-bg.svg
+assets/images/shine.png
+assets/images/sidebar-pattern.svg
+assets/images/star-selected.svg
+assets/images/star.svg
+assets/js/modernizr.js
+assets/js/table-random-colors.js
+assets/js/validations.js
+assets/vendor/apex/apexcharts.min (2).js
+assets/vendor/apex/apexcharts.min.js
+assets/vendor/apex/custom/dashboard2/orders.js
+assets/vendor/apex/custom/dashboard2/patients (2).js
+assets/vendor/apex/custom/dashboard2/patients.js
+assets/vendor/apex/custom/dashboard2/patients2 (2).js
+assets/vendor/apex/custom/dashboard2/patients2.js
+assets/vendor/apex/custom/dashboard2/pharmacy.js
+assets/vendor/apex/custom/dashboard2/revenue (2).js
+assets/vendor/apex/custom/dashboard2/revenue.js
+assets/vendor/apex/custom/dentist/appointments (2).js
+assets/vendor/apex/custom/dentist/appointments.js
+assets/vendor/apex/custom/dentist/claims (2).js
+assets/vendor/apex/custom/dentist/claims.js
+assets/vendor/apex/custom/dentist/earnings (2).js
+assets/vendor/apex/custom/dentist/earnings.js
+assets/vendor/apex/custom/dentist/gender (2).js
+assets/vendor/apex/custom/dentist/gender.js
+assets/vendor/apex/custom/dentist/income (2).js
+assets/vendor/apex/custom/dentist/income.js
+assets/vendor/apex/custom/dentist/patients (2).js
+assets/vendor/apex/custom/dentist/patients.js
+assets/vendor/apex/custom/dentist/surgeries (2).js
+assets/vendor/apex/custom/dentist/surgeries.js
+assets/vendor/apex/custom/department/department-list (2).js
+assets/vendor/apex/custom/department/department-list.js
+assets/vendor/apex/custom/department/employees (2).js
+assets/vendor/apex/custom/department/employees.js
+assets/vendor/apex/custom/doc-dashboard/appointments (2).js
+assets/vendor/apex/custom/doc-dashboard/appointments.js
+assets/vendor/apex/custom/doc-dashboard/gender (2).js
+assets/vendor/apex/custom/doc-dashboard/gender.js
+assets/vendor/apex/custom/doc-dashboard/income (2).js
+assets/vendor/apex/custom/doc-dashboard/income.js
+assets/vendor/apex/custom/doc-dashboard/patients (2).js
+assets/vendor/apex/custom/doc-dashboard/patients.js
+assets/vendor/apex/custom/doc-dashboard/surgeries (2).js
+assets/vendor/apex/custom/doc-dashboard/surgeries.js
+assets/vendor/apex/custom/expenses/expenses (2).js
+assets/vendor/apex/custom/expenses/expenses.js
+assets/vendor/apex/custom/graphs/area (2).js
+assets/vendor/apex/custom/graphs/area.js
+assets/vendor/apex/custom/graphs/bar (2).js
+assets/vendor/apex/custom/graphs/bar.js
+assets/vendor/apex/custom/graphs/candlestick (2).js
+assets/vendor/apex/custom/graphs/candlestick.js
+assets/vendor/apex/custom/graphs/column-area (2).js
+assets/vendor/apex/custom/graphs/column-area.js
+assets/vendor/apex/custom/graphs/donut (2).js
+assets/vendor/apex/custom/graphs/donut.js
+assets/vendor/apex/custom/graphs/funnel (2).js
+assets/vendor/apex/custom/graphs/funnel.js
+assets/vendor/apex/custom/graphs/gauge (2).js
+assets/vendor/apex/custom/graphs/gauge.js
+assets/vendor/apex/custom/graphs/heatmap (2).js
+assets/vendor/apex/custom/graphs/heatmap.js
+assets/vendor/apex/custom/graphs/line (2).js
+assets/vendor/apex/custom/graphs/line.js
+assets/vendor/apex/custom/graphs/pie (2).js
+assets/vendor/apex/custom/graphs/pie.js
+assets/vendor/apex/custom/graphs/pyramid (2).js
+assets/vendor/apex/custom/graphs/pyramid.js
+assets/vendor/apex/custom/graphs/radial-bar (2).js
+assets/vendor/apex/custom/graphs/radial-bar.js
+assets/vendor/apex/custom/home/appointments-overview.js
+assets/vendor/apex/custom/home/department-income (2).js
+assets/vendor/apex/custom/home/department-income.js
+assets/vendor/apex/custom/home/income.js
+assets/vendor/apex/custom/home/patients (2).js
+assets/vendor/apex/custom/home/patients-age.js
+assets/vendor/apex/custom/home/patients.js
+assets/vendor/apex/custom/home/sparklines (2).js
+assets/vendor/apex/custom/home/sparklines.js
+assets/vendor/apex/custom/income/income (2).js
+assets/vendor/apex/custom/income/income.js
+assets/vendor/apex/custom/patients/healthActivity (2).js
+assets/vendor/apex/custom/patients/healthActivity.js
+assets/vendor/apex/custom/patients/insuranceClaims (2).js
+assets/vendor/apex/custom/patients/insuranceClaims.js
+assets/vendor/apex/custom/patients/medicalExpenses (2).js
+assets/vendor/apex/custom/patients/medicalExpenses.js
+assets/vendor/apex/custom/patients/sparklines (2).js
+assets/vendor/apex/custom/patients/sparklines.js
+assets/vendor/apex/custom/payments/payments (2).js
+assets/vendor/apex/custom/payments/payments.js
+assets/vendor/apex/custom/rooms/admissions (2).js
+assets/vendor/apex/custom/rooms/admissions.js
+assets/vendor/calendar/css/custom (2).css
+assets/vendor/calendar/css/main.min (2).css
+assets/vendor/calendar/custom/appointments-calendar (2).js
+assets/vendor/calendar/custom/background-events (2).js
+assets/vendor/calendar/custom/background-events.js
+assets/vendor/calendar/custom/custom-schedule-calendar (2).js
+assets/vendor/calendar/custom/custom-schedule-calendar.js
+assets/vendor/calendar/custom/daygrid-calendar (2).js
+assets/vendor/calendar/custom/daygrid-calendar.js
+assets/vendor/calendar/custom/draggable-calendar (2).js
+assets/vendor/calendar/custom/draggable-calendar.js
+assets/vendor/calendar/custom/google-view-calendar (2).js
+assets/vendor/calendar/custom/google-view-calendar.js
+assets/vendor/calendar/custom/list-view-calendar (2).js
+assets/vendor/calendar/custom/list-view-calendar.js
+assets/vendor/calendar/custom/selectable-calendar (2).js
+assets/vendor/calendar/custom/selectable-calendar.js
+assets/vendor/calendar/js/main.min (2).js
+assets/vendor/datatables/buttons/buttons.colVis.min (2).js
+assets/vendor/datatables/buttons/buttons.colVis.min.js
+assets/vendor/datatables/buttons/buttons.html5.min (2).js
+assets/vendor/datatables/buttons/buttons.html5.min.js
+assets/vendor/datatables/buttons/buttons.print.min (2).js
+assets/vendor/datatables/buttons/buttons.print.min.js
+assets/vendor/datatables/buttons/dataTables.bs5-custom (2).css
+assets/vendor/datatables/buttons/dataTables.bs5-custom.css
+assets/vendor/datatables/buttons/dataTables.buttons.min (2).js
+assets/vendor/datatables/buttons/dataTables.buttons.min.js
+assets/vendor/datatables/buttons/jszip.min (2).js
+assets/vendor/datatables/buttons/jszip.min.js
+assets/vendor/datatables/buttons/pdfmake.min (2).js
+assets/vendor/datatables/buttons/pdfmake.min.js
+assets/vendor/datatables/buttons/vfs_fonts (2).js
+assets/vendor/datatables/buttons/vfs_fonts.js
+assets/vendor/datatables/custom/custom-datatables (2).js
+assets/vendor/datatables/custom/custom-datatables.js
+assets/vendor/datatables/dataTables.bootstrap.min (2).js
+assets/vendor/datatables/dataTables.bootstrap.min.js
+assets/vendor/datatables/dataTables.bs5 (2).css
+assets/vendor/datatables/dataTables.bs5-custom (2).css
+assets/vendor/datatables/dataTables.bs5-custom.css
+assets/vendor/datatables/dataTables.bs5.css
+assets/vendor/datatables/dataTables.min (2).js
+assets/vendor/datatables/dataTables.min.js
+assets/vendor/daterange/custom-daterange (2).js
+assets/vendor/daterange/daterange (2).css
+assets/vendor/daterange/daterange (2).js
+assets/vendor/dropzone/dropzone-custom (2).js
+assets/vendor/dropzone/dropzone-custom.js
+assets/vendor/dropzone/dropzone.min (2).css
+assets/vendor/dropzone/dropzone.min (2).js
+assets/vendor/dropzone/dropzone.min.css
+assets/vendor/dropzone/dropzone.min.js
+assets/vendor/gallery/baguetteBox (2).js
+assets/vendor/gallery/custom-gallery (2).js
+assets/vendor/gallery/gallery (2).css
+assets/vendor/gallery/plugins (2).js
+assets/vendor/input-masks/cleave-custom (2).js
+assets/vendor/input-masks/cleave-custom.js
+assets/vendor/input-masks/cleave-phone (2).js
+assets/vendor/input-masks/cleave-phone.js
+assets/vendor/input-masks/cleave.min (2).js
+assets/vendor/input-masks/cleave.min.js
+assets/vendor/input-tags/tagsinput (2).css
+assets/vendor/input-tags/tagsinput-custom (2).js
+assets/vendor/input-tags/tagsinput-custom.js
+assets/vendor/input-tags/tagsinput.css
+assets/vendor/input-tags/tagsinput.min (2).js
+assets/vendor/input-tags/tagsinput.min.js
+assets/vendor/input-tags/typeahead (2).js
+assets/vendor/input-tags/typeahead.js
+assets/vendor/jquery-ui/custom.js
+assets/vendor/jquery-ui/jquery-ui.min.css
+assets/vendor/jquery-ui/jquery-ui.min.js
+assets/vendor/jvectormap/africa-mill (2).js
+assets/vendor/jvectormap/africa-mill.js
+assets/vendor/jvectormap/au-mill (2).js
+assets/vendor/jvectormap/au-mill.js
+assets/vendor/jvectormap/continents-merc (2).js
+assets/vendor/jvectormap/continents-merc.js
+assets/vendor/jvectormap/continents-mill (2).js
+assets/vendor/jvectormap/continents-mill.js
+assets/vendor/jvectormap/custom-map (2).js
+assets/vendor/jvectormap/custom-map.js
+assets/vendor/jvectormap/custom/custom-denmark (2).js
+assets/vendor/jvectormap/custom/custom-denmark.js
+assets/vendor/jvectormap/custom/map-africa (2).js
+assets/vendor/jvectormap/custom/map-africa.js
+assets/vendor/jvectormap/custom/map-europe (2).js
+assets/vendor/jvectormap/custom/map-europe.js
+assets/vendor/jvectormap/custom/map-usa (2).js
+assets/vendor/jvectormap/custom/map-usa.js
+assets/vendor/jvectormap/custom/map-usa2 (2).js
+assets/vendor/jvectormap/custom/map-usa2.js
+assets/vendor/jvectormap/custom/map-usa4 (2).js
+assets/vendor/jvectormap/custom/map-usa4.js
+assets/vendor/jvectormap/custom/regions-selection (2).js
+assets/vendor/jvectormap/custom/regions-selection.js
+assets/vendor/jvectormap/custom/resions-with-labels (2).js
+assets/vendor/jvectormap/custom/resions-with-labels.js
+assets/vendor/jvectormap/custom/world-map-gdp (2).js
+assets/vendor/jvectormap/custom/world-map-gdp.js
+assets/vendor/jvectormap/custom/world-map-markers (2).js
+assets/vendor/jvectormap/custom/world-map-markers.js
+assets/vendor/jvectormap/custom/world-map-markers2 (2).js
+assets/vendor/jvectormap/custom/world-map-markers2.js
+assets/vendor/jvectormap/custom/world-map-markers3 (2).js
+assets/vendor/jvectormap/custom/world-map-markers3.js
+assets/vendor/jvectormap/de-merc (2).js
+assets/vendor/jvectormap/de-merc.js
+assets/vendor/jvectormap/dk-mill (2).js
+assets/vendor/jvectormap/dk-mill.js
+assets/vendor/jvectormap/europe-mill (2).js
+assets/vendor/jvectormap/europe-mill.js
+assets/vendor/jvectormap/gdp-data (2).js
+assets/vendor/jvectormap/gdp-data.js
+assets/vendor/jvectormap/jquery-jvectormap-2.0.5.min (2).js
+assets/vendor/jvectormap/jquery-jvectormap-2.0.5.min.js
+assets/vendor/jvectormap/us_aea (2).js
+assets/vendor/jvectormap/us_aea.js
+assets/vendor/jvectormap/usa (2).js
+assets/vendor/jvectormap/usa.js
+assets/vendor/jvectormap/world-mill-en (2).js
+assets/vendor/jvectormap/world-mill-en.js
+assets/vendor/morris/custom/area (2).js
+assets/vendor/morris/custom/area.js
+assets/vendor/morris/custom/barColors (2).js
+assets/vendor/morris/custom/barColors.js
+assets/vendor/morris/custom/dayData (2).js
+assets/vendor/morris/custom/dayData.js
+assets/vendor/morris/custom/donutColors (2).js
+assets/vendor/morris/custom/donutColors.js
+assets/vendor/morris/custom/donutFormatter (2).js
+assets/vendor/morris/custom/donutFormatter.js
+assets/vendor/morris/custom/morrisBar (2).js
+assets/vendor/morris/custom/morrisBar.js
+assets/vendor/morris/custom/negativeValues (2).js
+assets/vendor/morris/custom/negativeValues.js
+assets/vendor/morris/custom/stackedBar (2).js
+assets/vendor/morris/custom/stackedBar.js
+assets/vendor/morris/morris (2).css
+assets/vendor/morris/morris.css
+assets/vendor/morris/morris.min (2).js
+assets/vendor/morris/morris.min.js
+assets/vendor/morris/raphael-min (2).js
+assets/vendor/morris/raphael-min.js
+assets/vendor/overlay-scroll/OverlayScrollbars.min (2).css
+assets/vendor/overlay-scroll/custom-scrollbar (2).js
+assets/vendor/overlay-scroll/jquery.overlayScrollbars.min (2).js
+assets/vendor/quill/custom (2).js
+assets/vendor/quill/custom.js
+assets/vendor/quill/quill.core (2).css
+assets/vendor/quill/quill.core.css
+assets/vendor/quill/quill.min (2).js
+assets/vendor/quill/quill.min.js
+assets/vendor/rating/raty (2).js
+assets/vendor/rating/raty-custom (2).js
+assets/vendor/rating/raty-custom.js
+assets/vendor/rating/raty.js
+public/css/ajax-loader.gif
+public/css/bootstrap.min.css
+public/css/bootstrap/bootstrap-grid.css
+public/css/bootstrap/bootstrap-reboot.css
+public/css/css/bootstrap-reboot.css
+public/css/css/mixins/_text-hide.css
+public/css/login.css
+public/fonts/flaticon/backup.txt
+public/fonts/flaticon/font/_flaticon.scss
+public/fonts/flaticon/font/flaticon.css
+public/fonts/flaticon/font/flaticon.html
+public/fonts/ionicons/css/_ionicons.scss
+public/fonts/ionicons/css/ionicons.min.css
+public/images/about-2.jpg
+public/images/about.jpg
+public/images/loc.png
+public/images/person_1.jpg
+public/images/person_2.jpg
+public/images/person_3.jpg
+public/images/person_4.jpg
+public/images/person_6.jpg
+public/images/person_7.jpg
+public/images/person_8.jpg
+public/js/inventario.js
+public/js/jquery-3.2.1.min.js
+public/js/scripts.js
+public/js/sidebar.js
+public/js/toggle-menu.js
+public/scss/bootstrap/_alert.scss
+public/scss/bootstrap/_badge.scss
+public/scss/bootstrap/_breadcrumb.scss
+public/scss/bootstrap/_button-group.scss
+public/scss/bootstrap/_buttons.scss
+public/scss/bootstrap/_card.scss
+public/scss/bootstrap/_carousel.scss
+public/scss/bootstrap/_close.scss
+public/scss/bootstrap/_code.scss
+public/scss/bootstrap/_custom-forms.scss
+public/scss/bootstrap/_dropdown.scss
+public/scss/bootstrap/_forms.scss
+public/scss/bootstrap/_functions.scss
+public/scss/bootstrap/_grid.scss
+public/scss/bootstrap/_images.scss
+public/scss/bootstrap/_input-group.scss
+public/scss/bootstrap/_jumbotron.scss
+public/scss/bootstrap/_list-group.scss
+public/scss/bootstrap/_media.scss
+public/scss/bootstrap/_mixins.scss
+public/scss/bootstrap/_modal.scss
+public/scss/bootstrap/_nav.scss
+public/scss/bootstrap/_navbar.scss
+public/scss/bootstrap/_pagination.scss
+public/scss/bootstrap/_popover.scss
+public/scss/bootstrap/_print.scss
+public/scss/bootstrap/_progress.scss
+public/scss/bootstrap/_reboot.scss
+public/scss/bootstrap/_root.scss
+public/scss/bootstrap/_tables.scss
+public/scss/bootstrap/_tooltip.scss
+public/scss/bootstrap/_transitions.scss
+public/scss/bootstrap/_type.scss
+public/scss/bootstrap/_utilities.scss
+public/scss/bootstrap/_variables.scss
+public/scss/bootstrap/bootstrap-grid.scss
+public/scss/bootstrap/bootstrap-reboot.scss
+public/scss/bootstrap/bootstrap.scss
+public/scss/bootstrap/mixins/_alert.scss
+public/scss/bootstrap/mixins/_background-variant.scss
+public/scss/bootstrap/mixins/_badge.scss
+public/scss/bootstrap/mixins/_border-radius.scss
+public/scss/bootstrap/mixins/_box-shadow.scss
+public/scss/bootstrap/mixins/_breakpoints.scss
+public/scss/bootstrap/mixins/_buttons.scss
+public/scss/bootstrap/mixins/_caret.scss
+public/scss/bootstrap/mixins/_clearfix.scss
+public/scss/bootstrap/mixins/_float.scss
+public/scss/bootstrap/mixins/_forms.scss
+public/scss/bootstrap/mixins/_gradients.scss
+public/scss/bootstrap/mixins/_grid-framework.scss
+public/scss/bootstrap/mixins/_grid.scss
+public/scss/bootstrap/mixins/_hover.scss
+public/scss/bootstrap/mixins/_image.scss
+public/scss/bootstrap/mixins/_list-group.scss
+public/scss/bootstrap/mixins/_lists.scss
+public/scss/bootstrap/mixins/_nav-divider.scss
+public/scss/bootstrap/mixins/_pagination.scss
+public/scss/bootstrap/mixins/_reset-text.scss
+public/scss/bootstrap/mixins/_resize.scss
+public/scss/bootstrap/mixins/_screen-reader.scss
+public/scss/bootstrap/mixins/_size.scss
+public/scss/bootstrap/mixins/_table-row.scss
+public/scss/bootstrap/mixins/_text-emphasis.scss
+public/scss/bootstrap/mixins/_text-hide.scss
+public/scss/bootstrap/mixins/_text-truncate.scss
+public/scss/bootstrap/mixins/_transition.scss
+public/scss/bootstrap/mixins/_visibility.scss
+public/scss/bootstrap/utilities/_align.scss
+public/scss/bootstrap/utilities/_background.scss
+public/scss/bootstrap/utilities/_borders.scss
+public/scss/bootstrap/utilities/_clearfix.scss
+public/scss/bootstrap/utilities/_display.scss
+public/scss/bootstrap/utilities/_embed.scss
+public/scss/bootstrap/utilities/_flex.scss
+public/scss/bootstrap/utilities/_float.scss
+public/scss/bootstrap/utilities/_position.scss
+public/scss/bootstrap/utilities/_screenreaders.scss
+public/scss/bootstrap/utilities/_shadows.scss
+public/scss/bootstrap/utilities/_sizing.scss
+public/scss/bootstrap/utilities/_spacing.scss
+public/scss/bootstrap/utilities/_text.scss
+public/scss/bootstrap/utilities/_visibility.scss
+public/scss/style.scss
+

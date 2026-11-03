@@ -1,0 +1,301 @@
+<%
+  const headerProfile = typeof adminProfile !== 'undefined' ? adminProfile : {};
+  const headerName = headerProfile.displayName || 'Nombre pendiente';
+  const headerInitials = headerProfile.initials || headerName.split(/\s+/).slice(0, 2).map(part => part.charAt(0).toUpperCase()).join('') || 'DR';
+  const headerPhoto = headerProfile.photoUrl || '';
+  const headerRole = headerProfile.roleLabel || 'Usuario';
+  const canFn = typeof can === 'function' ? can : () => true;
+  const list = Array.isArray(pacientes) ? pacientes : [];
+  const patientStats = stats || { activos: list.length, inactivos: 0, total: list.length };
+  const formatDate = value => {
+    if (!value) return 'Sin registro';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? 'Sin registro' : date.toLocaleDateString('es-GT');
+  };
+  const patientInitials = item => `${item.nombre || ''} ${item.apellido || ''}`.trim().split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0].toUpperCase()).join('') || 'P';
+  const calculateAgeFromBirthdate = value => {
+    if (!value) return null;
+    const birthDate = new Date(value);
+    if (Number.isNaN(birthDate.getTime())) return null;
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) age -= 1;
+    return age >= 0 ? age : null;
+  };
+  const displayValue = value => value === null || typeof value === 'undefined' || value === '' ? 'N/D' : value;
+  const patientAge = item => displayValue(item.edad ?? calculateAgeFromBirthdate(item.fechaNacimiento));
+%>
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <base href="/" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pacientes - C&C Dental Studio</title>
+    <link rel="shortcut icon" type="image/svg+xml" href="/images/cnc-favicon.svg">
+    <link rel="stylesheet" href="assets/fonts/remix/remixicon.css">
+    <link rel="stylesheet" href="assets/css/main.min.css">
+    <link rel="stylesheet" href="assets/vendor/overlay-scroll/OverlayScrollbars.min.css">
+    <link rel="stylesheet" href="assets/vendor/daterange/daterange.css">
+    <style>
+      .profile-initials-badge,
+      .patient-avatar {
+        align-items: center;
+        background: #f4f1ff;
+        color: #705df3;
+        display: inline-flex;
+        font-weight: 800;
+        justify-content: center;
+      }
+      .patient-avatar {
+        border-radius: 14px;
+        flex: 0 0 64px;
+        height: 64px;
+        width: 64px;
+      }
+      .patient-counter {
+        background: #f4f1ff;
+        border-radius: 12px;
+        color: #705df3;
+        font-size: .82rem;
+        padding: .55rem .75rem;
+      }
+      .patient-card {
+        border-color: #dde2ee;
+        transition: border-color .2s ease, box-shadow .2s ease;
+      }
+      .patient-card-link {
+        color: inherit;
+        display: block;
+        text-decoration: none;
+      }
+      .patient-card-link:hover .patient-card-title { color: #705df3; }
+      .patient-card:hover {
+        border-color: rgba(112, 93, 243, .55);
+        box-shadow: 0 12px 28px rgba(58, 50, 140, .08);
+      }
+      .patient-card-facts {
+        color: #667085;
+        font-size: .78rem;
+        line-height: 1.2;
+      }
+      .patient-card-facts li + li {
+        border-left: 1px solid #dde2ee;
+        margin-left: .65rem;
+        padding-left: .65rem;
+      }
+      .patient-card-actions {
+        border-top: 1px solid #edf0f5;
+        padding-top: .8rem;
+      }
+      .patient-card-summary p {
+        max-width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page-wrapper">
+      <div class="main-container">
+        <nav id="sidebar" class="sidebar-wrapper">
+          <div class="brand-container d-flex align-items-center justify-content-between">
+            <div class="app-brand ms-3">
+              <a href="/admin/dash"><img src="/images/cnc-logo-alt.svg" class="logo" alt="C&C Dental Studio"></a>
+            </div>
+            <button type="button" class="pin-sidebar me-3"><i class="ri-menu-line"></i></button>
+          </div>
+          <div class="sidebar-profile">
+            <% if (headerPhoto) { %>
+              <img src="<%= headerPhoto %>" class="rounded-5 border border-primary border-3" alt="Foto de perfil">
+            <% } else { %>
+              <span class="profile-initials-badge rounded-5 border border-primary border-3 img-4x"><%= headerInitials %></span>
+            <% } %>
+            <h6 class="mb-1 profile-name text-nowrap text-truncate text-primary"><%= headerName %></h6>
+            <small class="profile-name text-nowrap text-truncate"><%= headerRole %></small>
+          </div>
+          <div class="sidebarMenuScroll">
+            <%- include('partials/adminSidebar', { activePage: 'pacientes', canFn }) %>
+          </div>
+        </nav>
+
+        <div class="app-container">
+          <div class="app-header d-flex align-items-center">
+            <div class="d-flex">
+              <div class="search-container d-xl-block d-none">
+                <input type="text" class="form-control" id="searchId" placeholder="Buscar">
+                <i class="ri-search-line"></i>
+              </div>
+            </div>
+            <div class="header-actions ms-auto d-flex align-items-center gap-2">
+              <button type="button" class="btn btn-icon btn-light rounded-5"><i class="ri-star-line"></i></button>
+              <button type="button" class="btn btn-icon btn-light rounded-5"><i class="ri-notification-3-line"></i></button>
+              <div class="dropdown ms-2">
+                <a id="userSettings" class="dropdown-toggle d-flex align-items-center" href="#!" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <div class="avatar-box">
+                    <% if (headerPhoto) { %>
+                      <img src="<%= headerPhoto %>" class="img-2xx rounded-5 border border-3 border-white" alt="Foto de perfil">
+                    <% } else { %>
+                      <span class="profile-initials-badge img-2xx rounded-5 border border-3 border-white"><%= headerInitials %></span>
+                    <% } %>
+                    <span class="status busy"></span>
+                  </div>
+                </a>
+                <div class="dropdown-menu dropdown-menu-end shadow-lg">
+                  <div class="px-3 py-2"><span class="small"><%= headerRole %></span><h6 class="m-0"><%= headerName %></h6></div>
+                  <div class="dropdown-divider"></div>
+                  <a href="/admin/perfil" class="dropdown-item"><i class="ri-user-line me-2"></i> Perfil</a>
+                  <a href="/admin/settings" class="dropdown-item"><i class="ri-settings-3-line me-2"></i> Configuración</a>
+                  <div class="dropdown-divider"></div>
+                  <div class="mx-3 my-2 d-grid"><a href="/logout" class="btn btn-danger">Cerrar sesión</a></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="app-hero-header d-flex align-items-center">
+            <ol class="breadcrumb">
+              <li class="breadcrumb-item"><a href="/admin/dash"><i class="ri-home-3-line"></i></a></li>
+              <li class="breadcrumb-item text-primary" aria-current="page">Pacientes</li>
+            </ol>
+            <div class="ms-auto">
+              <input type="text" id="abc" class="form-control custom-daterange">
+            </div>
+          </div>
+
+          <div class="app-body">
+            <div class="card">
+              <div class="card-header">
+                <div class="d-flex flex-wrap align-items-center gap-3">
+                  <h5 class="card-title m-0">Lista de pacientes</h5>
+                  <div class="ms-auto d-flex flex-wrap align-items-center gap-2">
+                    <span class="patient-counter"><strong><%= patientStats.activos %></strong> activos</span>
+                    <span class="patient-counter"><strong><%= patientStats.inactivos %></strong> inactivos</span>
+                    <span class="patient-counter"><strong><%= patientStats.total %></strong> total</span>
+                    <div class="search-container d-xl-block">
+                      <input type="text" class="form-control border" id="searchPatient" placeholder="Buscar">
+                      <i class="ri-search-line"></i>
+                    </div>
+                    <a href="/admin/archivados" class="btn btn-outline-secondary">Archivados</a>
+                    <a href="/admin/add-patient" class="btn btn-primary">Agregar paciente</a>
+                  </div>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="row gx-4" id="patientList">
+                  <% if (!list.length) { %>
+                    <div class="col-12"><div class="text-center text-muted py-4">Todavía no hay pacientes activos registrados.</div></div>
+                  <% } %>
+                  <% list.forEach(item => { %>
+                    <div class="col-xxl-4 col-md-6 col-12 mb-4 patient-item" data-patient-search="<%= `${item.nombre || ''} ${item.apellido || ''} ${item.telefono || ''} ${item.email || ''} ${item.genero_nombre || ''} ${item.tipoSangre || ''} ${item.tipo_paciente || ''} ${item.dpi || ''}`.toLowerCase() %>">
+                      <div class="card patient-card">
+                        <div class="card-body">
+                          <a href="/admin/pacientes/ver/<%= item.idPaciente %>" class="patient-card-link">
+                            <div class="d-flex flex-wrap gap-3 border-bottom pb-2 mb-2">
+                              <span class="patient-avatar"><%= patientInitials(item) %></span>
+                              <div class="flex-grow-1 min-w-0">
+                                <div class="d-flex justify-content-between align-items-start gap-2 mb-1">
+                                  <span class="text-primary">#PT<%= String(item.idPaciente).padStart(4, '0') %></span>
+                                  <span class="badge bg-success-subtle text-success"><%= item.estado_nombre || 'Activo' %></span>
+                                </div>
+                                <div class="fw-semibold mb-1 patient-card-title text-truncate"><%= item.nombre %> <%= item.apellido %></div>
+                                <ul class="list-unstyled d-flex flex-wrap m-0 patient-card-facts">
+                                  <li>Edad: <%= patientAge(item) %></li>
+                                  <li><%= displayValue(item.genero_nombre) %></li>
+                                  <li><%= displayValue(item.tipoSangre) %></li>
+                                </ul>
+                              </div>
+                            </div>
+                            <div class="patient-card-summary">
+                              <h6 class="text-primary mb-1">Tipo de paciente</h6>
+                              <p class="text-truncate mb-2"><%= item.tipo_paciente || 'Tipo pendiente' %></p>
+                              <p class="text-truncate mb-1">
+                                <span class="text-primary">Última cita:</span> <%= formatDate(item.ultima_cita) %>
+                              </p>
+                              <p class="text-truncate m-0">
+                                <span class="text-primary">Contacto:</span> <%= item.telefono || item.email || 'Sin contacto' %>
+                              </p>
+                            </div>
+                          </a>
+                          <% if (canFn('pacientes:editar') || canFn('pacientes:archivar')) { %>
+                            <div class="d-flex justify-content-end gap-2 mt-3 patient-card-actions">
+                              <% if (canFn('pacientes:editar')) { %>
+                                <a href="/admin/edit-patient/<%= item.idPaciente %>" class="btn btn-sm btn-outline-primary">Editar</a>
+                              <% } %>
+                              <% if (canFn('pacientes:archivar')) { %>
+                                <button type="button" class="btn btn-sm btn-outline-danger" data-archive-patient="<%= item.idPaciente %>">Archivar</button>
+                              <% } %>
+                            </div>
+                          <% } %>
+                        </div>
+                      </div>
+                    </div>
+                  <% }) %>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="app-footer"><span>© C&C Dental Studio 2026</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="archivePatientModal" tabindex="-1" aria-labelledby="archivePatientModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="archivePatientModalLabel">Archivar paciente</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body">¿Deseas archivar este paciente? Podrás verlo nuevamente desde pacientes archivados.</div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-danger" id="confirmArchivePatient">Archivar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/moment.min.js"></script>
+    <script src="assets/vendor/overlay-scroll/jquery.overlayScrollbars.min.js"></script>
+    <script src="assets/vendor/overlay-scroll/custom-scrollbar.js"></script>
+    <script src="assets/vendor/daterange/daterange.js"></script>
+    <script src="assets/vendor/daterange/custom-daterange.js"></script>
+    <script src="assets/js/custom.js"></script>
+    <script>
+      document.getElementById('searchPatient')?.addEventListener('input', event => {
+        const term = event.target.value.trim().toLowerCase();
+        document.querySelectorAll('.patient-item').forEach(item => {
+          item.classList.toggle('d-none', term && !item.dataset.patientSearch.includes(term));
+        });
+      });
+
+      let pendingArchiveButton = null;
+      const archiveModalElement = document.getElementById('archivePatientModal');
+      const archiveModal = archiveModalElement ? new bootstrap.Modal(archiveModalElement) : null;
+      document.querySelectorAll('[data-archive-patient]').forEach(button => {
+        button.addEventListener('click', () => {
+          pendingArchiveButton = button;
+          archiveModal?.show();
+        });
+      });
+      document.getElementById('confirmArchivePatient')?.addEventListener('click', async () => {
+        const button = pendingArchiveButton;
+        if (!button) return;
+        button.disabled = true;
+        try {
+          const response = await fetch(`/api/admin/pacientes/${button.dataset.archivePatient}/archivar`, { method: 'PUT' });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok || data.success === false) throw new Error(data.message || 'No se pudo archivar.');
+          button.closest('.patient-item')?.remove();
+          archiveModal?.hide();
+        } catch (error) {
+          alert(error.message);
+          button.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>

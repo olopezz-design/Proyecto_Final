@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <title>Portafolio | C&C Dental Studio</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,500,600,700" rel="stylesheet">
+    <link rel="shortcut icon" type="image/svg+xml" href="/images/cnc-favicon.svg">
+
+    <link rel="stylesheet" href="/css/open-iconic-bootstrap.min.css">
+    <link rel="stylesheet" href="/css/animate.css">
+    <link rel="stylesheet" href="/css/owl.carousel.min.css">
+    <link rel="stylesheet" href="/css/owl.theme.default.min.css">
+    <link rel="stylesheet" href="/css/magnific-popup.css">
+    <link rel="stylesheet" href="/css/aos.css">
+    <link rel="stylesheet" href="/css/ionicons.min.css">
+    <link rel="stylesheet" href="/css/bootstrap-datepicker.css">
+    <link rel="stylesheet" href="/css/jquery.timepicker.css">
+    <link rel="stylesheet" href="/css/flaticon.css">
+    <link rel="stylesheet" href="/css/icomoon.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/cnc-public.css">
+  </head>
+  <body class="cnc-page">
+    <nav class="navbar navbar-expand-lg navbar-dark ftco_navbar bg-dark ftco-navbar-light" id="ftco-navbar">
+      <div class="container">
+        <a class="navbar-brand cnc-brand" href="/">C&C<span>Dental Studio</span></a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#ftco-nav" aria-controls="ftco-nav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="oi oi-menu"></span> Menú
+        </button>
+
+        <div class="collapse navbar-collapse" id="ftco-nav">
+          <ul class="navbar-nav ml-auto">
+            <li class="nav-item"><a href="/" class="nav-link">Home</a></li>
+            <li class="nav-item"><a href="/about" class="nav-link">Sobre Nosotros</a></li>
+            <li class="nav-item"><a href="/services" class="nav-link">Servicios</a></li>
+            <li class="nav-item active"><a href="/portfolio" class="nav-link">Portafolio</a></li>
+            <li class="nav-item"><a href="/odontopediatria" class="nav-link">Odontopediatría</a></li>
+            <li class="nav-item"><a href="/contact" class="nav-link">Contacto</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <section class="home-slider owl-carousel">
+      <div class="slider-item bread-item cnc-portfolio-hero" style="background-image: url('/images/bg_3.jpg');" data-stellar-background-ratio="0.5">
+        <div class="overlay"></div>
+        <div class="container" data-scrollax-parent="true">
+          <div class="row slider-text align-items-end">
+            <div class="col-md-8 col-sm-12 ftco-animate mb-5">
+              <p class="breadcrumbs" data-scrollax=" properties: { translateY: '70%', opacity: 1.6}"><span class="mr-2"><a href="/">Home</a></span> <span>Portafolio</span></p>
+              <h1 class="mb-3" data-scrollax=" properties: { translateY: '70%', opacity: .9}">Portafolio</h1>
+              <p>Trabajos reales de la clínica, antes y después de tratamientos, publicados con autorización.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <% const groups = Array.isArray(portfolioGroups) ? portfolioGroups : []; %>
+    <% const totalImages = groups.reduce(function(total, group) { return total + (Array.isArray(group.imagenes) ? group.imagenes.length : 0); }, 0); %>
+    <% if (!totalImages) { %>
+    <section class="cnc-section cnc-section-soft">
+      <div class="container">
+        <div class="cnc-portfolio-intro cnc-panel ftco-animate">
+          <div>
+            <span class="cnc-kicker">En preparación</span>
+            <h2>Casos clínicos publicados con autorización</h2>
+            <p class="cnc-lead mb-0">Pronto compartiremos resultados reales de tratamientos realizados en la clínica.</p>
+          </div>
+          <a href="/contact" class="btn btn-primary">Consultar tratamientos</a>
+        </div>
+      </div>
+    </section>
+    <% } %>
+
+    <section class="cnc-section">
+      <div class="container">
+        <div class="row justify-content-center mb-5">
+          <div class="col-lg-8 text-center heading-section ftco-animate">
+            <span class="cnc-kicker">Portafolio clínico</span>
+            <h2><%= totalImages ? 'Evidencias por servicio' : 'Aún no hay fotografías publicadas' %></h2>
+            <% if (!totalImages) { %>
+              <p class="cnc-lead">Este espacio se actualizará con fotografías reales y autorizadas.</p>
+            <% } %>
+          </div>
+        </div>
+
+        <% if (portfolioReady === false) { %>
+          <div class="cnc-panel text-center ftco-animate">
+            <span class="cnc-portfolio-icon"><span class="flaticon-tooth"></span></span>
+            <h3>Portafolio en preparación</h3>
+            <p class="cnc-lead mb-0">Pronto compartiremos casos clínicos reales.</p>
+          </div>
+        <% } else if (!totalImages) { %>
+          <div class="cnc-panel text-center ftco-animate">
+            <span class="cnc-portfolio-icon"><span class="flaticon-dental-care"></span></span>
+            <h3>Próximamente compartiremos evidencias clínicas</h3>
+            <p class="cnc-lead mb-0">Este espacio se actualizará únicamente con fotografías reales y autorizadas.</p>
+          </div>
+        <% } else { %>
+          <div class="cnc-public-portfolio">
+            <% groups.forEach(function(group) { %>
+              <% const images = Array.isArray(group.imagenes) ? group.imagenes : []; %>
+              <% if (images.length) { %>
+                <section class="cnc-public-portfolio-group ftco-animate">
+                  <div class="cnc-public-portfolio-head">
+                    <div>
+                      <span class="cnc-kicker">Servicio</span>
+                      <h3><%= group.nombre %></h3>
+                      <p><%= group.descripcion || 'Evidencias clínicas publicadas para este servicio.' %></p>
+                    </div>
+                    <span class="cnc-status-pill"><%= images.length %> <%= images.length === 1 ? 'foto' : 'fotos' %></span>
+                  </div>
+
+                  <div class="cnc-public-portfolio-grid">
+                    <% images.forEach(function(image) { %>
+                      <a href="<%= image.url %>" class="cnc-public-portfolio-photo image-popup" title="<%= image.titulo || group.nombre %>">
+                        <img src="<%= image.url %>" alt="<%= image.titulo || group.nombre %>">
+                        <span class="cnc-public-portfolio-caption">
+                          <strong><%= image.titulo || group.nombre %></strong>
+                          <% if (image.descripcion) { %>
+                            <small><%= image.descripcion %></small>
+                          <% } %>
+                        </span>
+                      </a>
+                    <% }); %>
+                  </div>
+                </section>
+              <% } %>
+            <% }); %>
+          </div>
+        <% } %>
+      </div>
+    </section>
+
+    <footer class="ftco-footer ftco-bg-dark ftco-section">
+      <div class="container">
+        <div class="row mb-5">
+          <div class="col-md-4">
+            <div class="ftco-footer-widget mb-4">
+              <h2 class="ftco-heading-2">C&C Dental Studio</h2>
+              <p>Construyendo sonrisas que cambian vidas.</p>
+            </div>
+            <ul class="ftco-footer-social list-unstyled float-md-left float-lft">
+              <li class="ftco-animate"><a href="#"><span class="icon-facebook"></span></a></li>
+              <li class="ftco-animate"><a href="#"><span class="icon-instagram"></span></a></li>
+            </ul>
+          </div>
+          <div class="col-md-3">
+            <div class="ftco-footer-widget mb-4">
+              <h2 class="ftco-heading-2">Enlaces</h2>
+              <ul class="list-unstyled">
+                <li><a href="/about" class="py-2 d-block">Sobre Nosotros</a></li>
+                <li><a href="/services" class="py-2 d-block">Servicios</a></li>
+                <li><a href="/portfolio" class="py-2 d-block">Portafolio</a></li>
+                <li><a href="/odontopediatria" class="py-2 d-block">Odontopediatría</a></li>
+                <li><a href="/contact" class="py-2 d-block">Contacto</a></li>
+                <li><a href="/admin/login" class="py-2 d-block">Sistema C&C Dental Studio</a></li>
+              </ul>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="ftco-footer-widget mb-4">
+              <h2 class="ftco-heading-2">Contacto</h2>
+              <div class="block-23 mb-3">
+                <ul>
+                  <li><span class="icon icon-map-marker"></span><span class="text">9na Avenida, Apartamento B, Condominio Fuentes del Valle 2, zona 5 de Villa Nueva, Guatemala</span></li>
+                  <li><a href="tel:+50235155503"><span class="icon icon-phone"></span><span class="text">+502 3515-5503</span></a></li>
+                  <li><a href="mailto:castilloherbert@gmail.com"><span class="icon icon-envelope"></span><span class="text">castilloherbert@gmail.com</span></a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12 text-center">
+            <p>Copyright &copy;<script>document.write(new Date().getFullYear());</script> C&C Dental Studio.</p>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <div id="ftco-loader" class="show fullscreen"><svg class="circular" width="48px" height="48px"><circle class="path-bg" cx="24" cy="24" r="22" fill="none" stroke-width="4" stroke="#eeeeee"/><circle class="path" cx="24" cy="24" r="22" fill="none" stroke-width="4" stroke-miterlimit="10" stroke="#F96D00"/></svg></div>
+
+    <script src="/js/jquery.min.js"></script>
+    <script src="/js/jquery-migrate-3.0.1.min.js"></script>
+    <script src="/js/popper.min.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
+    <script src="/js/jquery.easing.1.3.js"></script>
+    <script src="/js/jquery.waypoints.min.js"></script>
+    <script src="/js/jquery.stellar.min.js"></script>
+    <script src="/js/owl.carousel.min.js"></script>
+    <script src="/js/jquery.magnific-popup.min.js"></script>
+    <script src="/js/aos.js"></script>
+    <script src="/js/jquery.animateNumber.min.js"></script>
+    <script src="/js/bootstrap-datepicker.js"></script>
+    <script src="/js/jquery.timepicker.min.js"></script>
+    <script src="/js/scrollax.min.js"></script>
+    <script src="/js/main.js"></script>
+  </body>
+</html>

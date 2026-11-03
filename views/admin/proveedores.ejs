@@ -1,0 +1,464 @@
+<%
+  const headerProfile = typeof adminProfile !== 'undefined' ? adminProfile : {};
+  const headerName = headerProfile.displayName || 'Nombre pendiente';
+  const headerInitials = headerProfile.initials || headerName.split(/\s+/).slice(0, 2).map(part => part.charAt(0).toUpperCase()).join('') || 'AD';
+  const headerPhoto = headerProfile.photoUrl || '';
+  const headerRole = headerProfile.roleLabel || 'Usuario';
+  const canFn = typeof can === 'function' ? can : () => true;
+  const providerRows = Array.isArray(proveedores) ? proveedores : [];
+  const safeJson = value => JSON.stringify(value || []).replace(/</g, '\\u003c');
+%>
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <base href="/" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Inventario - Proveedores</title>
+    <link rel="shortcut icon" type="image/svg+xml" href="/images/cnc-favicon.svg">
+    <link rel="stylesheet" href="assets/fonts/remix/remixicon.css">
+    <link rel="stylesheet" href="assets/css/main.min.css">
+    <link rel="stylesheet" href="assets/vendor/overlay-scroll/OverlayScrollbars.min.css">
+    <style>
+      .profile-initials-badge {
+        align-items: center;
+        background: #f4f1ff;
+        color: #705df3;
+        display: inline-flex;
+        font-weight: 800;
+        justify-content: center;
+      }
+      .provider-toolbar,
+      .provider-card,
+      .contact-card {
+        border: 1px solid #dde2ee;
+        border-radius: 8px;
+      }
+      .inventory-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .45rem;
+        justify-content: flex-end;
+      }
+      .inventory-nav-link {
+        align-items: center;
+        background: rgba(255, 255, 255, .14);
+        border: 1px solid rgba(255, 255, 255, .28);
+        border-radius: 8px;
+        color: #fff;
+        display: inline-flex;
+        font-weight: 700;
+        gap: .4rem;
+        min-height: 36px;
+        padding: .45rem .7rem;
+      }
+      .inventory-nav-link:hover,
+      .inventory-nav-link.active {
+        background: #fff;
+        color: #5b50d6;
+      }
+      .provider-toolbar {
+        background: #fff;
+        padding: 1rem;
+      }
+      .providers-grid {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      }
+      .provider-card {
+        background: #fff;
+        padding: 1rem;
+        transition: transform .18s ease, box-shadow .18s ease;
+      }
+      .provider-card:hover {
+        box-shadow: 0 14px 30px rgba(17, 24, 39, .08);
+        transform: translateY(-2px);
+      }
+      .provider-icon {
+        align-items: center;
+        background: #f4f1ff;
+        border-radius: 8px;
+        color: #7367f0;
+        display: inline-flex;
+        flex: 0 0 48px;
+        font-size: 1.35rem;
+        height: 48px;
+        justify-content: center;
+        width: 48px;
+      }
+      .contact-card {
+        background: #fbfbff;
+        padding: .75rem;
+      }
+      .provider-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .5rem;
+      }
+      @media (max-width: 575.98px) {
+        .providers-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page-wrapper">
+      <div class="main-container">
+        <nav id="sidebar" class="sidebar-wrapper">
+          <div class="brand-container d-flex align-items-center justify-content-between">
+            <div class="app-brand ms-3">
+              <a href="/admin/dash"><img src="/images/cnc-logo-alt.svg" class="logo" alt="C&C Dental Studio"></a>
+            </div>
+            <button type="button" class="pin-sidebar me-3"><i class="ri-menu-line"></i></button>
+          </div>
+          <div class="sidebar-profile">
+            <% if (headerPhoto) { %>
+              <img src="<%= headerPhoto %>" class="rounded-5 border border-primary border-3" alt="Foto de perfil">
+            <% } else { %>
+              <span class="profile-initials-badge rounded-5 border border-primary border-3 img-4x"><%= headerInitials %></span>
+            <% } %>
+            <h6 class="mb-1 profile-name text-nowrap text-truncate text-primary"><%= headerName %></h6>
+            <small class="profile-name text-nowrap text-truncate"><%= headerRole %></small>
+          </div>
+          <div class="sidebarMenuScroll">
+            <%- include('partials/adminSidebar', { activePage: 'inventario', canFn }) %>
+          </div>
+        </nav>
+
+        <div class="app-container">
+          <div class="app-header d-flex align-items-center">
+            <div class="search-container d-xl-block d-none">
+              <input type="text" class="form-control" placeholder="Buscar" id="topSearch">
+              <i class="ri-search-line"></i>
+            </div>
+            <div class="header-actions ms-auto d-flex align-items-center gap-2">
+              <div class="dropdown ms-2">
+                <a id="userSettings" class="dropdown-toggle d-flex align-items-center" href="#!" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <div class="avatar-box">
+                    <% if (headerPhoto) { %>
+                      <img src="<%= headerPhoto %>" class="img-2xx rounded-5 border border-3 border-white" alt="Foto de perfil">
+                    <% } else { %>
+                      <span class="profile-initials-badge img-2xx rounded-5 border border-3 border-white"><%= headerInitials %></span>
+                    <% } %>
+                    <span class="status busy"></span>
+                  </div>
+                </a>
+                <div class="dropdown-menu dropdown-menu-end shadow-lg">
+                  <div class="px-3 py-2"><span class="small"><%= headerRole %></span><h6 class="m-0"><%= headerName %></h6></div>
+                  <div class="dropdown-divider"></div>
+                  <a href="/admin/perfil" class="dropdown-item"><i class="ri-user-line me-2"></i> Perfil</a>
+                  <a href="/logout" class="dropdown-item"><i class="ri-logout-circle-r-line me-2"></i> Cerrar sesión</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="app-hero-header d-flex align-items-center">
+            <ol class="breadcrumb">
+              <li class="breadcrumb-item"><a href="/admin/dash"><i class="ri-home-3-line"></i></a></li>
+              <li class="breadcrumb-item text-primary" aria-current="page">Inventario</li>
+              <li class="breadcrumb-item text-primary" aria-current="page">Proveedores</li>
+            </ol>
+            <% if (canFn('inventario:crear')) { %>
+              <button class="btn btn-primary ms-auto" data-bs-toggle="modal" data-bs-target="#providerModal" data-mode="create"><i class="ri-add-line me-1"></i> Agregar proveedor</button>
+            <% } %>
+          </div>
+
+          <div class="app-body">
+            <%- include('partials/inventoryNav', { activeInventoryPage: 'proveedores', canFn }) %>
+
+            <div class="provider-toolbar mb-4">
+              <div class="row gx-3 align-items-center">
+                <div class="col-lg-6 mb-2 mb-lg-0">
+                  <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="ri-search-line text-primary"></i></span>
+                    <input type="text" class="form-control" id="providerSearch" placeholder="Buscar proveedor, contacto, NIT o correo">
+                  </div>
+                </div>
+                <div class="col-lg-6 d-flex justify-content-lg-end">
+                  <span class="badge bg-primary-subtle text-primary"><%= providerRows.length %> proveedor(es) activos</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="providers-grid" id="providersGrid">
+              <% providerRows.forEach(proveedor => { %>
+                <article class="provider-card" data-provider-card data-search="<%= [proveedor.nombre, proveedor.nit, proveedor.email, proveedor.telefono, proveedor.direccion, proveedor.observaciones, (proveedor.contactos || []).map(c => [c.nombre, c.telefono, c.correo, c.puesto].join(' ')).join(' ')].join(' ').toLowerCase() %>">
+                  <div class="d-flex align-items-start justify-content-between gap-3 mb-3">
+                    <div class="d-flex align-items-center min-w-0">
+                      <span class="provider-icon me-3"><i class="ri-truck-line"></i></span>
+                      <div class="min-w-0">
+                        <h5 class="mb-1 text-truncate"><%= proveedor.nombre %></h5>
+                        <div class="text-muted small">NIT: <%= proveedor.nit || 'Sin registro' %></div>
+                      </div>
+                    </div>
+                    <span class="badge bg-success-subtle text-success">Activo</span>
+                  </div>
+                  <div class="row gx-3 mb-2">
+                    <div class="col-sm-6 mb-2"><small class="text-muted d-block">Telefono</small><strong><%= proveedor.telefono || 'Sin telefono' %></strong></div>
+                    <div class="col-sm-6 mb-2"><small class="text-muted d-block">Correo</small><strong class="text-truncate d-block"><%= proveedor.email || 'Sin correo' %></strong></div>
+                    <div class="col-12 mb-2"><small class="text-muted d-block">Direccion</small><span><%= proveedor.direccion || 'Sin direccion' %></span></div>
+                    <% if (proveedor.observaciones) { %>
+                      <div class="col-12 mb-2"><small class="text-muted d-block">Observaciones</small><span><%= proveedor.observaciones %></span></div>
+                    <% } %>
+                  </div>
+                  <hr>
+                  <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0">Contactos</h6>
+                    <span class="badge bg-light text-primary"><%= (proveedor.contactos || []).length %></span>
+                  </div>
+                  <div class="d-grid gap-2 mb-3">
+                    <% if (!(proveedor.contactos || []).length) { %>
+                      <div class="text-muted small">Sin contactos registrados.</div>
+                    <% } %>
+                    <% (proveedor.contactos || []).forEach(contacto => { %>
+                      <div class="contact-card">
+                        <strong><%= contacto.nombre || 'Contacto' %></strong>
+                        <div class="small text-muted"><%= contacto.puesto || 'Sin cargo' %></div>
+                        <div class="small"><i class="ri-phone-line text-primary me-1"></i><%= contacto.telefono || 'Sin telefono' %></div>
+                        <div class="small"><i class="ri-mail-line text-primary me-1"></i><%= contacto.correo || 'Sin correo' %></div>
+                      </div>
+                    <% }) %>
+                  </div>
+                  <div class="provider-actions">
+                    <button class="btn btn-outline-primary btn-sm" type="button" data-action="details" data-id="<%= proveedor.id %>"><i class="ri-information-line me-1"></i> Detalles</button>
+                    <% if (canFn('inventario:editar')) { %>
+                      <button class="btn btn-outline-warning btn-sm" type="button" data-action="edit" data-id="<%= proveedor.id %>"><i class="ri-edit-line me-1"></i> Editar</button>
+                    <% } %>
+                    <% if (canFn('inventario:eliminar')) { %>
+                      <button class="btn btn-outline-danger btn-sm" type="button" data-action="delete" data-id="<%= proveedor.id %>"><i class="ri-forbid-line me-1"></i> Desactivar</button>
+                    <% } %>
+                  </div>
+                </article>
+              <% }) %>
+            </div>
+          </div>
+
+          <div class="app-footer"><span>© C&C Dental Studio 2026</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="providerModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <form class="modal-content" id="providerForm">
+          <div class="modal-header">
+            <h5 class="modal-title" id="providerModalTitle">Agregar proveedor</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="providerId">
+            <div class="row gx-3">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Nombre empresa</label>
+                <input class="form-control" id="providerName" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">NIT</label>
+                <input class="form-control" id="providerNit">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Telefono empresa</label>
+                <input class="form-control" id="providerPhone">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Correo empresa</label>
+                <input type="email" class="form-control" id="providerEmail">
+              </div>
+              <div class="col-12 mb-3">
+                <label class="form-label">Direccion</label>
+                <input class="form-control" id="providerAddress">
+              </div>
+              <div class="col-12 mb-3">
+                <label class="form-label">Observaciones</label>
+                <textarea class="form-control" id="providerNotes" rows="3"></textarea>
+              </div>
+            </div>
+            <div class="border rounded-2 p-3">
+              <div class="d-flex align-items-center justify-content-between mb-2">
+                <h6 class="mb-0">Contactos</h6>
+                <button type="button" class="btn btn-outline-primary btn-sm" id="addContactBtn"><i class="ri-add-line me-1"></i> Agregar contacto</button>
+              </div>
+              <div id="contactRows" class="d-grid gap-2"></div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+            <button type="submit" class="btn btn-primary">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="modal fade" id="detailsModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Detalle del proveedor</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body" id="detailsBody"></div>
+        </div>
+      </div>
+    </div>
+
+    <%- include('partials/uiFeedback') %>
+
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/vendor/overlay-scroll/jquery.overlayScrollbars.min.js"></script>
+    <script src="assets/vendor/overlay-scroll/custom-scrollbar.js"></script>
+    <script src="assets/js/custom.js"></script>
+    <script>
+      const providers = <%- safeJson(providerRows) %>;
+      const providerModal = new bootstrap.Modal(document.getElementById('providerModal'));
+      const detailsModal = new bootstrap.Modal(document.getElementById('detailsModal'));
+
+      function escapeHtml(value) {
+        return String(value || '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+      }
+      function findProvider(id) {
+        return providers.find(item => Number(item.id) === Number(id));
+      }
+      function filterCards(value) {
+        const term = String(value || '').trim().toLowerCase();
+        document.querySelectorAll('[data-provider-card]').forEach(card => {
+          card.style.display = !term || card.dataset.search.includes(term) ? '' : 'none';
+        });
+      }
+      function contactRow(contact = {}) {
+        const div = document.createElement('div');
+        div.className = 'contact-card';
+        div.dataset.contactRow = 'true';
+        div.innerHTML = `
+          <div class="row gx-2 align-items-end">
+            <div class="col-md-3 mb-2"><label class="form-label small">Nombre</label><input class="form-control" data-contact-field="nombre" value="${escapeHtml(contact.nombre || '')}"></div>
+            <div class="col-md-3 mb-2"><label class="form-label small">Telefono</label><input class="form-control" data-contact-field="telefono" value="${escapeHtml(contact.telefono || '')}"></div>
+            <div class="col-md-3 mb-2"><label class="form-label small">Correo</label><input class="form-control" data-contact-field="correo" value="${escapeHtml(contact.correo || '')}"></div>
+            <div class="col-md-2 mb-2"><label class="form-label small">Puesto</label><input class="form-control" data-contact-field="puesto" value="${escapeHtml(contact.puesto || '')}"></div>
+            <div class="col-md-1 mb-2 d-grid"><button type="button" class="btn btn-outline-danger" data-remove-contact><i class="ri-delete-bin-line"></i></button></div>
+          </div>`;
+        return div;
+      }
+      function collectContacts() {
+        return Array.from(document.querySelectorAll('[data-contact-row]')).map(row => ({
+          nombre: row.querySelector('[data-contact-field="nombre"]')?.value || '',
+          telefono: row.querySelector('[data-contact-field="telefono"]')?.value || '',
+          correo: row.querySelector('[data-contact-field="correo"]')?.value || '',
+          puesto: row.querySelector('[data-contact-field="puesto"]')?.value || '',
+        })).filter(item => item.nombre || item.telefono || item.correo || item.puesto);
+      }
+      function resetProviderForm() {
+        document.getElementById('providerForm').reset();
+        document.getElementById('providerId').value = '';
+        document.getElementById('contactRows').innerHTML = '';
+        document.getElementById('contactRows').appendChild(contactRow());
+      }
+      function fillProviderForm(provider) {
+        document.getElementById('providerId').value = provider.id;
+        document.getElementById('providerName').value = provider.nombre || '';
+        document.getElementById('providerNit').value = provider.nit || '';
+        document.getElementById('providerPhone').value = provider.telefono || '';
+        document.getElementById('providerEmail').value = provider.email || '';
+        document.getElementById('providerAddress').value = provider.direccion || '';
+        document.getElementById('providerNotes').value = provider.observaciones || '';
+        const container = document.getElementById('contactRows');
+        container.innerHTML = '';
+        (provider.contactos && provider.contactos.length ? provider.contactos : [{}]).forEach(contact => container.appendChild(contactRow(contact)));
+      }
+
+      document.getElementById('providerSearch')?.addEventListener('input', event => filterCards(event.target.value));
+      document.getElementById('topSearch')?.addEventListener('input', event => filterCards(event.target.value));
+
+      document.getElementById('providerModal')?.addEventListener('show.bs.modal', event => {
+        if (event.relatedTarget?.dataset.mode === 'create') {
+          document.getElementById('providerModalTitle').textContent = 'Agregar proveedor';
+          resetProviderForm();
+        }
+      });
+      document.getElementById('addContactBtn')?.addEventListener('click', () => {
+        document.getElementById('contactRows').appendChild(contactRow());
+      });
+      document.getElementById('contactRows')?.addEventListener('click', event => {
+        const button = event.target.closest('[data-remove-contact]');
+        if (button) button.closest('[data-contact-row]')?.remove();
+      });
+
+      document.getElementById('providersGrid')?.addEventListener('click', event => {
+        const button = event.target.closest('[data-action]');
+        if (!button) return;
+        const provider = findProvider(button.dataset.id);
+        if (!provider) return;
+
+        if (button.dataset.action === 'details') {
+          const contacts = provider.contactos || [];
+          document.getElementById('detailsBody').innerHTML = `
+            <h5>${escapeHtml(provider.nombre)}</h5>
+            <div class="row gx-3 mb-3">
+              <div class="col-md-6 mb-2"><small class="text-muted d-block">NIT</small><strong>${escapeHtml(provider.nit || 'Sin registro')}</strong></div>
+              <div class="col-md-6 mb-2"><small class="text-muted d-block">Telefono</small><strong>${escapeHtml(provider.telefono || 'Sin telefono')}</strong></div>
+              <div class="col-md-6 mb-2"><small class="text-muted d-block">Correo</small><strong>${escapeHtml(provider.email || 'Sin correo')}</strong></div>
+              <div class="col-md-6 mb-2"><small class="text-muted d-block">Direccion</small><strong>${escapeHtml(provider.direccion || 'Sin direccion')}</strong></div>
+              <div class="col-12 mb-2"><small class="text-muted d-block">Observaciones</small><span>${escapeHtml(provider.observaciones || 'Sin observaciones')}</span></div>
+            </div>
+            <h6>Contactos</h6>
+            ${contacts.length ? contacts.map(contact => `
+              <div class="contact-card mb-2">
+                <strong>${escapeHtml(contact.nombre || 'Contacto')}</strong>
+                <div class="small text-muted">${escapeHtml(contact.puesto || 'Sin cargo')}</div>
+                <div class="small">${escapeHtml(contact.telefono || 'Sin telefono')} · ${escapeHtml(contact.correo || 'Sin correo')}</div>
+              </div>`).join('') : '<div class="text-muted">Sin contactos registrados.</div>'}`;
+          detailsModal.show();
+        }
+
+        if (button.dataset.action === 'edit') {
+          document.getElementById('providerModalTitle').textContent = 'Editar proveedor';
+          fillProviderForm(provider);
+          providerModal.show();
+        }
+
+        if (button.dataset.action === 'delete') {
+          confirmUiAction('¿Deseas desactivar este proveedor?', async () => {
+            const response = await fetch(`/admin/proveedores/${provider.id}`, { method: 'DELETE' });
+            if (!response.ok) {
+              const text = await response.text();
+              showUiMessage(text || 'No se pudo desactivar el proveedor.', 'danger');
+              return;
+            }
+            showUiMessage('Proveedor desactivado correctamente.', 'success');
+            setTimeout(() => location.reload(), 600);
+          }, { title: 'Desactivar proveedor', confirmText: 'Desactivar', confirmType: 'danger' });
+        }
+      });
+
+      document.getElementById('providerForm')?.addEventListener('submit', async event => {
+        event.preventDefault();
+        const id = document.getElementById('providerId').value;
+        const payload = {
+          nombre: document.getElementById('providerName').value,
+          nit: document.getElementById('providerNit').value,
+          telefono: document.getElementById('providerPhone').value,
+          email: document.getElementById('providerEmail').value,
+          direccion: document.getElementById('providerAddress').value,
+          observaciones: document.getElementById('providerNotes').value,
+          contactos: collectContacts(),
+        };
+        try {
+          const response = await fetch(id ? `/admin/proveedores/${id}` : '/admin/proveedores', {
+            method: id ? 'PUT' : 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+          const text = await response.text();
+          if (!response.ok) throw new Error(text || 'No se pudo guardar el proveedor.');
+          showUiMessage(text || 'Proveedor guardado correctamente.', 'success');
+          setTimeout(() => location.reload(), 600);
+        } catch (error) {
+          showUiMessage(error.message, 'danger');
+        }
+      });
+    </script>
+  </body>
+</html>

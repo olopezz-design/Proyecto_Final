@@ -1,0 +1,95 @@
+<style>
+  .appointment-detail-modal .modal-content {
+    border: 0;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .appointment-detail-hero {
+    background: linear-gradient(135deg, #7367f0, #26c6da);
+    color: #fff;
+    padding: 1.25rem;
+  }
+  .appointment-detail-icon {
+    align-items: center;
+    background: rgba(255, 255, 255, .18);
+    border: 1px solid rgba(255, 255, 255, .3);
+    border-radius: 8px;
+    display: inline-flex;
+    font-size: 1.45rem;
+    height: 44px;
+    justify-content: center;
+    width: 44px;
+  }
+  .appointment-detail-card {
+    border: 1px solid #e1e7f0;
+    border-radius: 8px;
+    padding: .9rem;
+  }
+  .appointment-detail-card small {
+    color: #6b7280;
+    display: block;
+    font-weight: 700;
+    margin-bottom: .25rem;
+    text-transform: uppercase;
+  }
+  .appointment-detail-chip {
+    background: #f4f1ff;
+    border-radius: 999px;
+    color: #5b50d6;
+    display: inline-flex;
+    font-weight: 700;
+    padding: .35rem .7rem;
+  }
+</style>
+
+<div class="modal fade appointment-detail-modal" id="infoCitaModal" tabindex="-1" aria-labelledby="infoCitaModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="appointment-detail-hero">
+        <div class="d-flex align-items-start gap-3">
+          <span class="appointment-detail-icon"><i class="ri-calendar-check-line"></i></span>
+          <div class="min-w-0">
+            <h5 class="modal-title mb-1" id="infoCitaModalLabel">Detalle de la cita</h5>
+            <div class="d-flex flex-wrap gap-2">
+              <span id="infoCitaFecha" class="appointment-detail-chip"></span>
+              <span id="infoCitaHora" class="appointment-detail-chip"></span>
+              <span id="infoCitaEstado" class="appointment-detail-chip"></span>
+            </div>
+          </div>
+          <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+      </div>
+      <div class="modal-body p-4">
+        <div class="row gx-3 gy-3">
+          <div class="col-md-6">
+            <div class="appointment-detail-card h-100">
+              <small>Paciente</small>
+              <div class="fw-semibold" id="infoCitaPaciente"></div>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="appointment-detail-card h-100">
+              <small>Doctor</small>
+              <div class="fw-semibold" id="infoCitaDoctor"></div>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="appointment-detail-card">
+              <small>Motivo de la cita</small>
+              <div id="infoCitaMotivo"></div>
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="appointment-detail-card">
+              <small>Notas adicionales</small>
+              <div id="infoCitaNotas"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer bg-light">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+      </div>
+    </div>
+  </div>
+</div>

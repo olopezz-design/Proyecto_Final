@@ -1,0 +1,219 @@
+<style>
+    .ui-feedback-stack {
+        position: fixed;
+        top: 88px;
+        right: 24px;
+        z-index: 2060;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        width: min(360px, calc(100vw - 32px));
+    }
+
+    .ui-feedback-stack .alert {
+        margin: 0;
+        border: 0;
+        border-radius: 14px;
+        box-shadow: 0 14px 36px rgba(42, 45, 68, 0.18);
+    }
+
+    .ui-confirm-modal .modal-content {
+        border-radius: 10px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .ui-confirm-modal .modal-header {
+        padding-right: 3.5rem;
+    }
+
+    .ui-confirm-close {
+        align-items: center;
+        background: #f4f1ff;
+        border: 1px solid #dde2ee;
+        border-radius: 8px;
+        color: #5b50d6;
+        display: inline-flex;
+        font-size: 1.2rem;
+        height: 34px;
+        justify-content: center;
+        line-height: 1;
+        position: absolute;
+        right: 14px;
+        top: 14px;
+        width: 34px;
+    }
+
+    .ui-confirm-close:hover {
+        background: #ebe7ff;
+        color: #4338ca;
+    }
+</style>
+
+<script>
+(function () {
+    if (window.showUiMessage && window.confirmUiAction) return;
+
+    function escapeHtml(value) {
+        return String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function getFeedbackStack() {
+        let stack = document.getElementById('uiFeedbackStack');
+        if (!stack) {
+            stack = document.createElement('div');
+            stack.id = 'uiFeedbackStack';
+            stack.className = 'ui-feedback-stack';
+            document.body.appendChild(stack);
+        }
+        return stack;
+    }
+
+    function normalizeType(type) {
+        const map = {
+            error: 'danger',
+            success: 'success',
+            warning: 'warning',
+            info: 'info',
+            danger: 'danger'
+        };
+        return map[type] || 'info';
+    }
+
+    window.showUiMessage = function (message, type, options) {
+        const opts = options || {};
+        const stack = getFeedbackStack();
+        const alertBox = document.createElement('div');
+        alertBox.className = 'alert alert-' + normalizeType(type) + ' alert-dismissible fade show';
+        alertBox.setAttribute('role', 'status');
+        alertBox.innerHTML = [
+            '<div class="pr-4">' + escapeHtml(message || 'Operación realizada.') + '</div>',
+            '<button type="button" class="close" aria-label="Cerrar">',
+            '<span aria-hidden="true">&times;</span>',
+            '</button>'
+        ].join('');
+
+        const close = function () {
+            alertBox.classList.remove('show');
+            setTimeout(function () {
+                if (alertBox.parentNode) alertBox.parentNode.removeChild(alertBox);
+            }, 180);
+        };
+
+        alertBox.querySelector('.close').addEventListener('click', close);
+        stack.appendChild(alertBox);
+
+        if (opts.timeout !== 0) {
+            setTimeout(close, opts.timeout || 3600);
+        }
+    };
+
+    function ensureConfirmModal() {
+        let modal = document.getElementById('uiConfirmModal');
+        if (modal) return modal;
+
+        modal = document.createElement('div');
+        modal.className = 'modal fade ui-confirm-modal';
+        modal.id = 'uiConfirmModal';
+        modal.tabIndex = -1;
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-hidden', 'true');
+        modal.innerHTML = [
+            '<div class="modal-dialog modal-dialog-centered" role="document">',
+            '<div class="modal-content border-0 shadow-lg">',
+            '<button type="button" class="ui-confirm-close" data-ui-confirm-cancel aria-label="Cerrar">',
+            '<i class="ri-close-line"></i>',
+            '</button>',
+            '<div class="modal-header">',
+            '<h5 class="modal-title" data-ui-confirm-title>Confirmar acción</h5>',
+            '</div>',
+            '<div class="modal-body">',
+            '<p class="mb-0" data-ui-confirm-message></p>',
+            '</div>',
+            '<div class="modal-footer">',
+            '<button type="button" class="btn btn-light" data-ui-confirm-cancel>Cancelar</button>',
+            '<button type="button" class="btn btn-primary" data-ui-confirm-ok>Confirmar</button>',
+            '</div>',
+            '</div>',
+            '</div>'
+        ].join('');
+        document.body.appendChild(modal);
+        modal.addEventListener('click', function (event) {
+            if (event.target.closest('[data-ui-confirm-cancel]')) hideModal(modal);
+        });
+        return modal;
+    }
+
+    function hideFallbackModal(modal) {
+        modal.classList.remove('show');
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.classList.remove('modal-open');
+        const backdrop = document.getElementById('uiConfirmFallbackBackdrop');
+        if (backdrop) backdrop.remove();
+    }
+
+    function hideModal(modal) {
+        if (window.bootstrap && window.bootstrap.Modal) {
+            const Modal = window.bootstrap.Modal;
+            const instance = Modal.getOrCreateInstance ? Modal.getOrCreateInstance(modal) : (Modal.getInstance?.(modal) || new Modal(modal));
+            instance.hide();
+        } else if (window.jQuery && window.jQuery.fn && window.jQuery.fn.modal) {
+            window.jQuery(modal).modal('hide');
+        } else {
+            hideFallbackModal(modal);
+        }
+    }
+
+    function showFallbackModal(modal) {
+        let backdrop = document.getElementById('uiConfirmFallbackBackdrop');
+        if (!backdrop) {
+            backdrop = document.createElement('div');
+            backdrop.id = 'uiConfirmFallbackBackdrop';
+            backdrop.className = 'modal-backdrop fade show';
+            document.body.appendChild(backdrop);
+        }
+        modal.style.display = 'block';
+        modal.removeAttribute('aria-hidden');
+        modal.classList.add('show');
+        document.body.classList.add('modal-open');
+    }
+
+    function showModal(modal) {
+        if (window.bootstrap && window.bootstrap.Modal) {
+            const Modal = window.bootstrap.Modal;
+            const instance = Modal.getOrCreateInstance ? Modal.getOrCreateInstance(modal) : (Modal.getInstance?.(modal) || new Modal(modal));
+            instance.show();
+        } else if (window.jQuery && window.jQuery.fn && window.jQuery.fn.modal) {
+            window.jQuery(modal).modal('show');
+        } else {
+            showFallbackModal(modal);
+        }
+    }
+
+    window.confirmUiAction = function (message, onConfirm, options) {
+        const opts = options || {};
+        const modal = ensureConfirmModal();
+        modal.querySelector('[data-ui-confirm-title]').textContent = opts.title || 'Confirmar acción';
+        modal.querySelector('[data-ui-confirm-message]').textContent = message || '¿Deseas continuar?';
+
+        const currentButton = modal.querySelector('[data-ui-confirm-ok]');
+        const nextButton = currentButton.cloneNode(true);
+        nextButton.textContent = opts.confirmText || 'Confirmar';
+        nextButton.className = 'btn btn-' + (opts.confirmType || 'primary');
+        currentButton.parentNode.replaceChild(nextButton, currentButton);
+
+        nextButton.addEventListener('click', function () {
+            hideModal(modal);
+            if (typeof onConfirm === 'function') onConfirm();
+        });
+
+        showModal(modal);
+    };
+})();
+</script>

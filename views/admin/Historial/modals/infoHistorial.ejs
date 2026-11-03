@@ -1,0 +1,89 @@
+<!-- Modal para mostrar la información del historial clínico del paciente -->
+<div class="modal fade" id="infoHistorialModal" tabindex="-1" aria-labelledby="infoHistorialModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="infoHistorialModalLabel">Información del Historial Clínico</h5>
+            </div>
+            <div class="modal-body">
+                <table class="table table-bordered">
+                    <tbody>
+                        <!-- Información general del historial clínico -->
+                        <tr>
+                            <th colspan="2" class="text-center bg-light">Información General</th>
+                        </tr>
+                        <tr>
+                            <td><strong>ID del Historial Clínico:</strong></td>
+                            <td id="infoHistorialId"></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Fecha de Registro:</strong></td>
+                            <td id="infoFechaRegistro"></td>
+                        </tr>
+
+                        <!-- Información de la consulta -->
+                        <tr>
+                            <th colspan="2" class="text-center bg-light">Detalles de la Consulta</th>
+                        </tr>
+                        <tr>
+                            <td><strong>ID de la Consulta:</strong></td>
+                            <td id="infoConsultaId"></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Número de Pieza Dental:</strong></td>
+                            <td id="infoNoPieza"></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Descripción de la Consulta:</strong></td>
+                            <td id="infoDescripcionConsulta"></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Próxima Cita:</strong></td>
+                            <td id="infoProximaCita"></td>
+                        </tr>
+
+                        <!-- Información del paciente -->
+                        <tr>
+                            <th colspan="2" class="text-center bg-light">Información del Paciente</th>
+                        </tr>
+                        <tr>
+                            <td><strong>Nombre del Paciente:</strong></td>
+                            <td id="infoPacienteNombre"></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Apellido del Paciente:</strong></td>
+                            <td id="infoPacienteApellido"></td>
+                        </tr>
+
+                        <!-- Información del doctor -->
+                        <tr>
+                            <th colspan="2" class="text-center bg-light">Información del Doctor</th>
+                        </tr>
+                        <tr>
+                            <td><strong>Nombre del Doctor:</strong></td>
+                            <td id="infoDoctorNombre"></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Apellido del Doctor:</strong></td>
+                            <td id="infoDoctorApellido"></td>
+                        </tr>
+
+                        <!-- Información del servicio -->
+                        <tr>
+                            <th colspan="2" class="text-center bg-light">Detalles del Servicio</th>
+                        </tr>
+                        <tr>
+                            <td><strong>Tipo de Servicio:</strong></td>
+                            <td id="infoTipoServicio"></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Servicio:</strong></td>
+                            <td id="infoServicio"></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>

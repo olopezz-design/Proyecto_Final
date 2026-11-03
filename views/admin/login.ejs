@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Login - C&C Dental Studio</title>
+
+    <link rel="shortcut icon" type="image/svg+xml" href="/images/cnc-favicon.svg">
+    <link rel="stylesheet" href="/assets/fonts/remix/remixicon.css" />
+    <link rel="stylesheet" href="/assets/css/main.min.css" />
+  </head>
+
+  <body class="login-bg">
+    <div class="container">
+      <div class="auth-wrapper">
+        <form action="/auth" method="post">
+          <input type="hidden" name="returnTo" value="<%= typeof returnTo !== 'undefined' ? returnTo : '' %>">
+          <div class="auth-box">
+            <a href="/" class="auth-brand mb-4">
+              <img src="/images/cnc-favicon.svg" alt="C&C Dental Studio">
+              <span>C&C Dental Studio<small>Clínica dental</small></span>
+            </a>
+
+            <h4 class="mb-4">Iniciar sesión</h4>
+
+            <% if (typeof message !== 'undefined') { %>
+              <div class="alert alert-danger"><%= message %></div>
+            <% } %>
+
+            <div class="mb-3">
+              <label class="form-label" for="usuario">Usuario <span class="text-danger">*</span></label>
+              <input type="text"
+                     id="usuario"
+                     name="usuario"
+                     class="form-control"
+                     value="<%= typeof usuario !== 'undefined' ? usuario : '' %>"
+                     required
+                     autocomplete="username">
+            </div>
+
+            <div class="mb-2">
+              <label class="form-label" for="password">Contraseña <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <input type="password"
+                       id="password"
+                       name="password"
+                       class="form-control"
+                       required
+                       autocomplete="current-password">
+                <button class="btn btn-outline-secondary" type="button" id="togglePwd" aria-label="Mostrar/ocultar">
+                  <i class="ri-eye-line text-primary" id="eyeOpen"></i>
+                  <i class="ri-eye-off-line text-primary d-none" id="eyeOff"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="d-flex justify-content-end mb-3">
+              <a href="/recuperar-password" class="text-decoration-underline">¿Olvidaste tu contraseña?</a>
+            </div>
+
+            <div class="mb-3 d-grid gap-2">
+              <button type="submit" class="btn btn-primary">Iniciar sesión</button>
+              <a href="/signup" class="btn btn-outline-primary">Solicitar acceso</a>
+              <a href="/" class="btn btn-secondary">Regresar</a>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script src="/assets/js/jquery.min.js"></script>
+    <script src="/assets/js/bootstrap.bundle.min.js"></script>
+    <script src="/assets/js/custom.js"></script>
+    <script>
+      (function () {
+        const btn = document.getElementById('togglePwd');
+        if (!btn) return;
+        const pwd = document.getElementById('password');
+        const eyeOpen = document.getElementById('eyeOpen');
+        const eyeOff = document.getElementById('eyeOff');
+        btn.addEventListener('click', () => {
+          const show = pwd.type === 'password';
+          pwd.type = show ? 'text' : 'password';
+          eyeOpen.classList.toggle('d-none', show);
+          eyeOff.classList.toggle('d-none', !show);
+        });
+      })();
+    </script>
+  </body>
+</html>

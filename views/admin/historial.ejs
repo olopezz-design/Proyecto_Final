@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historial Clinico - C&C Dental Studio</title>
+    <link rel="shortcut icon" type="image/svg+xml" href="/images/cnc-favicon.svg">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+    <style>
+        /* Estilo para los botones de paginación */
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            color: #007bff;
+            background-color: transparent;
+            border: none;
+            padding: 0;
+            margin: 0 5px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        /* Estilo para el botón de la página actual */
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            font-weight: bold;
+            color: white;
+            background-color: #007bff;
+            border: none;
+            border-radius: 4px;
+        }
+
+        /* Ocultar el cuadro de búsqueda predeterminado de DataTables */
+        .dataTables_filter { display: none; }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #page-content-wrapper { flex: 1; }
+
+        footer {
+            background-color: #343a40;
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+        }
+
+        .modal-body {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .separar-pdf { margin-top: 20px; }
+    </style>
+</head>
+<body class="d-flex flex-column min-vh-100">
+    <div class="d-flex flex-grow-1" id="wrapper">
+        <!-- Sidebar -->
+        <div class="bg-dark border-right" id="sidebar-wrapper">
+            <div class="sidebar-heading text-center py-4">
+                <img src="/images/cnc-logo-alt.svg" alt="Logo" class="img-fluid mb-2" style="max-width: 50px;">
+                <h4 class="text-white font-weight-bold">C&C Dental Studio</h4>
+            </div>
+            <div class="list-group list-group-flush">
+                
+                <!-- Pacientes -->
+                <a href="#clientes-pacientes-submenu" class="list-group-item list-group-item-action bg-dark text-white d-flex justify-content-between align-items-center" data-toggle="collapse">
+                    <i class="fas fa-user mr-2"></i> Pacientes
+                    <i class="fas fa-chevron-down"></i>
+                </a>
+                <div id="clientes-pacientes-submenu" class="collapse">
+                    <a href="/admin/pacientes" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-user-friends"></i> Lista de Pacientes
+                    </a>
+                    <a href="/admin/citas" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-calendar-alt"></i> Citas
+                    </a>
+                    <a href="/admin/historial" class="list-group-item list-group-item-action bg-dark text-white pl-5 active">
+                        <i class="fas fa-file-medical-alt"></i> Historial Tratamiento
+                    </a>
+                    <a href="/admin/pago" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-wallet"></i> Control de Pago
+                    </a>
+                    <a href="/admin/archivados" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-archive"></i> Pacientes Archivados
+                    </a>
+                </div>
+
+                <!-- Doctores -->
+                <a href="#doctores-submenu" class="list-group-item list-group-item-action bg-dark text-white d-flex justify-content-between align-items-center" data-toggle="collapse">
+                    <i class="fas fa-user-md mr-2"></i> Doctores
+                    <i class="fas fa-chevron-down"></i>
+                </a>
+                <div id="doctores-submenu" class="collapse">
+                    <a href="/admin/doctores" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-user-check"></i> Doctores Activos
+                    </a>
+                    <a href="/admin/doctores/inactivos" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-user-slash"></i> Doctores Inactivos
+                    </a>
+                </div>
+
+                <!-- Inventario -->
+                <a href="#inventario-submenu" class="list-group-item list-group-item-action bg-dark text-white d-flex justify-content-between align-items-center" data-toggle="collapse">
+                    <i class="fas fa-box mr-2"></i> Inventario
+                    <i class="fas fa-chevron-down"></i>
+                </a>
+                <div id="inventario-submenu" class="collapse">
+                    <a href="/admin/marcas" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-tags"></i> Marcas
+                    </a>
+                    <a href="/admin/categorias" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-th-large"></i> Categorías
+                    </a>
+                    <a href="/admin/proveedores" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-truck"></i> Proveedores
+                    </a>
+                    <a href="/admin/productos" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-boxes"></i> Productos
+                    </a>
+                    <a href="/admin/comprasProductos" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-shopping-cart"></i> Compras
+                    </a>
+                    <a href="/admin/salidasProductos" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-dolly"></i> Salidas
+                    </a>
+                </div>
+
+                <a href="/admin/cotizaciones" class="list-group-item list-group-item-action bg-dark text-white">
+                    <i class="fas fa-arrow-circle-left"></i> Generar Cotización
+                </a>
+                <a href="/admin/dashboard" class="list-group-item list-group-item-action bg-dark text-white">
+                    <i class="fas fa-arrow-circle-left"></i> Regresar al Panel
+                </a>
+                <a href="/logout" class="list-group-item list-group-item-action bg-danger text-white">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                </a>
+            </div>
+        </div>
+        <!-- Contenido de la página principal -->
+        <div id="page-content-wrapper">
+            <div class="container-fluid">
+                <div class="container mt-5">
+                    <h2>Historial Clinico</h2>
+                    <div class="text-left mb-3">
+                        <a href="/admin/dashboard" class="btn btn-secondary">&larr; Regresar al Panel de Control</a>
+                        <% if (can('historial:crear')) { %>
+                            <button class="btn btn-primary" data-toggle="modal" data-target="#addConsultaModal">Agregar Consulta</button>
+                        <% } %>
+                    </div>
+
+                  <!-- Filtro para el historial de consultas -->
+                    <div class="card p-3 mb-4">
+                        <h5>Filtrar Historial de Consultas:</h5>
+                        <form action="/admin/historial" method="POST">
+            <!-- Filtro por Doctor -->
+            <div class="form-group">
+                <label for="idDoctor">Doctor:</label>
+                <select id="idDoctor" name="idDoctor" class="form-control">
+                    <option value="" disabled selected>Seleccione un Doctor</option>
+                    <% doctores.forEach(function(doctor) { %>
+                        <option value="<%= doctor.iddoctor %>"><%= doctor.nombre %> <%= doctor.apellido %></option>
+                    <% }); %>
+                </select>
+            </div>
+
+        <button type="submit" class="btn btn-success">Buscar Consultas</button>
+    </form>
+</div>
+
+                    <!-- Tabla de Historial Clínico -->
+                    <div class="card mt-4">
+                        <div class="card-body">
+                            <h4 class="card-title mb-4 text-center">Historial Clínico de Pacientes</h4>
+                            <table class="table table-bordered" id="historialTable">
+                                    <thead class="thead-light">
+                                    <tr class="text-center">
+                                        <th>ID Historial</th>
+                                        <th>Doctor</th>
+                                        <th>Paciente</th>
+                                        <th>Fecha Registro</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% if (historial && historial.length > 0) { %>
+                                        <% historial.forEach(function(historial_clinico) { %>
+                                            <tr>
+                                                <td class="text-center align-middle"><%= historial_clinico.idhistorialClinico %></td>
+                                                <td class="align-middle">
+                                                    <strong><%= historial_clinico.nombreDoctor %> <%= historial_clinico.apellidoDoctor %></strong>
+                                                </td>
+                                                <td class="align-middle">
+                                                    <strong><%= historial_clinico.nombrePaciente %> <%= historial_clinico.apellidoPaciente %></strong>
+                                                </td>
+                                                <td class="text-center align-middle">
+                                                    <%= new Date(historial_clinico.fecharegistro).toLocaleString('es-ES', { 
+                                                        day: '2-digit', 
+                                                        month: 'long', 
+                                                        year: 'numeric'
+                                                    }) %>
+                                                </td>
+                                                <td class="text-center align-middle">
+                                                    <button 
+                                                        class="btn btn-success btn-sm mx-1" 
+                                                        onclick="verHistorialClinico({
+                                                            idhistorialClinico: '<%= historial_clinico.idhistorialClinico %>',
+                                                            fecharegistro: '<%= historial_clinico.fecharegistro %>',
+                                                            idconsulta: '<%= historial_clinico.idconsulta %>',
+                                                            nopieza: '<%= historial_clinico.nopieza %>',
+                                                            descripcion: '<%= historial_clinico.descripcion %>',
+                                                            proximaCita: '<%= historial_clinico.proximaCita %>',
+                                                            nombreDoctor: '<%= historial_clinico.nombreDoctor %>',
+                                                            apellidoDoctor: '<%= historial_clinico.apellidoDoctor %>',
+                                                            nombreServicio: '<%= historial_clinico.nombreServicio %>',
+                                                            nombreTipoServicio: '<%= historial_clinico.nombreTipoServicio %>',
+                                                            nombrePaciente: '<%= historial_clinico.nombrePaciente %>',
+                                                            apellidoPaciente: '<%= historial_clinico.apellidoPaciente %>'
+                                                        })">
+                                                        <i class="fas fa-eye"></i>
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        <% }); %>
+                                    <% } else { %>
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted">No hay consultas disponibles.</td>
+                                        </tr>
+                                    <% } %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                        <BR></BR>
+
+
+
+
+                    <% if (can('historial:crear')) { %>
+                        <%- include('Historial/modals/addConsulta') %>
+                    <% } %>
+            
+
+              <%- include('Historial/modals/infoHistorial') %>
+
+
+
+    <!-- Scripts para Select2, jsPDF y DataTables -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.13/jspdf.plugin.autotable.min.js"></script>
+    <script>
+$(document).ready(function() {
+    // Check if there is data in the historial table
+    const hasData = $('#historialTable tbody tr').length > 1 || 
+                    ($('#historialTable tbody tr td').attr('colspan') !== '4' && $('#historialTable tbody tr td').text() !== "No hay datos disponibles en el historial");
+
+    if (hasData) {
+        $('#historialTable').DataTable({
+            deferRender: true,         // Improve performance by delaying rendering
+            destroy: true,             // Allows reinitialization if needed
+            paging: true,              // Enable pagination
+            searching: true,           // Enable search functionality
+            ordering: true,            // Enable column ordering
+            info: true,                // Show table information
+            lengthChange: false,       // Disable changing number of rows shown
+            language: {
+                paginate: {
+                    previous: "<",      // Customize Previous button
+                    next: ">"           // Customize Next button
+                },
+                emptyTable: "No hay datos disponibles en el historial" // Custom empty table message
+            },
+            order: []                   // No default ordering
+        });
+    }
+});
+
+
+function loadData() {
+    // Destroy existing DataTable instance
+    if ($.fn.DataTable.isDataTable('#historialTable')) {
+        $('#historialTable').DataTable().destroy();
+    }
+
+    // Populate the table with data...
+
+    // Reinitialize DataTable
+    $('#historialTable').DataTable({
+        deferRender: true,
+        destroy: true,
+        paging: true,
+        searching: true,
+        ordering: true,
+        info: true,
+        lengthChange: false,
+        language: {
+            paginate: {
+                previous: "<",
+                next: ">"
+            },
+            emptyTable: "No hay datos disponibles en el historial"
+        },
+        order: []
+    });
+}
+
+const guardarConsultaButton = document.getElementById('guardarconsulta');
+if (guardarConsultaButton) guardarConsultaButton.addEventListener('click', guardarConsulta);
+
+function guardarConsulta() {
+    // Capturar los valores del formulario
+    const idcita = document.getElementById('idcita').value;
+    const tipoServicio = document.getElementById('tipoServicio').value;
+    const servicio = document.getElementById('servicioSearch').value;
+    const piezaDental = document.getElementById('piezaDental').value;
+    const descripcionConsulta = document.getElementById('descripcionConsulta').value;
+    const proximaCita = document.getElementById('proximaCita').value;
+    const doctorSelect = document.getElementById('doctorSelect').value;
+
+    // Validación básica
+    let isValid = true;
+    if (!idcita) { document.getElementById('errorCitaId').style.display = 'block'; isValid = false; }
+    else { document.getElementById('errorCitaId').style.display = 'none'; }
+
+    if (!tipoServicio) { document.getElementById('errorTipoServicio').style.display = 'block'; isValid = false; }
+    else { document.getElementById('errorTipoServicio').style.display = 'none'; }
+
+    if (!servicio) { document.getElementById('errorServicioSearch').style.display = 'block'; isValid = false; }
+    else { document.getElementById('errorServicioSearch').style.display = 'none'; }
+
+    if (!descripcionConsulta) { document.getElementById('errorDescripcionConsulta').style.display = 'block'; isValid = false; }
+    else { document.getElementById('errorDescripcionConsulta').style.display = 'none'; }
+
+    if (!doctorSelect) { document.getElementById('errorDoctorSelect').style.display = 'block'; isValid = false; }
+    else { document.getElementById('errorDoctorSelect').style.display = 'none'; }
+
+    // Si la validación falla, salir de la función
+    if (!isValid) return;
+
+    // Crear objeto de datos para enviar
+    const consultaData = {
+        idcita,
+        tipoServicio,
+        servicio,
+        piezaDental,
+        descripcionConsulta,
+        proximaCita,
+        doctorSelect
+    };
+
+    // Enviar la solicitud al backend
+    fetch('/api/admin/consultas', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(consultaData)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Error al guardar la consulta');
+        }
+        return response.json();
+    })
+    .then(data => {
+        // Mostrar mensaje de éxito y cerrar el modal
+        showUiMessage(data.message || 'Consulta guardada correctamente.', 'success');
+        $('#addConsultaModal').modal('hide');
+        location.reload(); // Recargar la página para reflejar los cambios (opcional)
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showUiMessage('Hubo un problema al guardar la consulta.', 'danger');
+    });
+}
+
+
+
+
+function verHistorialClinico(historial) {
+    // Asignar valores de los datos del historial clínico al modal
+    document.getElementById('infoHistorialId').textContent = historial.idhistorialClinico;
+    document.getElementById('infoFechaRegistro').textContent = new Date(historial.fecharegistro).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
+    
+    // Detalles de la consulta
+    document.getElementById('infoConsultaId').textContent = historial.idconsulta;
+    document.getElementById('infoNoPieza').textContent = historial.nopieza || 'No especificado';
+    document.getElementById('infoDescripcionConsulta').textContent = historial.descripcion;
+    document.getElementById('infoProximaCita').textContent = historial.proximaCita ? new Date(historial.proximaCita).toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' }) : 'No programada';
+    
+    // Información del paciente
+    document.getElementById('infoPacienteNombre').textContent = historial.nombrePaciente;
+    document.getElementById('infoPacienteApellido').textContent = historial.apellidoPaciente;
+    
+    // Información del doctor
+    document.getElementById('infoDoctorNombre').textContent = historial.nombreDoctor;
+    document.getElementById('infoDoctorApellido').textContent = historial.apellidoDoctor;
+    
+    // Información del servicio
+    document.getElementById('infoTipoServicio').textContent = historial.nombreTipoServicio;
+    document.getElementById('infoServicio').textContent = historial.nombreServicio;
+
+    // Mostrar el modal
+    $('#infoHistorialModal').modal('show');
+}
+
+    </script>
+<%- include('partials/uiFeedback') %>
+
+
+
+
+
+<%- include('partials/pageLoader') %>
+</body>
+</html>

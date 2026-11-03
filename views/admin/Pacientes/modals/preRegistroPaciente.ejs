@@ -1,0 +1,102 @@
+<%
+  const recentPreregistros = Array.isArray(pendingPreregistros) ? pendingPreregistros : [];
+%>
+<div class="modal fade preregister-share-modal" id="preRegistroPacienteModal" tabindex="-1" aria-labelledby="preRegistroPacienteModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <form action="/admin/pacientes/pre-registro" method="post" data-preregister-form>
+        <div class="modal-header">
+          <div>
+            <h5 class="modal-title" id="preRegistroPacienteModalLabel">Enviar formulario de pre-registro</h5>
+            <p class="text-muted mb-0 small">Genera un enlace seguro para compartirlo sin salir de esta página.</p>
+          </div>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-danger d-none" data-preregister-error></div>
+
+          <div class="row gx-3">
+            <div class="col-md-5 mb-3">
+              <label class="form-label">Nombre de referencia</label>
+              <input class="form-control" name="nombre_referencia" placeholder="Ej. María López" autocomplete="name">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Correo</label>
+              <input class="form-control" type="email" name="email" placeholder="paciente@correo.com" autocomplete="email">
+            </div>
+            <div class="col-md-3 mb-3">
+              <label class="form-label">Teléfono</label>
+              <input class="form-control" name="telefono" placeholder="+502 0000-0000" autocomplete="tel">
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Vigencia</label>
+              <select class="form-select" name="vigencia_dias">
+                <option value="3">3 días</option>
+                <option value="7" selected>7 días</option>
+                <option value="15">15 días</option>
+                <option value="30">30 días</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="preregister-share-result d-none" data-share-result>
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+              <div class="me-auto">
+                <h6 class="mb-1">Compartir pre-registro</h6>
+                <div class="small text-muted" data-share-expiry>El enlace queda listo para enviarlo al paciente.</div>
+              </div>
+              <span class="badge bg-success-subtle text-success border border-success-subtle">Generado</span>
+            </div>
+
+            <div class="preregister-share-actions">
+              <button class="preregister-share-action" type="button" data-copy-prereg-link>
+                <span class="preregister-share-icon"><i class="ri-file-copy-line"></i></span>
+                <span>Copiar</span>
+              </button>
+              <a class="preregister-share-action" href="#!" target="_blank" rel="noopener" data-share-whatsapp>
+                <span class="preregister-share-icon whatsapp"><i class="ri-whatsapp-line"></i></span>
+                <span>WhatsApp</span>
+              </a>
+              <a class="preregister-share-action" href="#!" data-share-email>
+                <span class="preregister-share-icon email"><i class="ri-mail-send-line"></i></span>
+                <span>Correo</span>
+              </a>
+              <a class="preregister-share-action" href="#!" target="_blank" rel="noopener" data-open-prereg-link>
+                <span class="preregister-share-icon open"><i class="ri-external-link-line"></i></span>
+                <span>Abrir</span>
+              </a>
+            </div>
+
+            <div class="preregister-url-box mt-3">
+              <span class="preregister-url-text" data-share-url></span>
+              <button class="btn btn-outline-primary btn-sm" type="button" data-copy-prereg-link>Copiar</button>
+            </div>
+          </div>
+
+          <% if (recentPreregistros.length) { %>
+            <div class="border rounded-3 p-3 mt-3">
+              <h6 class="mb-3">Pre-registros recientes</h6>
+              <% recentPreregistros.forEach(item => { %>
+                <div class="d-flex flex-wrap align-items-center gap-2 border-bottom py-2">
+                  <div class="me-auto">
+                    <strong><%= item.nombre_referencia || item.email || item.telefono || 'Paciente sin referencia' %></strong>
+                    <div class="small text-muted"><%= item.estado === 'completado' ? 'Formulario completado' : 'Pendiente de completar' %></div>
+                  </div>
+                  <% if (item.estado === 'completado') { %>
+                    <a class="btn btn-sm btn-primary" href="/admin/pacientes/pre-registros/<%= item.id %>/crear">Crear paciente</a>
+                  <% } %>
+                </div>
+              <% }) %>
+            </div>
+          <% } %>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary" data-preregister-submit>
+            <i class="ri-link-m me-1"></i> Generar enlace
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

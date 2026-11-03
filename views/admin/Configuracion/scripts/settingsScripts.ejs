@@ -1,0 +1,915 @@
+<script>
+  (() => {
+    const catalogLabels = {
+      categoria: 'Categorías',
+      marca: 'Marcas',
+      especialidad: 'Especialidades',
+      estadocita: 'Estados de cita',
+      estadopaciente: 'Estados de paciente',
+      estadousuario: 'Estados de usuario',
+      genero: 'Géneros',
+      tipopaciente: 'Tipos de paciente',
+      metodo_pago: 'Métodos de pago',
+      servicio: 'Servicios',
+      tiposervicio: 'Tipos de servicio',
+    };
+
+    const clinicKeys = ['clinic_name', 'doctor_name', 'clinic_phone', 'clinic_email', 'clinic_address', 'clinic_coordinates'];
+    const notificationKeys = [
+      'appointment_notifications',
+      'payment_notifications',
+      'inventory_notifications',
+      'registration_notifications',
+      'email_notifications',
+      'desktop_notifications',
+    ];
+    const sessionKeys = ['session_inactivity_minutes'];
+
+    const catalogList = document.getElementById('catalogList');
+    const catalogRows = document.getElementById('catalogRows');
+    const catalogTitle = document.getElementById('catalogTitle');
+    const catalogStatus = document.getElementById('catalogStatus');
+    const catalogForm = document.getElementById('catalogForm');
+    const catalogId = document.getElementById('catalogId');
+    const catalogNombre = document.getElementById('catalogNombre');
+    const catalogDescripcion = document.getElementById('catalogDescripcion');
+    const catalogSimbolo = document.getElementById('catalogSimbolo');
+    const catalogExtraLabel = document.getElementById('catalogExtraLabel');
+    const catalogExtraHeader = document.getElementById('catalogExtraHeader');
+    const catalogActivo = document.getElementById('catalogActivo');
+    const cancelCatalogEdit = document.getElementById('cancelCatalogEdit');
+    const saveCatalog = document.getElementById('saveCatalog');
+    const catalogDeleteModalEl = document.getElementById('catalogDeleteModal');
+    const catalogDeleteModal = catalogDeleteModalEl ? new bootstrap.Modal(catalogDeleteModalEl) : null;
+    const confirmCatalogDelete = document.getElementById('confirmCatalogDelete');
+    let currentCatalog = catalogList?.querySelector('[data-catalog]')?.dataset.catalog || null;
+    let currentCatalogRows = [];
+    let pendingCatalogDeleteId = null;
+    const priceCatalogs = new Set(['servicio', 'tiposervicio']);
+    const accessStatus = document.getElementById('accessSettingsStatus');
+    const accessResponseModalEl = document.getElementById('accessResponseModal');
+    const accessResponseModal = accessResponseModalEl ? new bootstrap.Modal(accessResponseModalEl) : null;
+    const accessResponseForm = document.getElementById('accessResponseForm');
+    const accessResponseType = document.getElementById('accessResponseType');
+    const accessResponseAction = document.getElementById('accessResponseAction');
+    const accessResponseId = document.getElementById('accessResponseId');
+    const accessResponseRoleGroup = document.getElementById('accessResponseRoleGroup');
+    const accessResponseRole = document.getElementById('accessResponseRole');
+    const accessResponseText = document.getElementById('accessResponseText');
+    const accessResponseTitle = document.getElementById('accessResponseModalLabel');
+    const accessResponseSubtitle = document.getElementById('accessResponseSubtitle');
+    const accessResponseSubmit = document.getElementById('accessResponseSubmit');
+    const cleanupStatus = document.getElementById('cleanupStatus');
+    const cleanupPreviewResults = document.getElementById('cleanupPreviewResults');
+    const cleanupOpenConfirm = document.getElementById('cleanupOpenConfirm');
+    const cleanupConfirmSummary = document.getElementById('cleanupConfirmSummary');
+    const cleanupConfirmModalEl = document.getElementById('cleanupConfirmModal');
+    const cleanupConfirmModal = cleanupConfirmModalEl ? new bootstrap.Modal(cleanupConfirmModalEl) : null;
+    let cleanupRange = 'all';
+    let cleanupLastPreview = null;
+    const accessState = {
+      permissions: [],
+      roles: [],
+      users: [],
+      selectedRoleId: null,
+      selectedUserId: null,
+    };
+
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, char => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+      }[char]));
+    }
+
+    function showStatus(element, message, type = 'info') {
+      if (!element) return;
+      element.className = `settings-status alert alert-${type}`;
+      element.textContent = message;
+      element.style.display = message ? 'block' : 'none';
+    }
+
+    async function requestJson(url, options = {}) {
+      const response = await fetch(url, {
+        headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+        ...options,
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error || data.errors?.join(', ') || 'No se pudo completar la operación');
+      }
+      return data;
+    }
+
+    function boolValue(value) {
+      return value === true || value === '1' || value === 1 || value === 'true';
+    }
+
+    function catalogUsesPrice() {
+      return priceCatalogs.has(currentCatalog);
+    }
+
+    function formatCatalogPrice(value) {
+      if (value === null || value === undefined || value === '') return '';
+      const amount = Number(value);
+      return Number.isFinite(amount) ? `Q${amount.toFixed(2)}` : '';
+    }
+
+    function updateCatalogExtraField() {
+      const usesPrice = catalogUsesPrice();
+      if (catalogExtraLabel) catalogExtraLabel.textContent = usesPrice ? 'Precio' : 'Símbolo';
+      if (catalogExtraHeader) catalogExtraHeader.textContent = usesPrice ? 'Precio' : 'Símbolo';
+      if (!catalogSimbolo) return;
+      catalogSimbolo.name = usesPrice ? 'precio' : 'simbolo';
+      catalogSimbolo.type = usesPrice ? 'number' : 'text';
+      catalogSimbolo.placeholder = usesPrice ? '0.00' : '';
+      if (usesPrice) {
+        catalogSimbolo.min = '0';
+        catalogSimbolo.step = '0.01';
+        catalogSimbolo.removeAttribute('maxlength');
+      } else {
+        catalogSimbolo.removeAttribute('min');
+        catalogSimbolo.removeAttribute('step');
+        catalogSimbolo.setAttribute('maxlength', '12');
+      }
+    }
+
+    function formatDate(value) {
+      if (!value) return '-';
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? '-' : date.toLocaleDateString('es-GT');
+    }
+
+    function statusBadge(status) {
+      const normalized = String(status || '').toLowerCase();
+      const type = normalized === 'aprobada' ? 'success' : normalized === 'rechazada' ? 'danger' : 'warning';
+      return `<span class="badge bg-${type}">${escapeHtml(status || 'pendiente')}</span>`;
+    }
+
+    function renderConfigUsers(users = []) {
+      const rows = document.getElementById('settingsUsersRows');
+      const count = document.getElementById('settingsUsersCount');
+      if (!rows) return;
+      if (count) count.textContent = `${users.length} ${users.length === 1 ? 'usuario' : 'usuarios'}`;
+      if (!users.length) {
+        rows.innerHTML = `
+          <tr>
+            <td colspan="6" class="text-center text-muted py-4">Todavía no hay usuarios registrados.</td>
+          </tr>`;
+        return;
+      }
+
+      rows.innerHTML = users.map(user => {
+        const isActive = Number(user.estadoUsuario_idestadoUsuario) === 1;
+        const doctorName = `${user.doctor_nombre || ''} ${user.doctor_apellido || ''}`.trim() || 'Doctor no vinculado';
+        const profileUrl = user.iddoctor ? `/admin/doctores/perfil/${encodeURIComponent(user.iddoctor)}` : '#!';
+        return `
+          <tr data-user-row="${escapeHtml(user.idusuario)}">
+            <td>
+              <div class="fw-semibold">${escapeHtml(doctorName)}</div>
+              <small class="text-muted">${escapeHtml(user.user)}</small>
+            </td>
+            <td><span class="badge bg-light text-dark">${escapeHtml(user.rol_nombre || 'Sin rol')}</span></td>
+            <td>${escapeHtml(user.especialidad_nombre || 'Pendiente')}</td>
+            <td>
+              <div>${escapeHtml(user.telefono || '-')}</div>
+              <small class="text-muted">${escapeHtml(user.email || '-')}</small>
+            </td>
+            <td>
+              <span class="badge ${isActive ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'}" data-user-status>
+                ${isActive ? 'Activo' : 'Inactivo'}
+              </span>
+            </td>
+            <td class="text-end">
+              <a href="${profileUrl}" class="btn btn-sm btn-outline-primary ${user.iddoctor ? '' : 'disabled'}" ${user.iddoctor ? '' : 'aria-disabled="true"'}>Ver perfil</a>
+              <button type="button"
+                class="btn btn-sm ${isActive ? 'btn-outline-danger' : 'btn-outline-success'}"
+                data-user-toggle="${escapeHtml(user.idusuario)}"
+                data-next-state="${isActive ? 2 : 1}">
+                ${isActive ? 'Inactivar' : 'Activar'}
+              </button>
+            </td>
+          </tr>`;
+      }).join('');
+    }
+
+    async function loadConfigUsers() {
+      if (!document.getElementById('settingsUsersRows')) return;
+      const data = await requestJson('/configuracion/api/usuarios');
+      renderConfigUsers(data.users || []);
+    }
+
+    function emptyRow(colspan, text) {
+      return `
+        <tr>
+          <td colspan="${colspan}">
+            <div class="catalog-empty-state">${escapeHtml(text)}</div>
+          </td>
+        </tr>`;
+    }
+
+    function formatBytes(bytes) {
+      const value = Number(bytes || 0);
+      if (value < 1024) return `${value} B`;
+      if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
+      return `${(value / 1024 / 1024).toFixed(1)} MB`;
+    }
+
+    function selectedCleanupAreas() {
+      return Array.from(document.querySelectorAll('.cleanup-option input[type="checkbox"]:checked'))
+        .map(input => input.value);
+    }
+
+    function cleanupHasItems(preview) {
+      const totals = preview?.totals || {};
+      return Number(totals.dbRows || 0) > 0 || Number(totals.files || 0) > 0 || Number(totals.bytes || 0) > 0;
+    }
+
+    function cleanupPayload() {
+      return {
+        range: cleanupRange,
+        areas: selectedCleanupAreas(),
+      };
+    }
+
+    function renderCleanupItems(preview) {
+      const items = preview?.items || [];
+      if (!items.length) {
+        return '<div class="cleanup-preview-empty">No hay áreas seleccionadas.</div>';
+      }
+
+      return `
+        <div class="mb-3">
+          <span class="badge bg-primary-subtle text-primary">Rango: ${escapeHtml(preview.rangeLabel || 'Desde siempre')}</span>
+        </div>
+        ${items.map(item => `
+          <div class="cleanup-preview-item">
+            <div class="d-flex justify-content-between gap-2">
+              <strong>${escapeHtml(item.label)}</strong>
+              <span class="badge bg-light text-dark">${Number(item.dbRows || 0) + Number(item.files || 0)} elementos</span>
+            </div>
+            <small class="text-muted d-block mb-2">${escapeHtml(item.description || '')}</small>
+            <div class="d-flex flex-wrap gap-2">
+              <span class="badge bg-secondary-subtle text-secondary">${Number(item.dbRows || 0)} registros BD</span>
+              <span class="badge bg-secondary-subtle text-secondary">${Number(item.files || 0)} archivos</span>
+              <span class="badge bg-secondary-subtle text-secondary">${formatBytes(item.bytes)}</span>
+            </div>
+          </div>
+        `).join('')}
+      `;
+    }
+
+    function renderCleanupPreview(preview) {
+      if (!cleanupPreviewResults) return;
+      cleanupLastPreview = preview;
+      cleanupPreviewResults.className = '';
+      cleanupPreviewResults.innerHTML = renderCleanupItems(preview);
+      if (cleanupOpenConfirm) cleanupOpenConfirm.disabled = !cleanupHasItems(preview);
+    }
+
+    function renderCleanupEmpty(message) {
+      if (!cleanupPreviewResults) return;
+      cleanupLastPreview = null;
+      cleanupPreviewResults.className = 'cleanup-preview-empty';
+      cleanupPreviewResults.textContent = message;
+      if (cleanupOpenConfirm) cleanupOpenConfirm.disabled = true;
+    }
+
+    async function loadCleanupPreview() {
+      if (!cleanupPreviewResults) return;
+      const payload = cleanupPayload();
+      if (!payload.areas.length) {
+        renderCleanupEmpty('Selecciona al menos un área para calcular la limpieza.');
+        return;
+      }
+
+      showStatus(cleanupStatus, 'Calculando elementos disponibles para limpieza...', 'info');
+      try {
+        const preview = await requestJson('/configuracion/api/limpieza/preview', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
+        renderCleanupPreview(preview);
+        showStatus(cleanupStatus, cleanupHasItems(preview)
+          ? 'Vista previa lista. Revisa el resumen antes de ejecutar.'
+          : 'No se encontraron elementos para limpiar con esta selección.',
+          cleanupHasItems(preview) ? 'success' : 'warning'
+        );
+      } catch (error) {
+        renderCleanupEmpty('No se pudo calcular la limpieza.');
+        showStatus(cleanupStatus, error.message, 'danger');
+      }
+    }
+
+    function showCleanupConfirm() {
+      if (!cleanupLastPreview || !cleanupHasItems(cleanupLastPreview)) return;
+      if (cleanupConfirmSummary) cleanupConfirmSummary.innerHTML = renderCleanupItems(cleanupLastPreview);
+      cleanupConfirmModal?.show();
+    }
+
+    async function executeCleanup() {
+      const payload = cleanupPayload();
+      if (!payload.areas.length) return;
+
+      showStatus(cleanupStatus, 'Ejecutando limpieza...', 'info');
+      try {
+        const result = await requestJson('/configuracion/api/limpieza/execute', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
+        cleanupConfirmModal?.hide();
+        renderCleanupPreview(result);
+        if (cleanupOpenConfirm) cleanupOpenConfirm.disabled = true;
+        showStatus(cleanupStatus, 'Limpieza ejecutada correctamente.', 'success');
+      } catch (error) {
+        showStatus(cleanupStatus, error.message, 'danger');
+      }
+    }
+
+    function fillSystemSettings(settings = {}) {
+      clinicKeys.forEach(key => {
+        const input = document.getElementById(key);
+        if (input) input.value = settings[key] ?? '';
+      });
+
+      notificationKeys.forEach(key => {
+        const input = document.getElementById(key);
+        if (input) input.checked = boolValue(settings[key]);
+      });
+
+      sessionKeys.forEach(key => {
+        const input = document.getElementById(key);
+        if (input) input.value = settings[key] ?? '60';
+      });
+    }
+
+    function collectClinicSettings() {
+      return Object.fromEntries(clinicKeys.map(key => {
+        const input = document.getElementById(key);
+        return [key, input?.value?.trim() || ''];
+      }));
+    }
+
+    function collectNotificationSettings() {
+      return Object.fromEntries(notificationKeys.map(key => {
+        const input = document.getElementById(key);
+        return [key, input?.checked ? '1' : '0'];
+      }));
+    }
+
+    function collectSessionSettings() {
+      return Object.fromEntries(sessionKeys.map(key => {
+        const input = document.getElementById(key);
+        return [key, input?.value?.trim() || '60'];
+      }));
+    }
+
+    async function loadSystemSettings() {
+      try {
+        const data = await requestJson('/configuracion/api/system-settings');
+        fillSystemSettings(data.settings);
+        if (!data.tablesReady) {
+          showStatus(document.getElementById('clinicSettingsStatus'), 'La tabla de configuración aún no existe. Puedes revisar los valores sugeridos, pero para guardar debes integrar el SQL.', 'warning');
+        } else {
+          showStatus(document.getElementById('clinicSettingsStatus'), '', 'success');
+        }
+      } catch (error) {
+        showStatus(document.getElementById('clinicSettingsStatus'), error.message, 'danger');
+      }
+    }
+
+    async function saveSystemSettings(payload, statusElement, successMessage) {
+      try {
+        await requestJson('/configuracion/api/system-settings', {
+          method: 'PUT',
+          body: JSON.stringify(payload),
+        });
+        showStatus(statusElement, successMessage, 'success');
+      } catch (error) {
+        showStatus(statusElement, error.message, 'danger');
+      }
+    }
+
+    function resetCatalogForm() {
+      catalogId.value = '';
+      catalogNombre.value = '';
+      catalogDescripcion.value = '';
+      catalogSimbolo.value = '';
+      catalogActivo.checked = true;
+      cancelCatalogEdit.style.display = 'none';
+      saveCatalog.textContent = 'Guardar registro';
+    }
+
+    function fillCatalogForm(item) {
+      catalogId.value = item.id ?? '';
+      catalogNombre.value = item.nombre ?? '';
+      catalogDescripcion.value = item.descripcion ?? '';
+      catalogSimbolo.value = catalogUsesPrice() ? (item.precio ?? '') : (item.simbolo ?? '');
+      catalogActivo.checked = Number(item.activo) === 1;
+      cancelCatalogEdit.style.display = 'inline-block';
+      saveCatalog.textContent = 'Guardar cambios';
+      catalogNombre.focus();
+    }
+
+    function renderCatalogRows(data) {
+      if (!Array.isArray(data) || data.length === 0) {
+        catalogRows.innerHTML = `
+          <tr>
+            <td colspan="6">
+              <div class="catalog-empty-state">
+                Este catálogo todavía no tiene registros. Puedes crear el primero desde el formulario superior.
+              </div>
+            </td>
+          </tr>`;
+        return;
+      }
+
+      catalogRows.innerHTML = data.map(item => {
+        const active = Number(item.activo) === 1;
+        return `
+          <tr>
+            <td>${escapeHtml(item.id)}</td>
+            <td>${escapeHtml(item.nombre)}</td>
+            <td>${escapeHtml(item.descripcion)}</td>
+            <td>${escapeHtml(catalogUsesPrice() ? formatCatalogPrice(item.precio) : item.simbolo)}</td>
+            <td><span class="badge ${active ? 'bg-success' : 'bg-secondary'}">${active ? 'Activo' : 'Inactivo'}</span></td>
+            <td>
+              <button type="button" class="btn btn-sm btn-outline-primary" data-edit-catalog="${escapeHtml(item.id)}">Editar</button>
+              <button type="button" class="btn btn-sm btn-outline-danger" data-delete-catalog="${escapeHtml(item.id)}">Desactivar</button>
+            </td>
+          </tr>`;
+      }).join('');
+    }
+
+    async function loadCatalog(catalog = currentCatalog) {
+      if (!catalog) return;
+      currentCatalog = catalog;
+      catalogTitle.textContent = catalogLabels[catalog] || catalog.replace(/_/g, ' ');
+      updateCatalogExtraField();
+      showStatus(catalogStatus, 'Cargando catálogo...', 'info');
+      resetCatalogForm();
+
+      try {
+        currentCatalogRows = await requestJson(`/configuracion/api/config/catalogs/${encodeURIComponent(catalog)}`);
+        renderCatalogRows(currentCatalogRows);
+        showStatus(catalogStatus, '', 'success');
+      } catch (error) {
+        catalogRows.innerHTML = '';
+        showStatus(catalogStatus, error.message, 'danger');
+      }
+    }
+
+    function catalogPayload() {
+      const payload = {
+        nombre: catalogNombre.value.trim(),
+        descripcion: catalogDescripcion.value.trim(),
+        activo: catalogActivo.checked,
+      };
+      if (catalogUsesPrice()) {
+        const rawPrice = catalogSimbolo.value.trim();
+        payload.precio = rawPrice === '' ? null : Number(rawPrice);
+      } else {
+        payload.simbolo = catalogSimbolo.value.trim();
+      }
+      return payload;
+    }
+
+    function renderRoleOptions(selectedRoleId) {
+      if (!accessResponseRole) return;
+      accessResponseRole.innerHTML = accessState.roles.map(role => `
+        <option value="${escapeHtml(role.idrol)}" ${Number(role.idrol) === Number(selectedRoleId) ? 'selected' : ''}>
+          ${escapeHtml(role.nombre)}
+        </option>
+      `).join('');
+    }
+
+    function renderPermissionChecks(container, selected = []) {
+      if (!container) return;
+      const selectedSet = new Set(selected);
+      if (!accessState.permissions.length) {
+        container.innerHTML = '<div class="catalog-empty-state">No hay permisos configurados.</div>';
+        return;
+      }
+
+      container.innerHTML = accessState.permissions.map(permission => {
+        const key = permission.permiso_key;
+        return `
+          <label class="permission-check">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" value="${escapeHtml(key)}" ${selectedSet.has(key) ? 'checked' : ''}>
+              <span class="form-check-label fw-semibold">${escapeHtml(permission.label || key)}</span>
+              <small>${escapeHtml(permission.grupo || 'General')} · ${escapeHtml(key)}</small>
+            </div>
+          </label>`;
+      }).join('');
+    }
+
+    function selectedPermissionKeys(container) {
+      return Array.from(container?.querySelectorAll('input[type="checkbox"]:checked') || []).map(input => input.value);
+    }
+
+    function renderRegistrationRequests(items = []) {
+      const rows = document.getElementById('registrationRequestsRows');
+      if (!rows) return;
+      if (!items.length) {
+        rows.innerHTML = emptyRow(6, 'No hay solicitudes de registro.');
+        return;
+      }
+
+      rows.innerHTML = items.map(item => {
+        const pending = String(item.estado || '').toLowerCase() === 'pendiente';
+        return `
+          <tr>
+            <td>${escapeHtml(item.user)}</td>
+            <td>${escapeHtml(item.nombre || '-')}</td>
+            <td>${escapeHtml(item.rol_nombre || '-')}</td>
+            <td>${statusBadge(item.estado)}</td>
+            <td>${formatDate(item.fecha_solicitud)}</td>
+            <td>
+              ${pending ? `
+                <button type="button" class="btn btn-sm btn-outline-success" data-access-response="registration" data-action="aprobar" data-id="${escapeHtml(item.id)}" data-role-id="${escapeHtml(item.rol_idrol || '')}" data-label="${escapeHtml(item.user)}">Aprobar</button>
+                <button type="button" class="btn btn-sm btn-outline-danger" data-access-response="registration" data-action="rechazar" data-id="${escapeHtml(item.id)}" data-label="${escapeHtml(item.user)}">Rechazar</button>
+              ` : '<span class="text-muted">Procesada</span>'}
+            </td>
+          </tr>`;
+      }).join('');
+    }
+
+    function renderAuthorizationRequests(items = []) {
+      const rows = document.getElementById('authorizationRequestsRows');
+      if (!rows) return;
+      if (!items.length) {
+        rows.innerHTML = emptyRow(6, 'No hay solicitudes de permisos.');
+        return;
+      }
+
+      rows.innerHTML = items.map(item => {
+        const pending = String(item.estado || '').toLowerCase() === 'pendiente';
+        return `
+          <tr>
+            <td>${escapeHtml(item.user)}</td>
+            <td>${escapeHtml(item.permiso_label || item.permiso_key)}</td>
+            <td>${escapeHtml(item.motivo || '-')}</td>
+            <td>${statusBadge(item.estado)}</td>
+            <td>${formatDate(item.fecha_solicitud)}</td>
+            <td>
+              ${pending ? `
+                <button type="button" class="btn btn-sm btn-outline-success" data-access-response="authorization" data-action="aprobar" data-id="${escapeHtml(item.id)}" data-label="${escapeHtml(item.user)}">Aprobar</button>
+                <button type="button" class="btn btn-sm btn-outline-danger" data-access-response="authorization" data-action="rechazar" data-id="${escapeHtml(item.id)}" data-label="${escapeHtml(item.user)}">Rechazar</button>
+              ` : '<span class="text-muted">Procesada</span>'}
+            </td>
+          </tr>`;
+      }).join('');
+    }
+
+    function renderRolePermissions() {
+      const list = document.getElementById('rolePermissionsList');
+      const title = document.getElementById('rolePermissionsTitle');
+      const checks = document.getElementById('rolePermissionsChecks');
+      if (!list) return;
+      if (!accessState.roles.length) {
+        list.innerHTML = '<div class="catalog-empty-state">No hay roles configurados.</div>';
+        renderPermissionChecks(checks, []);
+        return;
+      }
+
+      accessState.selectedRoleId ||= accessState.roles[0].idrol;
+      list.innerHTML = accessState.roles.map(role => `
+        <button type="button" class="list-group-item list-group-item-action ${Number(role.idrol) === Number(accessState.selectedRoleId) ? 'active' : ''}" data-role-permissions="${escapeHtml(role.idrol)}">
+          ${escapeHtml(role.nombre)}
+        </button>
+      `).join('');
+
+      const selected = accessState.roles.find(role => Number(role.idrol) === Number(accessState.selectedRoleId));
+      if (title) title.textContent = selected ? `Rol: ${selected.nombre}` : 'Seleccione un rol';
+      renderPermissionChecks(checks, selected?.permissions || []);
+    }
+
+    function renderUserPermissions() {
+      const list = document.getElementById('userPermissionsList');
+      const title = document.getElementById('userPermissionsTitle');
+      const checks = document.getElementById('userPermissionsChecks');
+      if (!list) return;
+      if (!accessState.users.length) {
+        list.innerHTML = '<div class="catalog-empty-state">No hay usuarios configurados.</div>';
+        renderPermissionChecks(checks, []);
+        return;
+      }
+
+      accessState.selectedUserId ||= accessState.users[0].idusuario;
+      list.innerHTML = accessState.users.map(user => `
+        <button type="button" class="list-group-item list-group-item-action ${Number(user.idusuario) === Number(accessState.selectedUserId) ? 'active' : ''}" data-user-permissions="${escapeHtml(user.idusuario)}">
+          <span class="d-block fw-semibold">${escapeHtml(user.user)}</span>
+          <small>${escapeHtml(user.rol_nombre || 'Sin rol')}</small>
+        </button>
+      `).join('');
+
+      const selected = accessState.users.find(user => Number(user.idusuario) === Number(accessState.selectedUserId));
+      if (title) title.textContent = selected ? `Usuario: ${selected.user}` : 'Seleccione un usuario';
+      renderPermissionChecks(checks, selected?.permissions || []);
+    }
+
+    async function loadAccessSettings() {
+      if (!document.getElementById('accessSettingsStatus')) return;
+      showStatus(accessStatus, 'Cargando accesos...', 'info');
+      try {
+        const [permissions, roles, users, registrations, authorizations] = await Promise.all([
+          requestJson('/configuracion/api/permissions'),
+          requestJson('/configuracion/api/roles-permisos'),
+          requestJson('/configuracion/api/usuarios-permisos'),
+          requestJson('/configuracion/api/solicitudes-registro'),
+          requestJson('/configuracion/api/solicitudes-autorizacion'),
+        ]);
+
+        accessState.permissions = permissions.permissions || [];
+        accessState.roles = roles.roles || [];
+        accessState.users = users.users || [];
+
+        renderRegistrationRequests(registrations.solicitudes || []);
+        renderAuthorizationRequests(authorizations.solicitudes || []);
+        renderRolePermissions();
+        renderUserPermissions();
+        showStatus(accessStatus, '', 'success');
+      } catch (error) {
+        showStatus(accessStatus, error.message, 'danger');
+      }
+    }
+
+    async function toggleConfigUser(button) {
+      const userId = button.dataset.userToggle;
+      const nextState = Number(button.dataset.nextState || 1);
+      const row = button.closest('[data-user-row]');
+      const status = row?.querySelector('[data-user-status]');
+      button.disabled = true;
+
+      try {
+        await requestJson(`/configuracion/api/usuarios/${encodeURIComponent(userId)}/estado`, {
+          method: 'PUT',
+          body: JSON.stringify({ estadoUsuario_idestadoUsuario: nextState }),
+        });
+
+        const isActive = nextState === 1;
+        status.textContent = isActive ? 'Activo' : 'Inactivo';
+        status.className = `badge ${isActive ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger'}`;
+        button.dataset.nextState = isActive ? '2' : '1';
+        button.textContent = isActive ? 'Inactivar' : 'Activar';
+        button.className = `btn btn-sm ${isActive ? 'btn-outline-danger' : 'btn-outline-success'}`;
+      } catch (error) {
+        alert(error.message || 'No se pudo actualizar el usuario.');
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    catalogList?.addEventListener('click', event => {
+      const button = event.target.closest('[data-catalog]');
+      if (!button) return;
+      catalogList.querySelectorAll('[data-catalog]').forEach(item => item.classList.remove('active'));
+      button.classList.add('active');
+      loadCatalog(button.dataset.catalog);
+    });
+
+    document.getElementById('reloadCatalog')?.addEventListener('click', () => loadCatalog());
+    cancelCatalogEdit?.addEventListener('click', resetCatalogForm);
+
+    catalogRows?.addEventListener('click', async event => {
+      const editButton = event.target.closest('[data-edit-catalog]');
+      const deleteButton = event.target.closest('[data-delete-catalog]');
+
+      if (editButton) {
+        const item = currentCatalogRows.find(row => String(row.id) === String(editButton.dataset.editCatalog));
+        if (item) fillCatalogForm(item);
+        return;
+      }
+
+      if (deleteButton) {
+        pendingCatalogDeleteId = deleteButton.dataset.deleteCatalog;
+        catalogDeleteModal?.show();
+      }
+    });
+
+    confirmCatalogDelete?.addEventListener('click', async () => {
+      if (!pendingCatalogDeleteId) return;
+      try {
+        await requestJson(`/configuracion/api/config/catalogs/${encodeURIComponent(currentCatalog)}/${encodeURIComponent(pendingCatalogDeleteId)}`, {
+          method: 'DELETE',
+        });
+        pendingCatalogDeleteId = null;
+        catalogDeleteModal?.hide();
+        await loadCatalog();
+        showStatus(catalogStatus, 'Registro actualizado correctamente.', 'success');
+      } catch (error) {
+        showStatus(catalogStatus, error.message, 'danger');
+      }
+    });
+
+    catalogForm?.addEventListener('submit', async event => {
+      event.preventDefault();
+      if (!currentCatalog) return;
+
+      const id = catalogId.value;
+      const url = id
+        ? `/configuracion/api/config/catalogs/${encodeURIComponent(currentCatalog)}/${encodeURIComponent(id)}`
+        : `/configuracion/api/config/catalogs/${encodeURIComponent(currentCatalog)}`;
+      const method = id ? 'PUT' : 'POST';
+
+      try {
+        await requestJson(url, {
+          method,
+          body: JSON.stringify(catalogPayload()),
+        });
+        await loadCatalog();
+        showStatus(catalogStatus, id ? 'Registro editado correctamente.' : 'Registro creado correctamente.', 'success');
+      } catch (error) {
+        showStatus(catalogStatus, error.message, 'danger');
+      }
+    });
+
+    document.getElementById('rolePermissionsList')?.addEventListener('click', event => {
+      const button = event.target.closest('[data-role-permissions]');
+      if (!button) return;
+      accessState.selectedRoleId = Number(button.dataset.rolePermissions);
+      renderRolePermissions();
+    });
+
+    document.getElementById('userPermissionsList')?.addEventListener('click', event => {
+      const button = event.target.closest('[data-user-permissions]');
+      if (!button) return;
+      accessState.selectedUserId = Number(button.dataset.userPermissions);
+      renderUserPermissions();
+    });
+
+    document.getElementById('saveRolePermissions')?.addEventListener('click', async () => {
+      if (!accessState.selectedRoleId) return;
+      try {
+        const container = document.getElementById('rolePermissionsChecks');
+        await requestJson(`/configuracion/api/roles/${encodeURIComponent(accessState.selectedRoleId)}/permisos`, {
+          method: 'PUT',
+          body: JSON.stringify({ permissions: selectedPermissionKeys(container) }),
+        });
+        await loadAccessSettings();
+        showStatus(accessStatus, 'Permisos del rol guardados correctamente.', 'success');
+      } catch (error) {
+        showStatus(accessStatus, error.message, 'danger');
+      }
+    });
+
+    document.getElementById('saveUserPermissions')?.addEventListener('click', async () => {
+      if (!accessState.selectedUserId) return;
+      try {
+        const container = document.getElementById('userPermissionsChecks');
+        await requestJson(`/configuracion/api/usuarios/${encodeURIComponent(accessState.selectedUserId)}/permisos`, {
+          method: 'PUT',
+          body: JSON.stringify({ permissions: selectedPermissionKeys(container) }),
+        });
+        await loadAccessSettings();
+        showStatus(accessStatus, 'Permisos del usuario guardados correctamente.', 'success');
+      } catch (error) {
+        showStatus(accessStatus, error.message, 'danger');
+      }
+    });
+
+    document.getElementById('reloadAccessSettings')?.addEventListener('click', loadAccessSettings);
+
+    document.addEventListener('click', event => {
+      const button = event.target.closest('[data-access-response]');
+      if (!button) return;
+
+      const type = button.dataset.accessResponse;
+      const action = button.dataset.action;
+      const isApprove = action === 'aprobar';
+      const isRegistration = type === 'registration';
+      accessResponseForm?.reset();
+      accessResponseType.value = type;
+      accessResponseAction.value = action;
+      accessResponseId.value = button.dataset.id;
+      accessResponseRoleGroup.style.display = isRegistration && isApprove ? 'block' : 'none';
+      renderRoleOptions(button.dataset.roleId);
+      accessResponseTitle.textContent = `${isApprove ? 'Aprobar' : 'Rechazar'} ${isRegistration ? 'registro' : 'permiso'}`;
+      accessResponseSubtitle.textContent = button.dataset.label || '';
+      accessResponseSubmit.className = `btn btn-${isApprove ? 'primary' : 'danger'}`;
+      accessResponseSubmit.textContent = isApprove ? 'Aprobar solicitud' : 'Rechazar solicitud';
+      accessResponseModal?.show();
+    });
+
+    accessResponseForm?.addEventListener('submit', async event => {
+      event.preventDefault();
+      const type = accessResponseType.value;
+      const action = accessResponseAction.value;
+      const id = accessResponseId.value;
+      const responseText = accessResponseText.value.trim();
+      const isRegistration = type === 'registration';
+      const endpoint = isRegistration
+        ? `/configuracion/api/solicitudes-registro/${encodeURIComponent(id)}/${action}`
+        : `/configuracion/api/solicitudes-autorizacion/${encodeURIComponent(id)}/${action}`;
+      const payload = isRegistration
+        ? (action === 'aprobar' ? { rol_idrol: accessResponseRole.value } : { motivo: responseText })
+        : { respuesta: responseText };
+
+      try {
+        await requestJson(endpoint, {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
+        accessResponseModal?.hide();
+        await loadAccessSettings();
+        await loadConfigUsers();
+        showStatus(accessStatus, 'Solicitud procesada correctamente.', 'success');
+      } catch (error) {
+        showStatus(accessStatus, error.message, 'danger');
+      }
+    });
+
+    document.getElementById('clinicSettingsForm')?.addEventListener('submit', event => {
+      event.preventDefault();
+      saveSystemSettings(
+        collectClinicSettings(),
+        document.getElementById('clinicSettingsStatus'),
+        'Información guardada correctamente.'
+      );
+    });
+
+    document.getElementById('notificationSettingsForm')?.addEventListener('submit', event => {
+      event.preventDefault();
+      saveSystemSettings(
+        collectNotificationSettings(),
+        document.getElementById('notificationSettingsStatus'),
+        'Preferencias guardadas correctamente.'
+      );
+    });
+
+    document.getElementById('sessionSettingsForm')?.addEventListener('submit', event => {
+      event.preventDefault();
+      saveSystemSettings(
+        collectSessionSettings(),
+        document.getElementById('sessionSettingsStatus'),
+        'Tiempo de inactividad guardado correctamente.'
+      );
+    });
+
+    document.getElementById('passwordSettingsForm')?.addEventListener('submit', async event => {
+      event.preventDefault();
+      const status = document.getElementById('passwordSettingsStatus');
+      const payload = {
+        current_password: document.getElementById('current_password').value,
+        new_password: document.getElementById('new_password').value,
+        confirm_password: document.getElementById('confirm_password').value,
+      };
+
+      try {
+        await requestJson('/configuracion/api/password', {
+          method: 'PUT',
+          body: JSON.stringify(payload),
+        });
+        event.currentTarget.reset();
+        showStatus(status, 'Contraseña actualizada correctamente.', 'success');
+      } catch (error) {
+        showStatus(status, error.message, 'danger');
+      }
+    });
+
+    document.getElementById('cleanupRanges')?.addEventListener('click', event => {
+      const button = event.target.closest('[data-cleanup-range]');
+      if (!button) return;
+      cleanupRange = button.dataset.cleanupRange || 'all';
+      document.querySelectorAll('[data-cleanup-range]').forEach(item => {
+        item.classList.toggle('btn-primary', item === button);
+        item.classList.toggle('btn-outline-primary', item !== button);
+      });
+      renderCleanupEmpty('El rango cambió. Calcula nuevamente la vista previa.');
+    });
+
+    document.querySelectorAll('.cleanup-option input[type="checkbox"]').forEach(input => {
+      input.addEventListener('change', () => {
+        renderCleanupEmpty('La selección cambió. Calcula nuevamente la vista previa.');
+      });
+    });
+
+    document.getElementById('cleanupPreview')?.addEventListener('click', loadCleanupPreview);
+    cleanupOpenConfirm?.addEventListener('click', showCleanupConfirm);
+    document.getElementById('cleanupExecute')?.addEventListener('click', executeCleanup);
+
+    document.getElementById('settingsUsersRows')?.addEventListener('click', event => {
+      const button = event.target.closest('[data-user-toggle]');
+      if (button) toggleConfigUser(button);
+    });
+
+    document.getElementById('refreshSettingsPage')?.addEventListener('click', () => {
+      loadSystemSettings();
+      loadCatalog();
+      loadAccessSettings();
+      loadConfigUsers();
+      renderCleanupEmpty('Selecciona las áreas y calcula la limpieza para ver el resumen.');
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadSystemSettings();
+      loadCatalog();
+      loadAccessSettings();
+      loadConfigUsers();
+    });
+  })();
+</script>

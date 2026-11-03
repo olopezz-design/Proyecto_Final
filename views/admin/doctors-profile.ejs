@@ -1,0 +1,204 @@
+<%
+  const displayName = doctor ? `Dr. ${doctor.nombre || ''} ${doctor.apellido || ''}`.trim() : 'Perfil no vinculado';
+  const photoUrl = doctor?.fotoPerfil || '';
+  const headerProfile = typeof adminProfile !== 'undefined' ? adminProfile : {};
+  const headerName = headerProfile.displayName || displayName;
+  const headerInitials = headerProfile.initials || initials || 'DR';
+  const headerPhoto = headerProfile.photoUrl || photoUrl;
+  const headerRole = headerProfile.roleLabel || doctor?.especialidad_nombre || 'Doctor';
+  const canFn = typeof can === 'function' ? can : () => true;
+  const scheduleRows = typeof horarios !== 'undefined' && Array.isArray(horarios) ? horarios : [];
+%>
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Mi perfil - C&C Dental Studio</title>
+    <link rel="shortcut icon" type="image/svg+xml" href="/images/cnc-favicon.svg">
+    <link rel="stylesheet" href="/assets/fonts/remix/remixicon.css">
+    <link rel="stylesheet" href="/assets/css/main.min.css">
+    <link rel="stylesheet" href="/assets/vendor/overlay-scroll/OverlayScrollbars.min.css">
+    <style>
+      .header-actions > .d-lg-flex.d-none.gap-2 { display: none !important; }
+      .profile-initials-badge,
+      .profile-initials {
+        align-items: center;
+        background: #f4f1ff;
+        color: #705df3;
+        display: inline-flex;
+        font-weight: 800;
+        justify-content: center;
+      }
+      .profile-avatar,
+      .profile-initials {
+        width: 128px;
+        height: 128px;
+        border-radius: 24px;
+        border: 4px solid #705df3;
+      }
+      .profile-avatar { object-fit: cover; }
+      .profile-initials { font-size: 2rem; }
+      .doctor-profile-hero {
+        background: linear-gradient(135deg, #f1efff, #f9fbff);
+        border: 1px solid #dde2ee;
+        border-radius: 18px;
+      }
+      .info-row { border-bottom: 1px solid #edf1f7; padding: .8rem 0; }
+      .info-row:last-child { border-bottom: 0; }
+      .schedule-row {
+        border-bottom: 1px solid #edf1f7;
+        padding: .85rem 0;
+      }
+      .schedule-row:last-child { border-bottom: 0; }
+    </style>
+  </head>
+  <body>
+    <div class="page-wrapper">
+      <div class="main-container">
+        <nav id="sidebar" class="sidebar-wrapper">
+          <div class="brand-container d-flex align-items-center justify-content-between">
+            <div class="app-brand ms-3">
+              <a href="/admin/dash"><img src="/images/cnc-logo-alt.svg" class="logo" alt="C&C Dental Studio"></a>
+            </div>
+            <button type="button" class="pin-sidebar me-3"><i class="ri-menu-line"></i></button>
+          </div>
+          <div class="sidebar-profile">
+            <% if (headerPhoto) { %>
+              <img src="<%= headerPhoto %>" class="rounded-5 border border-primary border-3" alt="Foto de perfil">
+            <% } else { %>
+              <span class="profile-initials-badge rounded-5 border border-primary border-3 img-4x"><%= headerInitials %></span>
+            <% } %>
+            <h6 class="mb-1 profile-name text-nowrap text-truncate text-primary"><%= headerName %></h6>
+            <small class="profile-name text-nowrap text-truncate"><%= headerRole %></small>
+          </div>
+          <div class="sidebarMenuScroll">
+            <%- include('partials/adminSidebar', { activePage: 'perfil', canFn }) %>
+          </div>
+        </nav>
+
+        <div class="app-container">
+          <div class="app-header d-flex align-items-center">
+            <div class="d-flex">
+              <button type="button" id="toggle-sidebar" class="btn btn-outline-primary me-2"><i class="ri-menu-line"></i></button>
+              <div class="search-container d-xl-block d-none">
+                <input type="text" class="form-control" placeholder="Buscar">
+                <i class="ri-search-line"></i>
+              </div>
+            </div>
+            <div class="header-actions ms-auto">
+              <div class="dropdown ms-3">
+                <a id="userSettings" class="dropdown-toggle d-flex align-items-center" href="#!" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <div class="avatar-box">
+                    <% if (headerPhoto) { %>
+                      <img src="<%= headerPhoto %>" class="img-2xx rounded-5 border border-3 border-white" alt="Foto de perfil">
+                    <% } else { %>
+                      <span class="profile-initials-badge img-2xx rounded-5 border border-3 border-white"><%= headerInitials %></span>
+                    <% } %>
+                    <span class="status busy"></span>
+                  </div>
+                </a>
+                <div class="dropdown-menu dropdown-menu-end shadow-lg">
+                  <div class="px-3 py-2">
+                    <span class="small"><%= headerRole %></span>
+                    <h6 class="m-0"><%= headerName %></h6>
+                  </div>
+                  <div class="dropdown-divider"></div>
+                  <a href="/admin/perfil" class="dropdown-item"><i class="ri-user-line me-2"></i> Perfil</a>
+                  <a href="/admin/settings" class="dropdown-item"><i class="ri-settings-3-line me-2"></i> Configuración</a>
+                  <div class="dropdown-divider"></div>
+                  <div class="mx-3 my-2 d-grid"><a href="/logout" class="btn btn-danger">Cerrar sesión</a></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="app-hero-header d-flex align-items-center">
+            <ol class="breadcrumb">
+              <li class="breadcrumb-item"><a href="/admin/dash"><i class="ri-home-3-line"></i></a></li>
+              <li class="breadcrumb-item text-primary" aria-current="page">Mi perfil</li>
+            </ol>
+          </div>
+
+          <div class="app-body">
+            <% if (!doctor) { %>
+              <div class="alert alert-warning">Este usuario todavía no tiene un doctor vinculado.</div>
+            <% } else { %>
+              <% if (typeof updated !== 'undefined' && updated) { %>
+                <div class="alert alert-success">Perfil actualizado correctamente.</div>
+              <% } %>
+              <div class="doctor-profile-hero p-4 mb-4">
+                <div class="d-flex flex-wrap align-items-center gap-4">
+                  <% if (photoUrl) { %>
+                    <img src="<%= photoUrl %>" class="profile-avatar" alt="Foto de perfil">
+                  <% } else { %>
+                    <span class="profile-initials"><%= initials %></span>
+                  <% } %>
+                  <div class="flex-grow-1">
+                    <span class="badge bg-primary-subtle text-primary mb-2">Perfil profesional</span>
+                    <h3 class="mb-1"><%= displayName %></h3>
+                    <p class="text-muted mb-0"><%= doctor.especialidad_nombre || 'Especialidad pendiente' %></p>
+                  </div>
+                  <% if (typeof readOnly === 'undefined' || !readOnly) { %>
+                    <a href="/admin/perfil/editar" class="btn btn-primary">
+                      <i class="ri-edit-line me-1"></i> Editar perfil
+                    </a>
+                  <% } %>
+                </div>
+              </div>
+
+              <div class="row gx-4">
+                <div class="col-xl-7 col-12">
+                  <div class="card mb-4">
+                    <div class="card-header"><h5 class="card-title mb-0">Información profesional</h5></div>
+                    <div class="card-body">
+                      <div class="info-row d-flex justify-content-between gap-3"><span class="text-muted">Usuario</span><strong><%= doctor.usuario || '-' %></strong></div>
+                      <div class="info-row d-flex justify-content-between gap-3"><span class="text-muted">Teléfono</span><strong><%= doctor.telefono || '-' %></strong></div>
+                      <div class="info-row d-flex justify-content-between gap-3"><span class="text-muted">Correo</span><strong><%= doctor.email || '-' %></strong></div>
+                      <div class="info-row d-flex justify-content-between gap-3"><span class="text-muted">DPI</span><strong><%= doctor.dpi || '-' %></strong></div>
+                      <div class="info-row d-flex justify-content-between gap-3"><span class="text-muted">Género</span><strong><%= doctor.genero_nombre || '-' %></strong></div>
+                      <div class="info-row d-flex justify-content-between gap-3"><span class="text-muted">Tipo de sangre</span><strong><%= doctor.tipoSangre || '-' %></strong></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-xl-5 col-12">
+                  <div class="card mb-4">
+                    <div class="card-header"><h5 class="card-title mb-0">Datos adicionales</h5></div>
+                    <div class="card-body">
+                      <p class="text-muted mb-1">Domicilio</p>
+                      <p><%= doctor.domicilio || 'Pendiente' %></p>
+                      <p class="text-muted mb-1">Observación</p>
+                      <p class="mb-0"><%= doctor.observacion || 'Sin observaciones.' %></p>
+                    </div>
+                  </div>
+                  <div class="card mb-4">
+                    <div class="card-header"><h5 class="card-title mb-0">Horario laboral</h5></div>
+                    <div class="card-body">
+                      <% if (scheduleRows.length) { %>
+                        <% scheduleRows.forEach(item => { %>
+                          <div class="schedule-row d-flex justify-content-between align-items-center gap-3">
+                            <span class="text-muted"><%= item.dia_semana %></span>
+                            <strong><%= item.hora_inicio %> - <%= item.hora_fin %></strong>
+                          </div>
+                        <% }) %>
+                      <% } else { %>
+                        <p class="text-muted mb-0">Sin horario configurado.</p>
+                      <% } %>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <% } %>
+          </div>
+
+          <div class="app-footer"><span>© C&C Dental Studio 2026</span></div>
+        </div>
+      </div>
+    </div>
+    <script src="/assets/js/jquery.min.js"></script>
+    <script src="/assets/js/bootstrap.bundle.min.js"></script>
+    <script src="/assets/vendor/overlay-scroll/jquery.overlayScrollbars.min.js"></script>
+    <script src="/assets/vendor/overlay-scroll/custom-scrollbar.js"></script>
+    <script src="/assets/js/custom.js"></script>
+  </body>
+</html>

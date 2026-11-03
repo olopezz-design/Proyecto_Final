@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctores - C&C Dental Studio</title>
+    <link rel="shortcut icon" type="image/svg+xml" href="/images/cnc-favicon.svg">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+    <style>
+        /* Sidebar */
+        #sidebar-wrapper {
+            width: 250px;
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            height: 100vh;
+        }
+        .list-group-item {
+            font-size: 1.1rem;
+            transition: background 0.3s;
+        }
+        .list-group-item:hover {
+            background-color: #34495e;
+        }
+
+        /* Submenu indent and icon styling */
+        .list-group-item-action .pl-5 {
+            padding-left: 2.5rem;
+        }
+
+        /* Submenu style */
+        .list-group-item-action.collapse.show .list-group-item {
+            background: #2c3e50;
+        }
+
+        /* Estilo para los botones de paginación */
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            color: #007bff;
+            background-color: transparent;
+            border: none;
+            padding: 0;
+            margin: 0 5px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        /* Estilo para el botón de la página actual */
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            font-weight: bold;
+            color: white;
+            background-color: #007bff;
+            border: none;
+            border-radius: 4px;
+        }
+
+        /* Ocultar el cuadro de búsqueda predeterminado de DataTables */
+        .dataTables_filter { display: none; }
+
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #page-content-wrapper { flex: 1; }
+
+        footer {
+            background-color: #343a40;
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+        }
+
+        .modal-body {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .separar-pdf { margin-top: 20px; }
+    </style>
+</head>
+<body class="d-flex flex-column min-vh-100">
+    <div class="d-flex flex-grow-1" id="wrapper">
+        <!-- Sidebar -->
+        <div class="bg-dark border-right" id="sidebar-wrapper">
+            <div class="sidebar-heading text-center py-4">
+                <img src="/images/cnc-logo-alt.svg" alt="Logo" class="img-fluid mb-2" style="max-width: 50px;">
+                <h4 class="text-white font-weight-bold">C&C Dental Studio</h4>
+            </div>
+            <div class="list-group list-group-flush">
+                
+                <!-- Pacientes -->
+                <a href="#clientes-pacientes-submenu" class="list-group-item list-group-item-action bg-dark text-white d-flex justify-content-between align-items-center" data-toggle="collapse">
+                    <i class="fas fa-user mr-2"></i> Pacientes
+                    <i class="fas fa-chevron-down"></i>
+                </a>
+                <div id="clientes-pacientes-submenu" class="collapse">
+                    <a href="/admin/pacientes" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-user-friends"></i> Lista de Pacientes
+                    </a>
+                    <a href="/admin/citas" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-calendar-alt"></i> Citas
+                    </a>
+                    <a href="/admin/historial" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-file-medical-alt"></i> Historial Tratamiento
+                    </a>
+                    <a href="/admin/pago" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-wallet"></i> Control de Pago
+                    </a>
+                    <a href="/admin/archivados" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-archive"></i> Pacientes Archivados
+                    </a>
+                </div>
+
+                <!-- Doctores -->
+                <a href="#doctores-submenu" class="list-group-item list-group-item-action bg-dark text-white d-flex justify-content-between align-items-center" data-toggle="collapse">
+                    <i class="fas fa-user-md mr-2"></i> Doctores
+                    <i class="fas fa-chevron-down"></i>
+                </a>
+                <div id="doctores-submenu" class="collapse">
+                    <a href="/admin/doctores" class="list-group-item list-group-item-action bg-dark text-white pl-5 active">
+                        <i class="fas fa-user-check"></i> Doctores Activos
+                    </a>
+                    <a href="/admin/doctores/inactivos" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-user-slash"></i> Doctores Inactivos
+                    </a>
+                </div>
+
+                <!-- Inventario -->
+                <a href="#inventario-submenu" class="list-group-item list-group-item-action bg-dark text-white d-flex justify-content-between align-items-center" data-toggle="collapse">
+                    <i class="fas fa-box mr-2"></i> Inventario
+                    <i class="fas fa-chevron-down"></i>
+                </a>
+                <div id="inventario-submenu" class="collapse">
+                    <a href="/admin/marcas" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-tags"></i> Marcas
+                    </a>
+                    <a href="/admin/categorias" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-th-large"></i> Categorías
+                    </a>
+                    <a href="/admin/proveedores" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-truck"></i> Proveedores
+                    </a>
+                    <a href="/admin/productos" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-boxes"></i> Productos
+                    </a>
+                    <a href="/admin/comprasProductos" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-shopping-cart"></i> Compras
+                    </a>
+                    <a href="/admin/salidasProductos" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-dolly"></i> Salidas
+                    </a>
+                </div>
+
+                <a href="/admin/cotizaciones" class="list-group-item list-group-item-action bg-dark text-white">
+                    <i class="fas fa-arrow-circle-left"></i> Generar Cotización
+                </a>
+                <a href="/admin/dashboard" class="list-group-item list-group-item-action bg-dark text-white">
+                    <i class="fas fa-arrow-circle-left"></i> Regresar al Panel
+                </a>
+                <a href="/logout" class="list-group-item list-group-item-action bg-danger text-white">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                </a>
+            </div>
+        </div>
+
+
+
+        <!-- Page Content -->
+        <div id="page-content-wrapper">
+            <div class="container-fluid">
+                <h1 class="mt-4">Lista de Doctores</h1>
+                <div class="text-left mb-3">
+                    <a href="/admin/dashboard" class="btn btn-secondary">&larr; Regresar al Panel de Control</a>
+                    <% if (can('doctores:crear')) { %>
+                        <button class="btn btn-primary" data-toggle="modal" data-target="#addDoctorModal">Agregar Doctor/Auxiliar</button>
+                    <% } %>
+                </div>
+
+                <!-- Barra de búsqueda -->
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" placeholder="Buscar doctor..." id="searchDoctor">
+                </div>
+
+               <!-- Tabla de doctores -->
+                <div class="text-right mb-3"></div>
+                <table class="table table-bordered" id="doctorTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Usuario</th>
+                            <th>Nombre</th>
+                            <th>Especialidad</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="doctorList">
+                        <% 
+                        const especialidades = [
+                            "Otro", // índice 0
+                            "Dentista General", // índice 1
+                            "Ortodoncista", // índice 2
+                            "Cirujano Maxilofacial", // índice 3
+                            "Endodoncia", // índice 4
+                            "Periodoncia", // índice 5
+                            "Odontólogo Cosmético", // índice 6
+                            "Odontólogo Restaurador", // índice 7
+                            "Prótesis Dental" // índice 8
+                        ];
+                        
+                        doctores.forEach(function(doctor) { 
+                        %>
+                        <tr>
+                            <td><%= doctor.iddoctor %></td>
+                            <td><%= doctor.usuario_nombre %></td>
+                            <td><%= doctor.nombre + " " + doctor.apellido %></td>
+                            <td><%= especialidades[doctor.especialidad_idespecialidad] || "Otro" %></td>
+                            <td>
+                                <div class="d-flex justify-content-around">
+                                    <% if (can('doctores:editar')) { %>
+                                        <!-- Botón para editar doctor -->
+                                        <button class="btn btn-primary btn-sm mx-1" onclick="editarDoctorById('<%= doctor.iddoctor %>')" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    <% } %>
+                                
+                                    <!-- Botón para ver información del doctor -->
+                                    <button class="btn btn-info btn-sm mx-1" onclick="verInformacionById('<%= doctor.iddoctor %>')" title="Ver Información">
+                                        <i class="fas fa-info-circle"></i>
+                                    </button>
+                                
+                                    <% if (can('doctores:inactivar')) { %>
+                                        <!-- Botón para inactivar doctor -->
+                                        <form onsubmit="event.preventDefault(); inactivarDoctor('<%= doctor.iddoctor %>')" class="d-inline">
+                                            <button class="btn btn-danger btn-sm mx-1" type="submit" title="Inactivar">
+                                                <i class="fas fa-user-slash"></i>
+                                            </button>
+                                        </form>
+                                    <% } %>
+                                </div>
+                                
+     
+                            </td>
+                        </tr>
+                        <% }); %>
+                    </tbody>                    
+                </table>
+
+                
+
+<% if (can('doctores:crear')) { %>
+    <%- include('Doctores/modals/addDoctor') %>
+<% } %>
+
+<script>
+    // Función para mostrar el modal usando Bootstrap
+    function showModal() {
+        $('#addDoctorModal').modal('show');
+    }
+
+    // Función para cerrar el modal usando Bootstrap
+    function closeModal() {
+        $('#addDoctorModal').modal('hide');
+    }
+
+    // Función para agregar una fila de doctor a la tabla
+    function addDoctorToTable(doctor) {
+        const tableBody = document.getElementById('doctorList');
+        const newRow = document.createElement('tr');
+
+        newRow.innerHTML = `
+            <td>${doctor.iddoctor}</td>
+            <td>${doctor.user}</td>
+            <td>${doctor.nombre} ${doctor.apellido}</td>
+            <td>${doctor.especialidad}</td>
+            <td>
+                <button class="btn btn-primary btn-sm">Editar</button>
+                <button class="btn btn-info btn-sm">Ver Información</button>
+            </td>
+        `;
+
+        tableBody.appendChild(newRow);
+    }
+
+    // Manejo del formulario
+    const addDoctorForm = document.getElementById('addDoctorForm');
+    if (addDoctorForm) addDoctorForm.addEventListener('submit', function(event) {
+        event.preventDefault(); // Evitar el envío del formulario por defecto
+
+        // Obtener los datos del formulario
+        const data = {
+            nombre: document.getElementById('nombre').value,
+            apellido: document.getElementById('apellido').value,
+            telefono: document.getElementById('telefono').value,
+            email: document.getElementById('email').value,
+            observacion: document.getElementById('observacion').value,
+            especialidad_idespecialidad: document.getElementById('especialidad').value,
+            dpi: document.getElementById('dpi').value,
+            fechaNacimiento: document.getElementById('fechaNacimiento').value || null,
+            tipoSangre: document.getElementById('tipoSangre').value,
+            domicilio: document.getElementById('domicilio').value,
+            genero_idGenero: document.getElementById('genero').value,
+            rol_idrol: document.getElementById('rol').value,
+            user: document.getElementById('user').value,
+            password: document.getElementById('password').value
+        };
+
+        // Realizar la solicitud para agregar el doctor al servidor
+        fetch('/admin/doctores', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(async response => {
+            const contentType = response.headers.get("content-type");
+            const data = contentType && contentType.indexOf("application/json") !== -1
+                ? await response.json()
+                : await response.text();
+            if (!response.ok) {
+                throw new Error(typeof data === "string" ? data : (data.message || "Error al guardar el doctor."));
+            }
+            return data;
+        })
+        .then(data => {
+            showUiMessage(typeof data === "string" ? data : 'Doctor guardado correctamente.', 'success');
+            closeModal();
+            document.getElementById('addDoctorForm').reset();
+            location.reload();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showUiMessage('Hubo un problema al guardar el doctor: ' + error.message, 'danger');
+        });
+    });
+
+    // Asignar la función de cerrar modal al botón "Cancelar"
+   // document.getElementById('closeModal').addEventListener('click', closeModal);
+
+
+</script>
+
+
+
+
+<% if (can('doctores:editar')) { %>
+    <%- include('Doctores/modals/editDoctor') %>
+<% } %>
+
+
+
+
+<script>
+const doctorRows = <%- JSON.stringify(doctores || []).replace(/</g, '\\u003c') %>;
+const doctorById = doctorRows.reduce((items, doctor) => {
+    items[String(doctor.iddoctor)] = doctor;
+    return items;
+}, {});
+const doctorSchedulesById = <%- JSON.stringify(horariosPorDoctor || {}).replace(/</g, '\\u003c') %>;
+const scheduleDays = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+
+function dateForInput(value) {
+    if (!value) return '';
+    const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (match) return `${match[1]}-${match[2]}-${match[3]}`;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? '' : date.toISOString().slice(0, 10);
+}
+
+function scheduleDayOptions(selected) {
+    return scheduleDays.map(day => `<option value="${day}" ${day === selected ? 'selected' : ''}>${day}</option>`).join('');
+}
+
+function createDoctorScheduleRow(item = {}) {
+    const row = document.createElement('div');
+    row.className = 'border rounded p-2 mb-2';
+    row.innerHTML = `
+        <div class="form-row align-items-end">
+            <div class="col-md-4 mb-2 mb-md-0">
+                <label class="small mb-1">Día</label>
+                <select class="form-control edit-schedule-day">${scheduleDayOptions(item.dia_semana || 'Lunes')}</select>
+            </div>
+            <div class="col-md-3 mb-2 mb-md-0">
+                <label class="small mb-1">Desde</label>
+                <input type="time" class="form-control edit-schedule-start" value="${item.hora_inicio || '08:00'}">
+            </div>
+            <div class="col-md-3 mb-2 mb-md-0">
+                <label class="small mb-1">Hasta</label>
+                <input type="time" class="form-control edit-schedule-end" value="${item.hora_fin || '17:00'}">
+            </div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-outline-danger btn-block remove-schedule-row">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>
+    `;
+    row.querySelector('.remove-schedule-row').addEventListener('click', () => row.remove());
+    return row;
+}
+
+function renderDoctorScheduleRows(rows) {
+    const container = document.getElementById('editDoctorSchedules');
+    if (!container) return;
+    container.innerHTML = '';
+    (rows || []).forEach(row => container.appendChild(createDoctorScheduleRow(row)));
+}
+
+function collectDoctorSchedules() {
+    return Array.from(document.querySelectorAll('#editDoctorSchedules .border')).map(row => ({
+        dia_semana: row.querySelector('.edit-schedule-day').value,
+        hora_inicio: row.querySelector('.edit-schedule-start').value,
+        hora_fin: row.querySelector('.edit-schedule-end').value,
+    })).filter(row => row.dia_semana || row.hora_inicio || row.hora_fin);
+}
+
+document.getElementById('addDoctorScheduleRow')?.addEventListener('click', () => {
+    document.getElementById('editDoctorSchedules').appendChild(createDoctorScheduleRow());
+});
+
+function editarDoctorById(id) {
+    const doctor = doctorById[String(id)];
+    if (!doctor) return;
+
+    document.getElementById('editDoctorId').value = doctor.iddoctor || '';
+    document.getElementById('editNombre').value = doctor.nombre || '';
+    document.getElementById('editApellido').value = doctor.apellido || '';
+    document.getElementById('editTelefono').value = doctor.telefono || '';
+    document.getElementById('editEmail').value = doctor.email || '';
+    document.getElementById('editDomicilio').value = doctor.domicilio || '';
+    document.getElementById('editEspecialidad').value = doctor.especialidad_idespecialidad || '1';
+    document.getElementById('editDPI').value = doctor.dpi || '';
+    document.getElementById('editFechaNacimiento').value = dateForInput(doctor.fechaNacimiento);
+    document.getElementById('editGenero').value = doctor.genero_idGenero || '3';
+    document.getElementById('editTipoSangre').value = doctor.tipoSangre || '';
+    document.getElementById('editObservacion').value = doctor.observacion || '';
+    renderDoctorScheduleRows(doctorSchedulesById[String(id)] || []);
+
+    $('#editDoctorModal').modal('show');
+}
+
+const editDoctorForm = document.getElementById('editDoctorForm');
+if (editDoctorForm) editDoctorForm.addEventListener('submit', function(event) {
+    event.preventDefault();
+
+    const data = {
+        iddoctor: document.getElementById('editDoctorId').value,
+        nombre: document.getElementById('editNombre').value,
+        apellido: document.getElementById('editApellido').value,
+        telefono: document.getElementById('editTelefono').value,
+        email: document.getElementById('editEmail').value,
+        domicilio: document.getElementById('editDomicilio').value,
+        especialidad_idespecialidad: document.getElementById('editEspecialidad').value,
+        dpi: document.getElementById('editDPI').value,
+        fechaNacimiento: document.getElementById('editFechaNacimiento').value || null,
+        genero_idGenero: document.getElementById('editGenero').value,
+        tipoSangre: document.getElementById('editTipoSangre').value,
+        observacion: document.getElementById('editObservacion').value
+    };
+    if (document.getElementById('editDoctorSchedules')) {
+        data.horarios = collectDoctorSchedules();
+    }
+
+    fetch(`/admin/doctores/${data.iddoctor}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    })
+    .then(async response => {
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.message || 'Error al actualizar el doctor.');
+        return result;
+    })
+    .then(result => {
+        if (result.success) {
+            showUiMessage('Doctor actualizado correctamente.', 'success');
+            $('#editDoctorModal').modal('hide');
+            location.reload();
+        } else {
+            showUiMessage('Error al actualizar el doctor.', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showUiMessage(error.message || 'Hubo un problema al actualizar el doctor.', 'danger');
+    });
+});
+</script>
+<%- include('Doctores/modals/viewDoctor') %>
+
+
+
+<script>
+function readableDate(value) {
+    const inputValue = dateForInput(value);
+    if (!inputValue) return 'No disponible';
+    const [year, month, day] = inputValue.split('-').map(Number);
+    return new Date(year, month - 1, day).toLocaleDateString('es-ES', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+}
+
+function scheduleSummary(rows) {
+    if (!rows || !rows.length) return 'Sin horario configurado.';
+    return rows.map(row => `${row.dia_semana}: ${row.hora_inicio} - ${row.hora_fin}`).join('<br>');
+}
+
+function verInformacionById(id) {
+    const doctor = doctorById[String(id)];
+    if (!doctor) return;
+
+    $('#viewNombre').text(doctor.nombre || 'No disponible');
+    $('#viewApellido').text(doctor.apellido || 'No disponible');
+    $('#viewTelefono').text(doctor.telefono || 'No disponible');
+    $('#viewEmail').text(doctor.email || 'No disponible');
+    $('#viewDomicilio').text(doctor.domicilio || 'No disponible');
+    $('#viewGenero').text(getGeneroName(doctor.genero_idGenero));
+    $('#viewEspecialidad').text(getEspecialidadName(doctor.especialidad_idespecialidad));
+    $('#viewDPI').text(doctor.dpi || 'No disponible');
+    $('#viewFechaNacimiento').text(readableDate(doctor.fechaNacimiento));
+    $('#viewTipoSangre').text(doctor.tipoSangre || 'No disponible');
+    $('#viewHorario').html(scheduleSummary(doctorSchedulesById[String(id)] || []));
+    $('#viewObservacion').text(doctor.observacion || 'No disponible');
+
+    $('#viewDoctorModal').modal('show');
+}
+
+// Función para obtener el nombre del género
+function getGeneroName(id) {
+    const generos = {
+        1: 'Masculino',
+        2: 'Femenino',
+        3: 'Otro'
+    };
+    return generos[id] || 'Género Desconocido';
+}
+
+// Función para obtener el nombre de la especialidad
+function getEspecialidadName(id) {
+    const especialidades = {
+        1: 'Dentista General',
+        2: 'Ortodoncista',
+        3: 'Cirujano Maxilofacial',
+        4: 'Endodoncia',
+        5: 'Periodoncia',
+        6: 'Odontólogo Cosmético',
+        7: 'Odontólogo Restaurador',
+        8: 'Prótesis Dental'
+    };
+    return especialidades[id] || 'Especialidad Desconocida';
+}
+
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+
+
+<script>
+
+$(document).ready(function() {
+            $('#doctorTable').DataTable({
+                paging: true,
+                searching: true,
+                ordering: true,
+                info: true,
+                lengthChange: false,
+                language: {
+                    paginate: { previous: "<", next: ">" },
+                    emptyTable: "No hay datos disponibles en la tabla"
+                }
+            });
+        });
+
+
+
+
+
+//función para archivar un paciente
+
+function inactivarDoctor(idPaciente) {
+    fetch(`/api/admin/doctores/${idPaciente}/inactivar`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Error al inactivar el Doctor');
+        }
+        return response.json();
+    })
+    .then(data => {
+        showUiMessage(data.message || 'Doctor inactivado correctamente.', 'success');
+        // Aquí puedes recargar la lista de pacientes o actualizar el estado en la interfaz
+        location.reload(); // Esto recarga la página para ver los cambios (opcional)
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showUiMessage('Hubo un problema al inactivar el doctor.', 'danger');
+    });
+}
+
+  
+
+</script>
+<%- include('partials/uiFeedback') %>
+
+
+<%- include('partials/pageLoader') %>
+</body>
+</html>

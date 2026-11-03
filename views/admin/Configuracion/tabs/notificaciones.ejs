@@ -1,0 +1,95 @@
+<form id="notificationSettingsForm" class="settings-card-soft p-4 mb-4">
+  <div class="row gx-4">
+    <div class="col-12 mb-3">
+      <span class="settings-kicker">Preferencias</span>
+      <h5 class="mb-1">Notificaciones del sistema</h5>
+      <p class="text-muted mb-0">Activa los avisos que serán usados por los módulos administrativos conforme los vayamos conectando.</p>
+    </div>
+    <div class="col-xl-6 col-12">
+      <div class="list-group">
+        <label class="list-group-item d-flex align-items-center gap-3 py-3">
+          <span class="icon-box lg bg-primary-lighten rounded-3">
+            <i class="ri-calendar-check-line text-primary fs-5"></i>
+          </span>
+          <span>
+            <span class="d-block fw-semibold">Citas</span>
+            <span class="text-muted">Avisos para nuevas citas, cambios y recordatorios.</span>
+          </span>
+          <span class="form-check form-switch m-0 ms-auto">
+            <input class="form-check-input" type="checkbox" id="appointment_notifications">
+          </span>
+        </label>
+        <label class="list-group-item d-flex align-items-center gap-3 py-3">
+          <span class="icon-box lg bg-success-lighten rounded-3">
+            <i class="ri-money-dollar-circle-line text-success fs-5"></i>
+          </span>
+          <span>
+            <span class="d-block fw-semibold">Pagos</span>
+            <span class="text-muted">Avisos para abonos, saldos pendientes y pagos vencidos.</span>
+          </span>
+          <span class="form-check form-switch m-0 ms-auto">
+            <input class="form-check-input" type="checkbox" id="payment_notifications">
+          </span>
+        </label>
+        <label class="list-group-item d-flex align-items-center gap-3 py-3">
+          <span class="icon-box lg bg-warning-lighten rounded-3">
+            <i class="ri-archive-stack-line text-warning fs-5"></i>
+          </span>
+          <span>
+            <span class="d-block fw-semibold">Inventario</span>
+            <span class="text-muted">Avisos de stock bajo y movimientos importantes.</span>
+          </span>
+          <span class="form-check form-switch m-0 ms-auto">
+            <input class="form-check-input" type="checkbox" id="inventory_notifications">
+          </span>
+        </label>
+      </div>
+    </div>
+    <div class="col-xl-6 col-12">
+      <div class="list-group">
+        <label class="list-group-item d-flex align-items-center gap-3 py-3">
+          <span class="icon-box lg bg-info-lighten rounded-3">
+            <i class="ri-user-add-line text-info fs-5"></i>
+          </span>
+          <span>
+            <span class="d-block fw-semibold">Solicitudes de acceso</span>
+            <span class="text-muted">Avisos cuando alguien envíe una solicitud para ingresar.</span>
+          </span>
+          <span class="form-check form-switch m-0 ms-auto">
+            <input class="form-check-input" type="checkbox" id="registration_notifications">
+          </span>
+        </label>
+        <label class="list-group-item d-flex align-items-center gap-3 py-3">
+          <span class="icon-box lg bg-danger-lighten rounded-3">
+            <i class="ri-mail-send-line text-danger fs-5"></i>
+          </span>
+          <span>
+            <span class="d-block fw-semibold">Correo</span>
+            <span class="text-muted">Permitir avisos por correo cuando esté configurado el envío.</span>
+          </span>
+          <span class="form-check form-switch m-0 ms-auto">
+            <input class="form-check-input" type="checkbox" id="email_notifications">
+          </span>
+        </label>
+        <label class="list-group-item d-flex align-items-center gap-3 py-3">
+          <span class="icon-box lg bg-secondary rounded-3">
+            <i class="ri-notification-badge-line text-dark fs-5"></i>
+          </span>
+          <span>
+            <span class="d-block fw-semibold">Alertas internas</span>
+            <span class="text-muted">Mostrar avisos dentro del panel administrativo.</span>
+          </span>
+          <span class="form-check form-switch m-0 ms-auto">
+            <input class="form-check-input" type="checkbox" id="desktop_notifications">
+          </span>
+        </label>
+      </div>
+    </div>
+    <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-2 mt-3">
+      <div class="settings-status alert mb-0" id="notificationSettingsStatus"></div>
+      <button type="submit" class="btn btn-primary">
+        <i class="ri-save-3-line"></i> Guardar preferencias
+      </button>
+    </div>
+  </div>
+</form>

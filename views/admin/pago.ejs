@@ -1,0 +1,1055 @@
+<%
+  const headerProfile = typeof adminProfile !== 'undefined' ? adminProfile : {};
+  const headerName = headerProfile.displayName || 'Nombre pendiente';
+  const headerInitials = headerProfile.initials || headerName.split(/\s+/).slice(0, 2).map(part => part.charAt(0).toUpperCase()).join('') || 'DR';
+  const headerPhoto = headerProfile.photoUrl || '';
+  const headerRole = headerProfile.roleLabel || 'Usuario';
+  const canFn = typeof can === 'function' ? can : () => true;
+  const list = Array.isArray(pagos) ? pagos : [];
+  const consultations = Array.isArray(consultas) ? consultas : [];
+  const methods = Array.isArray(tiposPago) ? tiposPago : [];
+  const services = Array.isArray(servicios) ? servicios : [];
+  const treatments = Array.isArray(tiposServicios) ? tiposServicios : [];
+  const pendingConsultations = consultations.filter(item => Number(item.pagosRegistrados || 0) === 0);
+  const stats = typeof paymentStats !== 'undefined' ? paymentStats : {};
+  const prefill = typeof paymentPrefill !== 'undefined' ? paymentPrefill : {};
+  const activeFilters = typeof filters !== 'undefined' ? filters : {};
+  const formatMoney = value => `Q${Number(value || 0).toFixed(2)}`;
+  const toInputDate = value => {
+    if (!value) return '';
+    if (value instanceof Date) return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
+    const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return match ? `${match[1]}-${match[2]}-${match[3]}` : '';
+  };
+  const formatDate = value => {
+    if (!value) return 'Sin fecha';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? 'Sin fecha' : date.toLocaleDateString('es-GT', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+  const fullPatientName = item => `${item.nombrePaciente || ''} ${item.apellidoPaciente || ''}`.trim() || 'Paciente sin nombre';
+  const doctorName = item => `${item.nombreDoctor || ''} ${item.apellidoDoctor || ''}`.trim() || 'Doctor sin asignar';
+  const consultationLabel = item => {
+    const patient = fullPatientName(item);
+    const date = item.fechaCita ? ` - ${formatDate(item.fechaCita)}` : '';
+    return `#${item.idconsulta} ${patient}${date}`;
+  };
+  const paymentStatus = item => {
+    const pending = Number(item.saldo_restante || 0);
+    const paid = Number(item.totalAbonado || 0);
+    if (pending <= 0) return { label: 'Pagado', className: 'bg-success-subtle text-success' };
+    if (Number(item.nocuotas || 1) > 1) return { label: 'Cuotas', className: 'bg-warning-subtle text-warning' };
+    if (paid > 0) return { label: 'Abonos', className: 'bg-info-subtle text-info' };
+    return { label: 'Sin pago', className: 'bg-danger-subtle text-danger' };
+  };
+  const safeJson = value => JSON.stringify(value).replace(/</g, '\\u003c');
+%>
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <base href="/" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pagos - C&C Dental Studio</title>
+    <link rel="shortcut icon" type="image/svg+xml" href="/images/cnc-favicon.svg">
+    <link rel="stylesheet" href="assets/fonts/remix/remixicon.css">
+    <link rel="stylesheet" href="assets/css/main.min.css">
+    <link rel="stylesheet" href="assets/vendor/overlay-scroll/OverlayScrollbars.min.css">
+    <style>
+      .profile-initials-badge,
+      .payment-initials {
+        align-items: center;
+        background: #f4f1ff;
+        color: #705df3;
+        display: inline-flex;
+        font-weight: 800;
+        justify-content: center;
+      }
+      .payment-initials {
+        border: 2px solid #7367f0;
+        border-radius: 50%;
+        flex: 0 0 48px;
+        height: 48px;
+        width: 48px;
+      }
+      .payment-card {
+        border: 1px solid #dde2ee;
+        border-radius: 8px;
+      }
+      .payment-card[hidden] {
+        display: none !important;
+      }
+      .metric-tile {
+        border: 1px solid #dde2ee;
+        border-radius: 8px;
+        padding: 1rem;
+      }
+      .charge-builder {
+        border: 1px solid #dde2ee;
+        border-radius: 8px;
+        padding: 1rem;
+      }
+      .charge-line {
+        border: 1px solid #eef1f7;
+        border-radius: 8px;
+        padding: .75rem;
+      }
+      .payment-number-input::-webkit-outer-spin-button,
+      .payment-number-input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+      .payment-number-input {
+        -moz-appearance: textfield;
+        appearance: textfield;
+      }
+      .payment-mode-option {
+        border: 1px solid #dde2ee;
+        border-radius: 8px;
+        cursor: pointer;
+        padding: .75rem 1rem;
+      }
+      .payment-mode-option:has(input:checked) {
+        background: #f4f1ff;
+        border-color: #7367f0;
+        color: #5b4be8;
+      }
+      .clinical-summary-card {
+        background: #fbfcff;
+        border: 1px solid #dde2ee;
+        border-radius: 8px;
+        max-height: 620px;
+        overflow: auto;
+      }
+      .clinical-summary-text {
+        white-space: pre-line;
+      }
+    </style>
+    <%- include('partials/searchableSelect') %>
+  </head>
+  <body>
+    <div class="page-wrapper">
+      <div class="main-container">
+        <nav id="sidebar" class="sidebar-wrapper">
+          <div class="brand-container d-flex align-items-center justify-content-between">
+            <div class="app-brand ms-3">
+              <a href="/admin/dash"><img src="/images/cnc-logo-alt.svg" class="logo" alt="C&C Dental Studio"></a>
+            </div>
+            <button type="button" class="pin-sidebar me-3"><i class="ri-menu-line"></i></button>
+          </div>
+          <div class="sidebar-profile">
+            <% if (headerPhoto) { %>
+              <img src="<%= headerPhoto %>" class="rounded-5 border border-primary border-3" alt="Foto de perfil">
+            <% } else { %>
+              <span class="profile-initials-badge rounded-5 border border-primary border-3 img-4x"><%= headerInitials %></span>
+            <% } %>
+            <h6 class="mb-1 profile-name text-nowrap text-truncate text-primary"><%= headerName %></h6>
+            <small class="profile-name text-nowrap text-truncate"><%= headerRole %></small>
+          </div>
+          <div class="sidebarMenuScroll">
+            <%- include('partials/adminSidebar', { activePage: 'pagos', canFn }) %>
+          </div>
+        </nav>
+
+        <div class="app-container">
+          <div class="app-header d-flex align-items-center">
+            <div class="d-flex">
+              <div class="search-container d-xl-block d-none">
+                <input type="text" class="form-control" id="headerPaymentSearch" placeholder="Buscar">
+                <i class="ri-search-line"></i>
+              </div>
+            </div>
+            <div class="header-actions ms-auto d-flex align-items-center gap-2">
+              <% if (canFn('pagos:crear')) { %>
+                <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addPaymentModal">
+                  <i class="ri-add-line me-1"></i> Nuevo pago
+                </button>
+              <% } %>
+              <div class="dropdown ms-2">
+                <a id="userSettings" class="dropdown-toggle d-flex align-items-center" href="#!" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <div class="avatar-box">
+                    <% if (headerPhoto) { %>
+                      <img src="<%= headerPhoto %>" class="img-2xx rounded-5 border border-3 border-white" alt="Foto de perfil">
+                    <% } else { %>
+                      <span class="profile-initials-badge img-2xx rounded-5 border border-3 border-white"><%= headerInitials %></span>
+                    <% } %>
+                    <span class="status busy"></span>
+                  </div>
+                </a>
+                <div class="dropdown-menu dropdown-menu-end shadow-lg">
+                  <div class="px-3 py-2"><span class="small"><%= headerRole %></span><h6 class="m-0"><%= headerName %></h6></div>
+                  <div class="dropdown-divider"></div>
+                  <a href="/admin/perfil" class="dropdown-item"><i class="ri-user-line me-2"></i> Perfil</a>
+                  <a href="/admin/settings" class="dropdown-item"><i class="ri-settings-3-line me-2"></i> Configuración</a>
+                  <div class="dropdown-divider"></div>
+                  <div class="mx-3 my-2 d-grid"><a href="/logout" class="btn btn-danger">Cerrar sesión</a></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="app-hero-header d-flex align-items-center">
+            <ol class="breadcrumb">
+              <li class="breadcrumb-item"><a href="/admin/dash"><i class="ri-home-3-line"></i></a></li>
+              <li class="breadcrumb-item text-primary" aria-current="page">Pagos</li>
+            </ol>
+          </div>
+
+          <div class="app-body">
+            <div class="row gx-3 mb-3">
+              <div class="col-md-4 mb-2">
+                <div class="metric-tile">
+                  <div class="text-muted">Abonado</div>
+                  <h4 class="mb-0 text-success"><%= formatMoney(stats.totalAbonado) %></h4>
+                </div>
+              </div>
+              <div class="col-md-4 mb-2">
+                <div class="metric-tile">
+                  <div class="text-muted">Saldo pendiente</div>
+                  <h4 class="mb-0 text-warning"><%= formatMoney(stats.totalPendiente) %></h4>
+                </div>
+              </div>
+              <div class="col-md-4 mb-2">
+                <div class="metric-tile">
+                  <div class="text-muted">Pagos registrados</div>
+                  <h4 class="mb-0 text-primary"><%= list.length %></h4>
+                </div>
+              </div>
+            </div>
+
+            <div class="card mb-3">
+              <div class="card-body">
+                <form method="post" action="/admin/pago" class="row gx-3 align-items-end">
+                  <div class="col-md-3 mb-2">
+                    <label class="form-label">Desde</label>
+                    <input type="date" class="form-control" name="fechaInicio" value="<%= toInputDate(activeFilters.fechaInicio) %>">
+                  </div>
+                  <div class="col-md-3 mb-2">
+                    <label class="form-label">Hasta</label>
+                    <input type="date" class="form-control" name="fechaFin" value="<%= toInputDate(activeFilters.fechaFin) %>">
+                  </div>
+                  <div class="col-md-3 mb-2">
+                    <label class="form-label">Consulta</label>
+                    <select class="form-select searchable-native-select" id="paymentFilterConsulta" name="consulta_idconsulta">
+                      <option value="">Todas</option>
+                      <% consultations.forEach(item => { %>
+                        <option value="<%= item.idconsulta %>" <%= Number(activeFilters.consulta_idconsulta || 0) === Number(item.idconsulta) ? 'selected' : '' %>><%= consultationLabel(item) %></option>
+                      <% }) %>
+                    </select>
+                    <div id="paymentFilterConsultaSearch"></div>
+                  </div>
+                  <div class="col-md-2 mb-2">
+                    <label class="form-label">Método</label>
+                    <select class="form-select searchable-native-select" id="paymentFilterMethod" name="metodo_pago_idmetodo_pago">
+                      <option value="">Todos</option>
+                      <% methods.forEach(item => { %>
+                        <option value="<%= item.idmetodo_pago %>" <%= Number(activeFilters.metodo_pago_idmetodo_pago || 0) === Number(item.idmetodo_pago) ? 'selected' : '' %>><%= item.nombre %></option>
+                      <% }) %>
+                    </select>
+                    <div id="paymentFilterMethodSearch"></div>
+                  </div>
+                  <div class="col-md-1 mb-2 d-grid">
+                    <button type="submit" class="btn btn-primary"><i class="ri-filter-3-line"></i></button>
+                  </div>
+                </form>
+              </div>
+            </div>
+
+            <div class="card mb-3">
+              <div class="card-header d-flex align-items-center justify-content-between gap-2">
+                <h5 class="mb-0">Consultas por cobrar</h5>
+                <span class="badge bg-primary-subtle text-primary"><%= pendingConsultations.length %></span>
+              </div>
+              <div class="card-body">
+                <% if (!pendingConsultations.length) { %>
+                  <div class="text-center text-muted py-3">No hay consultas pendientes de cobro.</div>
+                <% } %>
+                <div class="d-grid gap-2">
+                  <% pendingConsultations.forEach(item => {
+                    const patient = fullPatientName(item);
+                    const initials = patient.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0].toUpperCase()).join('') || 'P';
+                  %>
+                    <div class="payment-card">
+                      <div class="card-body">
+                        <div class="d-flex align-items-center flex-wrap gap-4">
+                          <span class="payment-initials"><%= initials %></span>
+                          <div class="d-flex flex-column mw-180">
+                            <div class="text-primary">Consulta #<%= item.idconsulta %></div>
+                            <div class="fw-semibold text-truncate"><%= patient %></div>
+                            <small class="text-muted"><%= item.motivoCita || 'Consulta' %></small>
+                          </div>
+                          <div class="d-flex flex-column mw-180">
+                            <div class="text-primary">Fecha</div>
+                            <div><%= formatDate(item.fechaCita) %></div>
+                            <small class="text-muted"><%= item.horaCita || '' %></small>
+                          </div>
+                          <div class="d-flex flex-column mw-180">
+                            <div class="text-primary">Doctor</div>
+                            <div><%= doctorName(item) %></div>
+                          </div>
+                          <div class="ms-auto d-flex align-items-center gap-3 flex-wrap">
+                            <div class="d-flex flex-column">
+                              <div class="text-primary">Estado</div>
+                              <span class="badge bg-danger-subtle text-danger">Sin pago</span>
+                            </div>
+                            <% if (canFn('pagos:crear')) { %>
+                              <button type="button" class="btn btn-primary js-open-payment-for-consultation" data-consultation-id="<%= item.idconsulta %>">
+                                <i class="ri-bank-card-line me-1"></i> Registrar pago
+                              </button>
+                            <% } %>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  <% }) %>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header d-flex align-items-center justify-content-between gap-2">
+                <h5 class="mb-0">Listado de pagos</h5>
+                <div class="search-container d-xl-none d-block">
+                  <input type="text" class="form-control" id="mobilePaymentSearch" placeholder="Buscar">
+                  <i class="ri-search-line"></i>
+                </div>
+              </div>
+              <div class="card-body">
+                <% if (!list.length) { %>
+                  <div class="text-center text-muted py-4">No hay pagos registrados.</div>
+                <% } %>
+                <div class="d-grid gap-2" id="paymentList">
+                  <% list.forEach(pago => {
+                    const patient = fullPatientName(pago);
+                    const initials = patient.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0].toUpperCase()).join('') || 'P';
+                    const pending = Number(pago.saldo_restante || 0);
+                    const status = paymentStatus(pago);
+                    const search = `${patient} ${doctorName(pago)} ${pago.DescripcionConsulta || ''} ${pago.nombreMetodoPago || ''} ${status.label}`.toLowerCase();
+                  %>
+                    <div class="payment-card" data-payment-search="<%= search %>">
+                      <div class="card-body">
+                        <div class="d-flex align-items-center flex-wrap gap-4">
+                          <span class="payment-initials"><%= initials %></span>
+                          <div class="d-flex flex-column mw-180">
+                            <div class="text-primary">#PAG<%= String(pago.idpago).padStart(3, '0') %></div>
+                            <div class="fw-semibold text-truncate"><%= patient %></div>
+                            <small class="text-muted">Consulta #<%= pago.ConsultaId || '-' %></small>
+                          </div>
+                          <div class="d-flex flex-column mw-180">
+                            <div class="text-primary">Fecha</div>
+                            <div><%= formatDate(pago.fecha) %></div>
+                            <small class="text-muted"><%= Number(pago.nocuotas || 1) > 1 ? `${pago.nocuotas} cuotas` : 'Pago único' %></small>
+                          </div>
+                          <div class="d-flex flex-column mw-180">
+                            <div class="text-primary">Doctor</div>
+                            <div><%= doctorName(pago) %></div>
+                            <small class="text-muted"><%= pago.nombreMetodoPago || 'Sin método' %></small>
+                          </div>
+                          <div class="d-flex flex-column">
+                            <div class="text-primary">Saldo</div>
+                            <div><%= formatMoney(pago.saldo) %></div>
+                            <small class="text-success">Abonado <%= formatMoney(pago.totalAbonado) %></small>
+                          </div>
+                          <div class="ms-auto d-flex align-items-center gap-3 flex-wrap">
+                            <div class="d-flex flex-column">
+                              <div class="text-primary">Pendiente</div>
+                              <strong class="<%= pending <= 0 ? 'text-success' : 'text-warning' %>"><%= formatMoney(pending) %></strong>
+                            </div>
+                            <span class="badge <%= status.className %>"><%= status.label %></span>
+                            <% if (Number(pago.recibosRegistrados || 0) > 0) { %>
+                              <span class="badge bg-primary-subtle text-primary">Recibo</span>
+                            <% } %>
+                            <div class="d-flex gap-2">
+                              <% if (canFn('pagos:abonar')) { %>
+                                <button type="button" class="icon-box xs icon-box-hover rounded-5 border-0 js-open-abono" data-payment-id="<%= pago.idpago %>" data-pending="<%= pending %>" <%= pending <= 0 ? 'disabled' : '' %> title="Registrar abono">
+                                  <i class="ri-money-dollar-circle-line text-primary"></i>
+                                </button>
+                              <% } %>
+                              <button type="button" class="icon-box xs icon-box-hover rounded-5 border-0 js-view-payment" data-payment-id="<%= pago.idpago %>" title="Ver detalles">
+                                <i class="ri-eye-line text-primary"></i>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  <% }) %>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="app-footer"><span>© C&C Dental Studio 2026</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="addPaymentModal" tabindex="-1" aria-labelledby="addPaymentLabel" aria-hidden="true">
+      <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="addPaymentLabel">Nuevo pago</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <form id="addPaymentForm">
+            <div class="modal-body">
+              <div class="row gx-3">
+                <div class="col-lg-8">
+                  <div class="row gx-3">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Consulta asociada</label>
+                  <select class="form-select searchable-native-select" id="consulta_id" required>
+                    <option value="">Seleccionar consulta</option>
+                    <% consultations.forEach(item => { %>
+                      <option
+                        value="<%= item.idconsulta %>"
+                        data-amount="0.00"
+                        data-pending="<%= Number(item.saldoPendiente || 0).toFixed(2) %>"
+                        data-summary="<%= item.descripcion || '' %>"
+                        data-patient="<%= fullPatientName(item) %>"
+                        data-doctor="<%= doctorName(item) %>"
+                        data-date="<%= item.fechaCita ? `${formatDate(item.fechaCita)} ${item.horaCita || ''}` : 'Sin fecha' %>"
+                        data-motive="<%= item.motivoCita || 'Consulta' %>"
+                        <%= Number(prefill.consultaId || 0) === Number(item.idconsulta) ? 'selected' : '' %>>
+                        <%= consultationLabel(item) %>
+                      </option>
+                    <% }) %>
+                  </select>
+                  <div id="paymentConsultationSearch"></div>
+                </div>
+                <div class="col-md-3 mb-3">
+                  <label class="form-label">Fecha de pago</label>
+                  <input type="date" class="form-control" id="fecha" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Método de pago</label>
+                  <select class="form-select searchable-native-select" id="idtipoPago" required>
+                    <option value="">Seleccionar método</option>
+                    <% methods.forEach(item => { %>
+                      <option value="<%= item.idmetodo_pago %>"><%= item.nombre %></option>
+                    <% }) %>
+                  </select>
+                  <div id="paymentMethodSearch"></div>
+                  <small class="text-muted d-none" id="paymentEvidenceHint">Puedes adjuntar comprobante si aplica.</small>
+                </div>
+                <div class="col-12 mb-3">
+                  <label class="form-label">Forma de pago</label>
+                  <div class="row gx-2">
+                    <div class="col-md-4 mb-2">
+                      <label class="payment-mode-option d-flex align-items-center gap-2 mb-0">
+                        <input class="form-check-input m-0" type="radio" name="tipoCobro" value="completo" checked>
+                        <span>Pago completo</span>
+                      </label>
+                    </div>
+                    <div class="col-md-4 mb-2">
+                      <label class="payment-mode-option d-flex align-items-center gap-2 mb-0">
+                        <input class="form-check-input m-0" type="radio" name="tipoCobro" value="abonos">
+                        <span>Por abonos</span>
+                      </label>
+                    </div>
+                    <div class="col-md-4 mb-2">
+                      <label class="payment-mode-option d-flex align-items-center gap-2 mb-0">
+                        <input class="form-check-input m-0" type="radio" name="tipoCobro" value="cuotas">
+                        <span>Por cuotas</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-12 mb-3">
+                  <div class="charge-builder">
+                    <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap mb-3">
+                      <div>
+                        <h6 class="mb-0">Cotización a cobrar</h6>
+                        <small class="text-muted">Procedimientos, tratamientos y servicios incluidos para el cobro.</small>
+                      </div>
+                      <strong class="text-primary" id="paymentServiceTotal">Q0.00</strong>
+                    </div>
+                    <div class="row gx-2 align-items-end">
+                      <div class="col-md-3 mb-2">
+                        <label class="form-label">Tratamiento</label>
+                        <select class="form-select searchable-native-select" id="paymentTreatment">
+                          <option value="">Seleccionar</option>
+                          <% treatments.forEach(item => { %>
+                            <option value="<%= item.idtiposervicio %>" data-price="<%= Number(item.precio || 0).toFixed(2) %>"><%= item.nombre %></option>
+                          <% }) %>
+                        </select>
+                        <div id="paymentTreatmentSearch"></div>
+                      </div>
+                      <div class="col-md-3 mb-2">
+                        <label class="form-label">Servicio</label>
+                        <select class="form-select searchable-native-select" id="paymentService">
+                          <option value="">Seleccionar</option>
+                          <% services.forEach(item => { %>
+                            <option value="<%= item.idservicio %>" data-price="<%= Number(item.precio || 0).toFixed(2) %>"><%= item.nombre %></option>
+                          <% }) %>
+                        </select>
+                        <div id="paymentServiceSearch"></div>
+                      </div>
+                      <div class="col-md-2 mb-2">
+                        <label class="form-label">Cantidad</label>
+                        <input type="number" inputmode="numeric" min="1" step="1" class="form-control payment-number-input" id="paymentServiceQty" placeholder="0">
+                      </div>
+                      <div class="col-md-2 mb-2">
+                        <label class="form-label">Precio</label>
+                        <input type="number" inputmode="decimal" min="0" step="0.01" class="form-control payment-number-input" id="paymentServicePrice" placeholder="0.00">
+                      </div>
+                      <div class="col-md-2 mb-2 d-grid">
+                        <button type="button" class="btn btn-outline-primary" id="addPaymentService"><i class="ri-add-line me-1"></i> Agregar</button>
+                      </div>
+                    </div>
+                    <div class="d-grid gap-2 mt-2" id="paymentServiceList"></div>
+                  </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Saldo total</label>
+                  <input type="number" inputmode="decimal" min="0" step="0.01" class="form-control payment-number-input" id="saldo" value="<%= prefill.saldo ? Number(prefill.saldo).toFixed(2) : '' %>" placeholder="0.00" required>
+                </div>
+                <div class="col-md-6 mb-3" id="initialPaymentField">
+                  <label class="form-label">Abono inicial</label>
+                  <input type="number" inputmode="decimal" min="0" step="0.01" class="form-control payment-number-input" id="abono" value="0" placeholder="0.00" required>
+                </div>
+                <div class="col-md-6 mb-3 d-none" id="installmentsField">
+                  <label class="form-label">Cantidad de cuotas</label>
+                  <input type="number" inputmode="numeric" min="2" step="1" class="form-control payment-number-input" id="nocuota" value="2" placeholder="0" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Evidencia de pago <span class="text-muted">(opcional)</span></label>
+                  <input type="file" class="form-control" id="evidenciaPago" accept="image/*,application/pdf">
+                </div>
+                  </div>
+                </div>
+                <div class="col-lg-4 mb-3">
+                  <div class="clinical-summary-card p-3 h-100">
+                    <div class="d-flex align-items-center gap-2 mb-3">
+                      <span class="icon-box xs bg-primary-subtle rounded-5"><i class="ri-stethoscope-line text-primary"></i></span>
+                      <h6 class="mb-0">Resumen clínico</h6>
+                    </div>
+                    <div class="mb-3">
+                      <small class="text-muted d-block">Paciente</small>
+                      <strong id="summaryPatient">Selecciona una consulta</strong>
+                    </div>
+                    <div class="row gx-2 mb-3">
+                      <div class="col-6">
+                        <small class="text-muted d-block">Doctor</small>
+                        <span id="summaryDoctor">-</span>
+                      </div>
+                      <div class="col-6">
+                        <small class="text-muted d-block">Fecha</small>
+                        <span id="summaryDate">-</span>
+                      </div>
+                    </div>
+                    <div class="mb-3">
+                      <small class="text-muted d-block">Motivo</small>
+                      <span id="summaryMotive">-</span>
+                    </div>
+                    <hr>
+                    <div>
+                      <small class="text-muted d-block mb-1">Notas de la consulta</small>
+                      <div class="clinical-summary-text" id="summaryText">El resumen aparecerá al seleccionar una consulta.</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>
+              <button type="submit" class="btn btn-primary">Guardar pago</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="addAbonoModal" tabindex="-1" aria-labelledby="addAbonoLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="addAbonoLabel">Registrar abono</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <form id="addAbonoForm">
+            <div class="modal-body">
+              <input type="hidden" id="abonoPagoId">
+              <div class="mb-3">
+                <label class="form-label">Saldo pendiente</label>
+                <div class="fw-semibold text-warning" id="saldoRestanteModal">Q0.00</div>
+              </div>
+              <div class="row gx-3">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Fecha de abono</label>
+                  <input type="date" class="form-control" id="fechaAbono" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Valor del abono</label>
+                  <input type="number" inputmode="decimal" min="0.01" step="0.01" class="form-control payment-number-input" id="valorAbono" placeholder="0.00" required>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Descripción</label>
+                <textarea class="form-control" id="descripcionAbono" rows="3" placeholder="Detalle del abono"></textarea>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Evidencia del abono <span class="text-muted">(opcional)</span></label>
+                <input type="file" class="form-control" id="evidenciaAbono" accept="image/*,application/pdf">
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>
+              <button type="submit" class="btn btn-success">Guardar abono</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="paymentDetailsModal" tabindex="-1" aria-labelledby="paymentDetailsLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="paymentDetailsLabel">Detalles del pago</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body" id="paymentDetailsBody"></div>
+        </div>
+      </div>
+    </div>
+
+    <%- include('partials/uiFeedback') %>
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/vendor/overlay-scroll/jquery.overlayScrollbars.min.js"></script>
+    <script src="assets/vendor/overlay-scroll/custom-scrollbar.js"></script>
+    <script src="assets/js/custom.js"></script>
+    <script>
+      (function () {
+        const prefill = <%- safeJson(prefill) %>;
+        const serviceOptions = <%- safeJson(services) %>;
+        const treatmentOptions = <%- safeJson(treatments) %>;
+        const today = new Date().toISOString().slice(0, 10);
+        const paymentModal = document.getElementById('addPaymentModal');
+        const abonoModal = document.getElementById('addAbonoModal');
+        const detailsModal = document.getElementById('paymentDetailsModal');
+        const searchablePaymentControls = {
+          filterConsulta: window.initSearchableNativeSelect?.('paymentFilterConsulta', 'paymentFilterConsultaSearch', {
+            placeholder: 'Todas',
+            searchPlaceholder: 'Buscar consulta',
+          }),
+          filterMethod: window.initSearchableNativeSelect?.('paymentFilterMethod', 'paymentFilterMethodSearch', {
+            placeholder: 'Todos',
+            searchPlaceholder: 'Buscar metodo',
+          }),
+          consultation: window.initSearchableNativeSelect?.('consulta_id', 'paymentConsultationSearch', {
+            placeholder: 'Seleccionar consulta',
+            searchPlaceholder: 'Buscar consulta',
+          }),
+          method: window.initSearchableNativeSelect?.('idtipoPago', 'paymentMethodSearch', {
+            placeholder: 'Seleccionar metodo',
+            searchPlaceholder: 'Buscar metodo',
+          }),
+          treatment: window.initSearchableNativeSelect?.('paymentTreatment', 'paymentTreatmentSearch', {
+            placeholder: 'Seleccionar tratamiento',
+            searchPlaceholder: 'Buscar tratamiento',
+          }),
+          service: window.initSearchableNativeSelect?.('paymentService', 'paymentServiceSearch', {
+            placeholder: 'Seleccionar servicio',
+            searchPlaceholder: 'Buscar servicio',
+          }),
+        };
+        let paymentChargeItems = [];
+
+        function money(value) {
+          return `Q${Number(value || 0).toFixed(2)}`;
+        }
+
+        function escapeHtml(value) {
+          return String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+        }
+
+        function formatDate(value) {
+          const date = new Date(value);
+          return Number.isNaN(date.getTime()) ? 'Sin fecha' : date.toLocaleDateString('es-GT', { day: '2-digit', month: 'short', year: 'numeric' });
+        }
+
+        function applySearch(value) {
+          const term = String(value || '').trim().toLowerCase();
+          document.querySelectorAll('[data-payment-search]').forEach(item => {
+            item.hidden = term && !item.dataset.paymentSearch.includes(term);
+          });
+        }
+
+        function selectedConsultationAmount() {
+          const selected = document.getElementById('consulta_id')?.selectedOptions?.[0];
+          if (!selected) return 0;
+          return Number(selected.dataset.amount || selected.dataset.pending || 0);
+        }
+
+        function selectedConsultationOption() {
+          return document.getElementById('consulta_id')?.selectedOptions?.[0] || null;
+        }
+
+        function updateClinicalSummary() {
+          const selected = selectedConsultationOption();
+          const setText = (id, value) => {
+            const node = document.getElementById(id);
+            if (node) node.textContent = value || '-';
+          };
+          if (!selected?.value) {
+            setText('summaryPatient', 'Selecciona una consulta');
+            setText('summaryDoctor', '-');
+            setText('summaryDate', '-');
+            setText('summaryMotive', '-');
+            setText('summaryText', 'El resumen aparecerá al seleccionar una consulta.');
+            return;
+          }
+          setText('summaryPatient', selected.dataset.patient || 'Paciente sin nombre');
+          setText('summaryDoctor', selected.dataset.doctor || 'Doctor sin asignar');
+          setText('summaryDate', selected.dataset.date || 'Sin fecha');
+          setText('summaryMotive', selected.dataset.motive || 'Consulta');
+          setText('summaryText', selected.dataset.summary || 'Sin notas clínicas registradas.');
+        }
+
+        function selectedService() {
+          const serviceId = Number(document.getElementById('paymentService')?.value || 0);
+          return serviceOptions.find(item => Number(item.idservicio) === serviceId);
+        }
+
+        function selectedTreatment() {
+          const treatmentId = Number(document.getElementById('paymentTreatment')?.value || 0);
+          return treatmentOptions.find(item => Number(item.idtiposervicio) === treatmentId);
+        }
+
+        function currentPaymentMode() {
+          return document.querySelector('input[name="tipoCobro"]:checked')?.value || 'completo';
+        }
+
+        function syncPaymentMode() {
+          const mode = currentPaymentMode();
+          const saldo = document.getElementById('saldo');
+          const abono = document.getElementById('abono');
+          const abonoField = document.getElementById('initialPaymentField');
+          const cuotasField = document.getElementById('installmentsField');
+          const cuotas = document.getElementById('nocuota');
+          if (cuotasField) cuotasField.classList.toggle('d-none', mode !== 'cuotas');
+          if (abonoField) abonoField.classList.toggle('d-none', mode === 'completo');
+          if (mode === 'completo' && saldo && abono) abono.value = Number(saldo.value || 0).toFixed(2);
+          if (mode === 'abonos' && cuotas) cuotas.value = '1';
+          if (mode === 'cuotas' && cuotas && Number(cuotas.value || 0) < 2) cuotas.value = '2';
+          if (mode === 'cuotas' && saldo && abono && cuotas) {
+            const total = Number(saldo.value || 0);
+            const totalCuotas = Math.max(Number(cuotas.value || 2), 2);
+            abono.value = total > 0 ? (total / totalCuotas).toFixed(2) : '0.00';
+          }
+        }
+
+        function renderChargeItems() {
+          const list = document.getElementById('paymentServiceList');
+          const totalLabel = document.getElementById('paymentServiceTotal');
+          const serviceTotal = paymentChargeItems.reduce((sum, item) => sum + (item.cantidad * item.precio), 0);
+          if (totalLabel) totalLabel.textContent = money(serviceTotal);
+          if (!list) return;
+          list.innerHTML = paymentChargeItems.map(item => `
+            <div class="charge-line d-flex align-items-center justify-content-between gap-2 flex-wrap">
+              <div>
+                <div class="fw-semibold">${escapeHtml(item.servicio)}</div>
+                <small class="text-muted">${escapeHtml(item.tratamiento || 'Sin tratamiento')} · Cant. ${item.cantidad} · ${money(item.precio)}</small>
+              </div>
+              <div class="d-flex align-items-center gap-2">
+                <strong>${money(item.cantidad * item.precio)}</strong>
+                <button type="button" class="btn btn-outline-danger btn-sm js-remove-charge" data-charge-id="${item.id}"><i class="ri-delete-bin-line"></i></button>
+              </div>
+            </div>
+          `).join('');
+
+          if (serviceTotal > 0) {
+            const saldo = document.getElementById('saldo');
+            if (saldo) {
+              const baseAmount = selectedConsultationAmount();
+              saldo.value = (baseAmount + serviceTotal).toFixed(2);
+              saldo.dataset.autofilled = 'true';
+              syncPaymentMode();
+            }
+          }
+        }
+
+        function applySelectedServicePrice() {
+          const service = selectedService();
+          const treatment = selectedTreatment();
+          const priceInput = document.getElementById('paymentServicePrice');
+          if (!service || !priceInput) return;
+          const servicePrice = Number(service.precio || 0);
+          const treatmentPrice = Number(treatment?.precio || 0);
+          const basePrice = servicePrice > 0 ? servicePrice : treatmentPrice;
+          const currentPrice = Number(priceInput.value || 0);
+          if (basePrice > 0 && (currentPrice <= 0 || priceInput.dataset.autofilledPrice === 'true')) {
+            priceInput.value = basePrice.toFixed(2);
+            priceInput.dataset.autofilledPrice = 'true';
+          }
+        }
+
+        function applyConsultationAmount(force) {
+          const saldo = document.getElementById('saldo');
+          if (!saldo) return;
+          if (paymentChargeItems.length) return;
+          const amount = selectedConsultationAmount();
+          if (amount > 0 && (force || !Number(saldo.value || 0) || saldo.dataset.autofilled === 'true')) {
+            saldo.value = amount.toFixed(2);
+            saldo.dataset.autofilled = 'true';
+          }
+        }
+
+        document.getElementById('headerPaymentSearch')?.addEventListener('input', event => applySearch(event.target.value));
+        document.getElementById('mobilePaymentSearch')?.addEventListener('input', event => applySearch(event.target.value));
+        document.getElementById('fecha').value = today;
+        document.getElementById('fechaAbono').value = today;
+        document.querySelectorAll('input[name="tipoCobro"]').forEach(input => {
+          input.addEventListener('change', syncPaymentMode);
+        });
+        document.getElementById('idtipoPago')?.addEventListener('change', event => {
+          const option = event.target.selectedOptions?.[0];
+          const name = String(option?.textContent || '').toLowerCase();
+          document.getElementById('paymentEvidenceHint')?.classList.toggle('d-none', !/(transfer|dep[oó]sito)/.test(name));
+        });
+        document.getElementById('consulta_id')?.addEventListener('change', () => {
+          paymentChargeItems = [];
+          renderChargeItems();
+          applyConsultationAmount(true);
+          updateClinicalSummary();
+          syncPaymentMode();
+        });
+        document.getElementById('paymentService')?.addEventListener('change', applySelectedServicePrice);
+        document.getElementById('paymentTreatment')?.addEventListener('change', applySelectedServicePrice);
+        document.getElementById('paymentServicePrice')?.addEventListener('input', event => {
+          event.target.dataset.autofilledPrice = 'false';
+        });
+        document.getElementById('addPaymentService')?.addEventListener('click', () => {
+          const service = selectedService();
+          const treatment = selectedTreatment();
+          const quantity = Number(document.getElementById('paymentServiceQty')?.value || 0);
+          const price = Math.max(Number(document.getElementById('paymentServicePrice')?.value || 0), 0);
+          if (!quantity || quantity <= 0) {
+            showUiMessage('Ingresa la cantidad a cobrar.', 'warning');
+            return;
+          }
+          if (!service || price <= 0) {
+            showUiMessage('Selecciona un servicio con precio.', 'warning');
+            return;
+          }
+          paymentChargeItems.push({
+            id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+            servicioId: Number(service.idservicio || 0),
+            tratamientoId: Number(treatment?.idtiposervicio || 0),
+            tratamiento: treatment?.nombre || '',
+            servicio: service.nombre || 'Servicio',
+            cantidad: quantity,
+            precio: price,
+          });
+          document.getElementById('paymentServiceQty').value = '';
+          document.getElementById('paymentServicePrice').dataset.autofilledPrice = 'true';
+          renderChargeItems();
+        });
+        document.getElementById('paymentServiceList')?.addEventListener('click', event => {
+          const button = event.target.closest('.js-remove-charge');
+          if (!button) return;
+          paymentChargeItems = paymentChargeItems.filter(item => item.id !== button.dataset.chargeId);
+          renderChargeItems();
+          if (!paymentChargeItems.length) applyConsultationAmount(true);
+          syncPaymentMode();
+        });
+        document.getElementById('saldo')?.addEventListener('input', event => {
+          event.target.dataset.autofilled = 'false';
+          syncPaymentMode();
+        });
+        document.getElementById('nocuota')?.addEventListener('input', syncPaymentMode);
+        updateClinicalSummary();
+        syncPaymentMode();
+
+        if (prefill.consultaId && paymentModal && window.bootstrap) {
+          window.setTimeout(() => {
+            applyConsultationAmount(true);
+            new bootstrap.Modal(paymentModal).show();
+          }, 200);
+        }
+
+        document.querySelectorAll('.js-open-payment-for-consultation').forEach(button => {
+          button.addEventListener('click', () => {
+            const select = document.getElementById('consulta_id');
+            const saldo = document.getElementById('saldo');
+            if (select) select.value = button.dataset.consultationId || '';
+            searchablePaymentControls.consultation?.setValue(select?.value || '');
+            paymentChargeItems = [];
+            renderChargeItems();
+            updateClinicalSummary();
+            if (saldo) {
+              saldo.value = '';
+              saldo.dataset.autofilled = 'true';
+            }
+            applyConsultationAmount(true);
+            syncPaymentMode();
+            if (paymentModal && window.bootstrap) new bootstrap.Modal(paymentModal).show();
+          });
+        });
+
+        document.getElementById('addPaymentForm')?.addEventListener('submit', async event => {
+          event.preventDefault();
+          syncPaymentMode();
+          const payload = {
+            fecha: document.getElementById('fecha').value,
+            saldo: Number(document.getElementById('saldo').value || 0),
+            abono: Number(document.getElementById('abono').value || 0),
+            nocuota: Number(document.getElementById('nocuota').value || 1),
+            consulta_idconsulta: Number(document.getElementById('consulta_id').value || 0),
+            metodo_pago_idmetodo_pago: Number(document.getElementById('idtipoPago').value || 0),
+            tipoCobro: currentPaymentMode(),
+          };
+          if (!payload.consulta_idconsulta || !payload.metodo_pago_idmetodo_pago) {
+            showUiMessage('Selecciona consulta y método de pago.', 'warning');
+            return;
+          }
+          if (payload.saldo <= 0) {
+            showUiMessage('Define el monto real a cobrar.', 'warning');
+            return;
+          }
+          if (payload.abono > payload.saldo) {
+            showUiMessage('El abono no puede ser mayor al saldo.', 'warning');
+            return;
+          }
+          try {
+            const formData = new FormData();
+            Object.entries(payload).forEach(([key, value]) => formData.append(key, value));
+            formData.append('detallesPago', JSON.stringify(paymentChargeItems));
+            const evidence = document.getElementById('evidenciaPago')?.files?.[0];
+            if (evidence) formData.append('evidenciaPago', evidence);
+            const response = await fetch('/api/admin/pagos', {
+              method: 'POST',
+              body: formData,
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || data.success === false) throw new Error(data.message || 'No se pudo guardar el pago.');
+            showUiMessage('Pago guardado correctamente.', 'success');
+            setTimeout(() => window.location.href = '/admin/pago', 650);
+          } catch (error) {
+            showUiMessage(error.message || 'No se pudo guardar el pago.', 'danger');
+          }
+        });
+
+        document.querySelectorAll('.js-open-abono').forEach(button => {
+          button.addEventListener('click', () => {
+            document.getElementById('abonoPagoId').value = button.dataset.paymentId || '';
+            document.getElementById('saldoRestanteModal').textContent = money(button.dataset.pending);
+            document.getElementById('valorAbono').value = '';
+            document.getElementById('descripcionAbono').value = '';
+            document.getElementById('evidenciaAbono').value = '';
+            if (abonoModal && window.bootstrap) new bootstrap.Modal(abonoModal).show();
+          });
+        });
+
+        document.getElementById('addAbonoForm')?.addEventListener('submit', async event => {
+          event.preventDefault();
+          const payload = {
+            idPago: Number(document.getElementById('abonoPagoId').value || 0),
+            valorAbono: Number(document.getElementById('valorAbono').value || 0),
+            descripcionAbono: document.getElementById('descripcionAbono').value,
+            fechaAbono: document.getElementById('fechaAbono').value,
+          };
+          if (!payload.idPago || payload.valorAbono <= 0) {
+            showUiMessage('Ingresa un abono válido.', 'warning');
+            return;
+          }
+          try {
+            const formData = new FormData();
+            Object.entries(payload).forEach(([key, value]) => formData.append(key, value));
+            const evidence = document.getElementById('evidenciaAbono')?.files?.[0];
+            if (evidence) formData.append('evidenciaAbono', evidence);
+            const response = await fetch('/api/admin/pagos/abonos', {
+              method: 'POST',
+              body: formData,
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || data.success === false) throw new Error(data.message || 'No se pudo guardar el abono.');
+            showUiMessage('Abono guardado correctamente.', 'success');
+            setTimeout(() => window.location.reload(), 650);
+          } catch (error) {
+            showUiMessage(error.message || 'No se pudo guardar el abono.', 'danger');
+          }
+        });
+
+        document.querySelectorAll('.js-view-payment').forEach(button => {
+          button.addEventListener('click', async () => {
+            try {
+              const response = await fetch(`/api/admin/pagos/${button.dataset.paymentId}/detalles`);
+              const data = await response.json().catch(() => ({}));
+              if (!response.ok || data.success === false) throw new Error(data.message || 'No se pudo cargar el pago.');
+              const pago = data.pago || {};
+              const abonos = Array.isArray(data.abonos) ? data.abonos : [];
+              const recibos = Array.isArray(data.recibos) ? data.recibos : [];
+              const detalles = Array.isArray(data.detalles) ? data.detalles : [];
+              const patient = `${pago.nombrePaciente || ''} ${pago.apellidoPaciente || ''}`.trim() || 'Paciente sin nombre';
+              const rows = abonos.map(abono => `
+                <tr>
+                  <td>${formatDate(abono.fecha)}</td>
+                  <td>${money(abono.valor)}</td>
+                  <td>${escapeHtml(abono.descripcion || 'Sin descripción')}</td>
+                </tr>
+              `).join('') || '<tr><td colspan="3" class="text-muted text-center">Sin abonos adicionales.</td></tr>';
+              const receiptRows = recibos.map(recibo => `
+                <tr>
+                  <td>#${escapeHtml(recibo.idRecibo || '-')}</td>
+                  <td>${formatDate(recibo.fecha)}</td>
+                  <td>${money(recibo.monto)}</td>
+                  <td>${recibo.imagen ? `<a href="${escapeHtml(recibo.imagen)}" target="_blank" class="btn btn-outline-primary btn-sm">Evidencia</a>` : '<span class="text-muted">Sin archivo</span>'}</td>
+                </tr>
+              `).join('') || '<tr><td colspan="4" class="text-muted text-center">Sin recibos generados.</td></tr>';
+              const detailRows = detalles.map(item => `
+                <tr>
+                  <td>${escapeHtml([item.nombre_tratamiento, item.nombre_servicio].filter(Boolean).join(' / ') || item.nombre_servicio || 'Servicio')}</td>
+                  <td>${Number(item.cantidad || 0).toFixed(2)}</td>
+                  <td>${money(item.precio_unitario)}</td>
+                  <td>${money(item.subtotal)}</td>
+                </tr>
+              `).join('') || '<tr><td colspan="4" class="text-muted text-center">Sin servicios cobrados guardados.</td></tr>';
+              document.getElementById('paymentDetailsBody').innerHTML = `
+                <div class="row gx-3 mb-3">
+                  <div class="col-md-6"><small class="text-muted d-block">Paciente</small><strong>${escapeHtml(patient)}</strong></div>
+                  <div class="col-md-6"><small class="text-muted d-block">Consulta</small><strong>#${escapeHtml(pago.ConsultaId || '-')}</strong></div>
+                </div>
+                <div class="row gx-3 mb-3">
+                  <div class="col-md-3"><small class="text-muted d-block">Saldo</small><strong>${money(pago.saldo)}</strong></div>
+                  <div class="col-md-3"><small class="text-muted d-block">Abono inicial</small><strong>${money(pago.abono)}</strong></div>
+                  <div class="col-md-3"><small class="text-muted d-block">Abonos</small><strong>${money(pago.abonosRegistrados)}</strong></div>
+                  <div class="col-md-3"><small class="text-muted d-block">Pendiente</small><strong>${money(pago.saldo_restante)}</strong></div>
+                </div>
+                <div class="table-responsive">
+                  <table class="table align-middle">
+                    <thead><tr><th>Fecha</th><th>Monto</th><th>Descripción</th></tr></thead>
+                    <tbody>${rows}</tbody>
+                  </table>
+                </div>
+                <h6 class="mt-4">Servicios cobrados</h6>
+                <div class="table-responsive">
+                  <table class="table align-middle">
+                    <thead><tr><th>Servicio</th><th>Cant.</th><th>Precio</th><th>Subtotal</th></tr></thead>
+                    <tbody>${detailRows}</tbody>
+                  </table>
+                </div>
+                <h6 class="mt-4">Recibos y evidencias</h6>
+                <div class="table-responsive">
+                  <table class="table align-middle">
+                    <thead><tr><th>#</th><th>Fecha</th><th>Monto</th><th>Archivo</th></tr></thead>
+                    <tbody>${receiptRows}</tbody>
+                  </table>
+                </div>
+              `;
+              if (detailsModal && window.bootstrap) new bootstrap.Modal(detailsModal).show();
+            } catch (error) {
+              showUiMessage(error.message || 'No se pudo cargar el pago.', 'danger');
+            }
+          });
+        });
+      })();
+    </script>
+  </body>
+</html>

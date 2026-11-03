@@ -1,0 +1,613 @@
+<%
+  const headerProfile = typeof adminProfile !== 'undefined' ? adminProfile : {};
+  const headerName = headerProfile.displayName || 'Nombre pendiente';
+  const headerInitials = headerProfile.initials || headerName.split(/\s+/).slice(0, 2).map(part => part.charAt(0).toUpperCase()).join('') || 'AD';
+  const headerPhoto = headerProfile.photoUrl || '';
+  const headerRole = headerProfile.roleLabel || 'Usuario';
+  const canFn = typeof can === 'function' ? can : () => true;
+  const invoiceRows = Array.isArray(facturas) ? facturas : [];
+  const safeJson = value => JSON.stringify(value || []).replace(/</g, '\\u003c');
+  const money = value => `Q${Number(value || 0).toFixed(2)}`;
+  const formatDate = value => {
+    if (!value) return 'Sin fecha';
+    const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (match) return `${match[3]}/${match[2]}/${match[1]}`;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? 'Sin fecha' : date.toLocaleDateString('es-GT');
+  };
+  const paymentLabel = value => {
+    const id = Number(value || 0);
+    if (id === 1) return 'Efectivo';
+    if (id === 2) return 'Transferencia';
+    if (id === 3) return 'Tarjeta';
+    return 'N/A';
+  };
+  const totalCompras = invoiceRows.reduce((sum, row) => sum + Number(row.montoTotal || 0), 0);
+  const totalDetalles = invoiceRows.reduce((sum, row) => sum + (Array.isArray(row.detalles) ? row.detalles.length : 0), 0);
+%>
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <base href="/" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Compras - Inventario</title>
+    <link rel="shortcut icon" type="image/svg+xml" href="/images/cnc-favicon.svg">
+    <link rel="stylesheet" href="assets/fonts/remix/remixicon.css">
+    <link rel="stylesheet" href="assets/css/main.min.css">
+    <link rel="stylesheet" href="assets/vendor/overlay-scroll/OverlayScrollbars.min.css">
+    <style>
+      .profile-initials-badge {
+        align-items: center;
+        background: #f4f1ff;
+        color: #705df3;
+        display: inline-flex;
+        font-weight: 800;
+        justify-content: center;
+      }
+      .inventory-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .45rem;
+        justify-content: flex-end;
+      }
+      .inventory-nav-link {
+        align-items: center;
+        background: rgba(255, 255, 255, .14);
+        border: 1px solid rgba(255, 255, 255, .28);
+        border-radius: 8px;
+        color: #fff;
+        display: inline-flex;
+        font-weight: 700;
+        gap: .4rem;
+        min-height: 36px;
+        padding: .45rem .7rem;
+      }
+      .inventory-nav-link:hover,
+      .inventory-nav-link.active {
+        background: #fff;
+        color: #5b50d6;
+      }
+      .purchase-summary-grid {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      }
+      .purchase-stat,
+      .purchase-toolbar,
+      .purchase-panel,
+      .purchase-product-row {
+        background: #fff;
+        border: 1px solid #dde2ee;
+        border-radius: 8px;
+      }
+      .purchase-stat {
+        padding: 1rem;
+      }
+      .purchase-stat small {
+        color: #6b7280;
+        display: block;
+      }
+      .purchase-stat strong {
+        display: block;
+        font-size: 1.6rem;
+        line-height: 1.1;
+      }
+      .purchase-toolbar,
+      .purchase-panel {
+        padding: 1rem;
+      }
+      .invoice-table {
+        min-width: 720px;
+      }
+      .purchase-product-row {
+        padding: .9rem;
+      }
+      .purchase-number-input {
+        -moz-appearance: textfield;
+        appearance: textfield;
+      }
+      .purchase-number-input::-webkit-inner-spin-button,
+      .purchase-number-input::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+      .purchase-number-input::placeholder {
+        color: #9aa4b2;
+        opacity: 1;
+      }
+      @media (max-width: 767.98px) {
+        .inventory-nav {
+          justify-content: flex-start;
+          width: 100%;
+        }
+        .inventory-nav-link {
+          flex: 1 1 46%;
+          justify-content: center;
+        }
+      }
+      @media (max-width: 575.98px) {
+        .inventory-nav-link {
+          flex-basis: 100%;
+        }
+      }
+    </style>
+    <%- include('partials/searchableSelect') %>
+  </head>
+  <body>
+    <div class="page-wrapper">
+      <div class="main-container">
+        <nav id="sidebar" class="sidebar-wrapper">
+          <div class="brand-container d-flex align-items-center justify-content-between">
+            <div class="app-brand ms-3">
+              <a href="/admin/dash"><img src="/images/cnc-logo-alt.svg" class="logo" alt="C&C Dental Studio"></a>
+            </div>
+            <button type="button" class="pin-sidebar me-3"><i class="ri-menu-line"></i></button>
+          </div>
+          <div class="sidebar-profile">
+            <% if (headerPhoto) { %>
+              <img src="<%= headerPhoto %>" class="rounded-5 border border-primary border-3" alt="Foto de perfil">
+            <% } else { %>
+              <span class="profile-initials-badge rounded-5 border border-primary border-3 img-4x"><%= headerInitials %></span>
+            <% } %>
+            <h6 class="mb-1 profile-name text-nowrap text-truncate text-primary"><%= headerName %></h6>
+            <small class="profile-name text-nowrap text-truncate"><%= headerRole %></small>
+          </div>
+          <div class="sidebarMenuScroll">
+            <%- include('partials/adminSidebar', { activePage: 'inventario', canFn }) %>
+          </div>
+        </nav>
+
+        <div class="app-container">
+          <div class="app-header d-flex align-items-center">
+            <div class="search-container d-xl-block d-none">
+              <input type="text" class="form-control" placeholder="Buscar" id="topSearch">
+              <i class="ri-search-line"></i>
+            </div>
+            <div class="header-actions ms-auto d-flex align-items-center gap-2">
+              <div class="dropdown ms-2">
+                <a id="userSettings" class="dropdown-toggle d-flex align-items-center" href="#!" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <div class="avatar-box">
+                    <% if (headerPhoto) { %>
+                      <img src="<%= headerPhoto %>" class="img-2xx rounded-5 border border-3 border-white" alt="Foto de perfil">
+                    <% } else { %>
+                      <span class="profile-initials-badge img-2xx rounded-5 border border-3 border-white"><%= headerInitials %></span>
+                    <% } %>
+                    <span class="status busy"></span>
+                  </div>
+                </a>
+                <div class="dropdown-menu dropdown-menu-end shadow-lg">
+                  <div class="px-3 py-2"><span class="small"><%= headerRole %></span><h6 class="m-0"><%= headerName %></h6></div>
+                  <div class="dropdown-divider"></div>
+                  <a href="/admin/perfil" class="dropdown-item"><i class="ri-user-line me-2"></i> Perfil</a>
+                  <a href="/logout" class="dropdown-item"><i class="ri-logout-circle-r-line me-2"></i> Cerrar sesión</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="app-hero-header d-flex align-items-center">
+            <ol class="breadcrumb">
+              <li class="breadcrumb-item"><a href="/admin/dash"><i class="ri-home-3-line"></i></a></li>
+              <li class="breadcrumb-item"><a href="/admin/productos">Inventario</a></li>
+              <li class="breadcrumb-item text-primary" aria-current="page">Compras</li>
+            </ol>
+            <% if (canFn('inventario:compras')) { %>
+              <button class="btn btn-primary ms-auto" data-bs-toggle="modal" data-bs-target="#purchaseCreateModal">
+                <i class="ri-shopping-cart-2-line me-1"></i> Comprar producto
+              </button>
+            <% } %>
+          </div>
+
+          <div class="app-body">
+            <%- include('partials/inventoryNav', { activeInventoryPage: 'compras', canFn }) %>
+
+            <div class="purchase-summary-grid mb-4">
+              <div class="purchase-stat"><small>Facturas</small><strong><%= invoiceRows.length %></strong></div>
+              <div class="purchase-stat"><small>Total comprado</small><strong class="text-primary"><%= money(totalCompras) %></strong></div>
+              <div class="purchase-stat"><small>Productos ingresados</small><strong class="text-success"><%= totalDetalles %></strong></div>
+              <div class="purchase-stat"><small>Última factura</small><strong><%= invoiceRows[0] ? formatDate(invoiceRows[0].fechaEmision) : 'Sin registro' %></strong></div>
+            </div>
+
+            <div class="purchase-toolbar mb-4">
+              <div class="row gx-3 align-items-center">
+                <div class="col-lg-7 mb-2 mb-lg-0">
+                  <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="ri-search-line text-primary"></i></span>
+                    <input type="text" class="form-control" id="invoiceSearch" placeholder="Buscar factura, fecha, pago o monto">
+                  </div>
+                </div>
+                <div class="col-lg-5 d-flex justify-content-lg-end gap-2 flex-wrap">
+                  <a href="/admin/productos" class="btn btn-outline-primary"><i class="ri-archive-2-line me-1"></i> Productos</a>
+                  <a href="/admin/salidasProductos" class="btn btn-outline-secondary"><i class="ri-history-line me-1"></i> Kardex</a>
+                </div>
+              </div>
+            </div>
+
+            <div class="purchase-panel">
+              <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                <div>
+                  <h5 class="mb-1">Compras de productos</h5>
+                  <small class="text-muted">Registra entradas de inventario y revisa las facturas creadas.</small>
+                </div>
+              </div>
+
+              <% if (!invoiceRows.length) { %>
+                <div class="text-center text-muted border rounded-2 py-5">Todavía no hay compras registradas.</div>
+              <% } else { %>
+                <div class="table-responsive">
+                  <table class="table align-middle invoice-table">
+                    <thead>
+                      <tr>
+                        <th>Fecha de emisión</th>
+                        <th>Monto total</th>
+                        <th>Tipo de pago</th>
+                        <th>Productos</th>
+                        <th class="text-end">Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody id="invoiceRows">
+                      <% invoiceRows.forEach(factura => {
+                        const details = Array.isArray(factura.detalles) ? factura.detalles : [];
+                        const search = [factura.idfactura, formatDate(factura.fechaEmision), money(factura.montoTotal), paymentLabel(factura.tipoPago_idtipoPago), details.map(item => item.nombre_producto).join(' ')].join(' ').toLowerCase();
+                      %>
+                        <tr data-invoice-row data-search="<%= search %>">
+                          <td><%= formatDate(factura.fechaEmision) %></td>
+                          <td><strong><%= money(factura.montoTotal) %></strong></td>
+                          <td><span class="badge bg-primary-subtle text-primary"><%= paymentLabel(factura.tipoPago_idtipoPago) %></span></td>
+                          <td><%= details.length %></td>
+                          <td>
+                            <div class="d-flex justify-content-end gap-2">
+                              <button class="btn btn-outline-primary btn-sm" type="button" data-view-invoice="<%= factura.idfactura %>" data-date="<%= factura.fechaEmision %>" data-total="<%= factura.montoTotal %>" data-payment="<%= factura.tipoPago_idtipoPago %>">
+                                <i class="ri-information-line"></i>
+                              </button>
+                              <% if (canFn('inventario:compras')) { %>
+                                <button class="btn btn-outline-danger btn-sm" type="button" data-delete-invoice="<%= factura.idfactura %>">
+                                  <i class="ri-delete-bin-line"></i>
+                                </button>
+                              <% } %>
+                            </div>
+                          </td>
+                        </tr>
+                      <% }) %>
+                    </tbody>
+                  </table>
+                </div>
+              <% } %>
+            </div>
+          </div>
+
+          <div class="app-footer"><span>© C&C Dental Studio 2026</span></div>
+        </div>
+      </div>
+    </div>
+
+    <% if (canFn('inventario:compras')) { %>
+      <div class="modal fade" id="purchaseCreateModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+          <form class="modal-content" id="comprarProductoForm">
+            <div class="modal-header">
+              <h5 class="modal-title">Registrar compra de producto</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+              <div class="row gx-3">
+                <div class="col-md-4 mb-3">
+                  <label for="fechaEmision" class="form-label">Fecha de emisión</label>
+                  <input type="date" class="form-control" id="fechaEmision" required>
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label for="tipoPago" class="form-label">Tipo de pago</label>
+                  <select class="form-select" id="tipoPago" required>
+                    <option value="1">Efectivo</option>
+                    <option value="2">Transferencia</option>
+                    <option value="3">Tarjeta</option>
+                  </select>
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label for="proveedor" class="form-label">Proveedor</label>
+                  <select class="form-select" id="proveedor" required>
+                    <option value="">Seleccione un proveedor</option>
+                  </select>
+                  <div id="purchaseProviderSearch"></div>
+                </div>
+              </div>
+
+              <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                <h6 class="mb-0">Productos</h6>
+                <button type="button" class="btn btn-outline-primary btn-sm" id="addPurchaseProductBtn">
+                  <i class="ri-add-line me-1"></i> Agregar producto
+                </button>
+              </div>
+              <div class="d-grid gap-2" id="productosContainer"></div>
+
+              <div class="row justify-content-end mt-3">
+                <div class="col-md-4">
+                  <label for="totalGlobal" class="form-label">Total global</label>
+                  <input type="number" class="form-control purchase-number-input" id="totalGlobal" placeholder="0" readonly>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <button type="submit" class="btn btn-primary">Registrar compra</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    <% } %>
+
+    <div class="modal fade" id="invoiceInfoModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Detalle de factura</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body" id="invoiceInfoBody"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <%- include('partials/uiFeedback') %>
+
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/vendor/overlay-scroll/jquery.overlayScrollbars.min.js"></script>
+    <script src="assets/vendor/overlay-scroll/custom-scrollbar.js"></script>
+    <script src="assets/js/custom.js"></script>
+    <script>
+      const invoiceInfoModal = new bootstrap.Modal(document.getElementById('invoiceInfoModal'));
+      const purchaseCreateModal = document.getElementById('purchaseCreateModal') ? new bootstrap.Modal(document.getElementById('purchaseCreateModal')) : null;
+      let productsCache = [];
+      let providersLoaded = false;
+      let productRowId = 0;
+
+      function escapeHtml(value) {
+        return String(value || '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+      }
+
+      function money(value) {
+        return `Q${Number(value || 0).toFixed(2)}`;
+      }
+
+      function paymentLabel(value) {
+        const id = Number(value || 0);
+        if (id === 1) return 'Efectivo';
+        if (id === 2) return 'Transferencia';
+        if (id === 3) return 'Tarjeta';
+        return 'N/A';
+      }
+
+      function formatDate(value) {
+        if (!value) return 'Sin fecha';
+        const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+        if (match) return `${match[3]}/${match[2]}/${match[1]}`;
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? 'Sin fecha' : date.toLocaleDateString('es-GT');
+      }
+
+      function localToday() {
+        const date = new Date();
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      }
+
+      function ensurePurchaseSearchable(select, placeholder, searchPlaceholder) {
+        if (!select || !window.initSearchableNativeSelect) return null;
+        let wrapper = select.nextElementSibling;
+        if (!wrapper || !wrapper.classList || !wrapper.classList.contains('purchase-select-search')) {
+          wrapper = document.createElement('div');
+          wrapper.className = 'purchase-select-search';
+          select.insertAdjacentElement('afterend', wrapper);
+        }
+        if (!select._searchableControl) {
+          select._searchableControl = window.initSearchableNativeSelect(select, wrapper, {
+            placeholder,
+            searchPlaceholder,
+          });
+        }
+        select._searchableControl?.setOptions(window.searchableSelectOptions?.(select) || []);
+        select._searchableControl?.setValue(select.value || '');
+        return select._searchableControl;
+      }
+
+      async function loadProviders() {
+        if (providersLoaded || !document.getElementById('proveedor')) return;
+        const response = await fetch('/admin/get-proveedores');
+        const providers = await response.json();
+        const select = document.getElementById('proveedor');
+        providers.forEach(provider => {
+          const option = document.createElement('option');
+          option.value = provider.id;
+          option.textContent = provider.nombre;
+          select.appendChild(option);
+        });
+        providersLoaded = true;
+        ensurePurchaseSearchable(select, 'Seleccione un proveedor', 'Buscar proveedor');
+      }
+
+      async function loadProducts() {
+        if (productsCache.length) return productsCache;
+        const response = await fetch('/admin/get-productos');
+        productsCache = await response.json();
+        return productsCache;
+      }
+
+      function fillProductSelect(select) {
+        select.innerHTML = '<option value="">Seleccione un producto</option>';
+        productsCache.forEach(product => {
+          const option = document.createElement('option');
+          option.value = product.id;
+          option.textContent = product.nombre;
+          select.appendChild(option);
+        });
+        ensurePurchaseSearchable(select, 'Seleccione un producto', 'Buscar producto');
+      }
+
+      async function addPurchaseProductRow() {
+        await loadProducts();
+        const row = document.createElement('div');
+        row.className = 'purchase-product-row';
+        row.dataset.purchaseProductRow = 'true';
+        row.innerHTML = `
+          <div class="row gx-3 align-items-end">
+            <div class="col-lg-4 col-md-6 mb-2">
+              <label class="form-label" for="purchaseProduct${++productRowId}">Producto</label>
+              <select class="form-select producto-select" id="purchaseProduct${productRowId}" required></select>
+            </div>
+            <div class="col-lg-2 col-md-6 mb-2">
+              <label class="form-label">Cantidad</label>
+              <input type="number" min="1" step="1" inputmode="numeric" class="form-control purchase-number-input cantidad" placeholder="0" required>
+            </div>
+            <div class="col-lg-2 col-md-6 mb-2">
+              <label class="form-label">Precio compra</label>
+              <input type="number" min="0" step="0.01" inputmode="decimal" class="form-control purchase-number-input precioCompra" placeholder="0" required>
+            </div>
+            <div class="col-lg-2 col-md-6 mb-2">
+              <label class="form-label">Subtotal</label>
+              <input type="number" class="form-control purchase-number-input subtotal" placeholder="0" readonly>
+            </div>
+            <div class="col-lg-2 mb-2 d-grid">
+              <button type="button" class="btn btn-outline-danger js-remove-purchase-product"><i class="ri-delete-bin-line me-1"></i> Quitar</button>
+            </div>
+          </div>`;
+        document.getElementById('productosContainer')?.appendChild(row);
+        fillProductSelect(row.querySelector('.producto-select'));
+        row.querySelector('.ss-btn')?.focus();
+      }
+
+      function recalculatePurchaseTotals() {
+        let total = 0;
+        document.querySelectorAll('[data-purchase-product-row]').forEach(row => {
+          const quantity = Number(row.querySelector('.cantidad')?.value || 0);
+          const price = Number(row.querySelector('.precioCompra')?.value || 0);
+          const subtotal = quantity > 0 && price >= 0 ? quantity * price : 0;
+          const subtotalInput = row.querySelector('.subtotal');
+          if (subtotalInput) subtotalInput.value = subtotal ? subtotal.toFixed(2) : '';
+          total += subtotal;
+        });
+        const totalInput = document.getElementById('totalGlobal');
+        if (totalInput) totalInput.value = total ? total.toFixed(2) : '';
+      }
+
+      function collectPurchaseProducts() {
+        return Array.from(document.querySelectorAll('[data-purchase-product-row]')).map(row => ({
+          producto: Number(row.querySelector('.producto-select')?.value || 0),
+          cantidad: Number(row.querySelector('.cantidad')?.value || 0),
+          precioCompra: Number(row.querySelector('.precioCompra')?.value || 0),
+          subtotal: Number(row.querySelector('.subtotal')?.value || 0),
+        }));
+      }
+
+      function filterInvoices(value) {
+        const term = String(value || '').trim().toLowerCase();
+        document.querySelectorAll('[data-invoice-row]').forEach(row => {
+          row.hidden = term && !row.dataset.search.includes(term);
+        });
+      }
+
+      async function renderInvoiceInfo(button) {
+        const id = button.dataset.viewInvoice;
+        const response = await fetch(`/admin/get-detalles-factura/${id}`);
+        const details = await response.json();
+        const rows = details.length
+          ? details.map(item => `
+              <tr>
+                <td>${escapeHtml(item.producto_nombre)}</td>
+                <td>${Number(item.cantidad || 0)}</td>
+                <td>${money(item.subtotal)}</td>
+              </tr>`).join('')
+          : '<tr><td colspan="3" class="text-muted text-center py-4">Sin detalles registrados.</td></tr>';
+        document.getElementById('invoiceInfoBody').innerHTML = `
+          <div class="row gx-3 mb-3">
+            <div class="col-md-4"><small class="text-muted d-block">Fecha</small><strong>${formatDate(button.dataset.date)}</strong></div>
+            <div class="col-md-4"><small class="text-muted d-block">Monto total</small><strong>${money(button.dataset.total)}</strong></div>
+            <div class="col-md-4"><small class="text-muted d-block">Tipo de pago</small><strong>${paymentLabel(button.dataset.payment)}</strong></div>
+          </div>
+          <div class="table-responsive">
+            <table class="table align-middle">
+              <thead><tr><th>Producto</th><th>Cantidad</th><th>Subtotal</th></tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>`;
+        invoiceInfoModal.show();
+      }
+
+      function deleteInvoice(id, button) {
+        confirmUiAction('¿Deseas eliminar esta factura y ajustar el stock?', async () => {
+          button.disabled = true;
+          try {
+            const response = await fetch('/admin/eliminar-factura', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ facturaId: id }),
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || data.success === false) throw new Error(data.message || 'No se pudo eliminar la factura.');
+            showUiMessage('Factura eliminada correctamente.', 'success');
+            setTimeout(() => window.location.reload(), 650);
+          } catch (error) {
+            button.disabled = false;
+            showUiMessage(error.message || 'No se pudo eliminar la factura.', 'danger');
+          }
+        }, { title: 'Eliminar factura', confirmText: 'Eliminar', confirmType: 'danger' });
+      }
+
+      document.getElementById('fechaEmision') && (document.getElementById('fechaEmision').value = localToday());
+      document.getElementById('invoiceSearch')?.addEventListener('input', event => filterInvoices(event.target.value));
+      document.getElementById('topSearch')?.addEventListener('input', event => filterInvoices(event.target.value));
+      document.getElementById('addPurchaseProductBtn')?.addEventListener('click', addPurchaseProductRow);
+      document.getElementById('productosContainer')?.addEventListener('input', recalculatePurchaseTotals);
+      document.getElementById('productosContainer')?.addEventListener('click', event => {
+        const button = event.target.closest('.js-remove-purchase-product');
+        if (!button) return;
+        button.closest('[data-purchase-product-row]')?.remove();
+        recalculatePurchaseTotals();
+      });
+      document.getElementById('invoiceRows')?.addEventListener('click', event => {
+        const viewButton = event.target.closest('[data-view-invoice]');
+        const deleteButton = event.target.closest('[data-delete-invoice]');
+        if (viewButton) renderInvoiceInfo(viewButton).catch(error => showUiMessage(error.message || 'No se pudo cargar la factura.', 'danger'));
+        if (deleteButton) deleteInvoice(Number(deleteButton.dataset.deleteInvoice), deleteButton);
+      });
+
+      document.getElementById('comprarProductoForm')?.addEventListener('submit', async event => {
+        event.preventDefault();
+        const productos = collectPurchaseProducts();
+        const invalid = productos.some(item => !item.producto || item.cantidad <= 0 || item.precioCompra < 0);
+        if (!productos.length || invalid) {
+          showUiMessage('Selecciona producto, cantidad y precio en cada fila.', 'warning');
+          return;
+        }
+        try {
+          const response = await fetch('/admin/comprar-producto', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              fechaEmision: document.getElementById('fechaEmision').value,
+              tipoPago: document.getElementById('tipoPago').value,
+              proveedor: document.getElementById('proveedor').value,
+              productos,
+              totalGlobal: Number(document.getElementById('totalGlobal').value || 0),
+            }),
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok || data.success === false) throw new Error(data.message || data.error || 'Error al registrar la compra.');
+          showUiMessage('Compra registrada correctamente.', 'success');
+          purchaseCreateModal?.hide();
+          setTimeout(() => window.location.reload(), 650);
+        } catch (error) {
+          showUiMessage(error.message || 'Error al registrar la compra.', 'danger');
+        }
+      });
+
+      if (document.getElementById('comprarProductoForm')) {
+        loadProviders().catch(error => showUiMessage(error.message || 'No se pudieron cargar proveedores.', 'danger'));
+        addPurchaseProductRow().catch(error => showUiMessage(error.message || 'No se pudieron cargar productos.', 'danger'));
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,68 @@
+<!-- Modal para ver información del doctor -->
+<div class="modal fade" id="viewDoctorModal" tabindex="-1" aria-labelledby="viewDoctorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="viewDoctorModalLabel"><i class="fas fa-user-md"></i> Información del Doctor</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <table class="table table-striped table-hover table-bordered">
+                    <tbody>
+                        <tr>
+                            <th style="width: 30%;" class="bg-light text-center">Nombre</th>
+                            <td id="viewNombre" class="text-center"></td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light text-center">Apellido</th>
+                            <td id="viewApellido" class="text-center"></td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light text-center">DPI</th>
+                            <td id="viewDPI" class="text-center"></td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light text-center">Teléfono</th>
+                            <td id="viewTelefono" class="text-center"></td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light text-center">Correo Electrónico</th>
+                            <td id="viewEmail" class="text-center"></td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light text-center">Fecha de Nacimiento</th>
+                            <td id="viewFechaNacimiento" class="text-center"></td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light text-center">Especialidad</th>
+                            <td id="viewEspecialidad" class="text-center"></td>
+                        </tr>
+                        <tr>
+                            <th class="bg-light text-center">Tipo de Sangre</th>
+                            <td id="viewTipoSangre" class="text-center"></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="mt-4">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th class="bg-light text-center"><i class="fas fa-sticky-note"></i> Observaciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td id="viewObservacion" style="padding: 15px;"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer d-flex justify-content-end">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>

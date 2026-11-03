@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="es">
+<%
+  const headerProfile = typeof adminProfile !== 'undefined' ? adminProfile : {};
+  const headerName = headerProfile.displayName || 'Nombre pendiente';
+  const headerInitials = headerProfile.initials || headerName.split(/\s+/).slice(0, 2).map(part => part.charAt(0).toUpperCase()).join('') || 'DR';
+  const headerPhoto = headerProfile.photoUrl || '';
+  const headerRole = headerProfile.roleLabel || 'Usuario';
+  const canFn = typeof can === 'function' ? can : () => true;
+%>
+
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title><%= title || 'Configuración' %> - C&C Dental Studio</title>
+
+    <!-- Meta -->
+    <meta name="description" content="Sistema de gestión de C&C Dental Studio">
+    <meta property="og:title" content="C&C Dental Studio">
+    <meta property="og:description" content="Sistema de gestión de C&C Dental Studio">
+    <meta property="og:type" content="Website">
+    <link rel="shortcut icon" type="image/svg+xml" href="/images/cnc-favicon.svg">
+
+    <!-- *************
+		************ CSS Files *************
+	  ************* -->
+    <link rel="stylesheet" href="assets/fonts/remix/remixicon.css">
+    <link rel="stylesheet" href="assets/css/main.min.css">
+
+    <!-- *************
+		************ Vendor Css Files *************
+	  ************ -->
+
+    <!-- Scrollbar CSS -->
+    <link rel="stylesheet" href="assets/vendor/overlay-scroll/OverlayScrollbars.min.css">
+
+    <!-- Date Range CSS -->
+    <link rel="stylesheet" href="assets/vendor/daterange/daterange.css">
+
+    <style>
+      .profile-initials-badge {
+        align-items: center;
+        background: #f4f1ff;
+        color: #705df3;
+        display: inline-flex;
+        font-weight: 800;
+        justify-content: center;
+      }
+
+      .settings-status {
+        display: none;
+      }
+
+      .catalog-grid {
+        display: grid;
+        grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+        gap: 1rem;
+      }
+
+      .app-container,
+      .catalog-grid > section,
+      .settings-card-soft {
+        min-width: 0;
+      }
+
+      .catalog-list {
+        max-height: 520px;
+        overflow-y: auto;
+      }
+
+      .catalog-list .list-group-item {
+        border-radius: 12px;
+        margin-bottom: .5rem;
+        border: 1px solid var(--bs-border-color);
+      }
+
+      .catalog-list .list-group-item.active {
+        background: linear-gradient(135deg, #0d6efd, #18a4bc);
+        border-color: transparent;
+      }
+
+      .catalog-empty-state {
+        border: 1px dashed #b6c7d8;
+        border-radius: 16px;
+        padding: 1.4rem;
+        text-align: center;
+        color: #6c757d;
+        background: #f8fbff;
+      }
+
+      .catalog-form-card,
+      .settings-card-soft {
+        border: 1px solid rgba(13, 110, 253, .12);
+        border-radius: 18px;
+        background: linear-gradient(180deg, rgba(248, 251, 255, .98), rgba(255, 255, 255, .96));
+      }
+
+      .settings-kicker {
+        color: #0d6efd;
+        font-size: .76rem;
+        font-weight: 800;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+      }
+
+      .config-table-actions {
+        min-width: 160px;
+      }
+
+      .table-outer {
+        border: 1px solid #dde2ee;
+        border-radius: 8px;
+        max-width: 100%;
+        overflow: hidden;
+      }
+
+      .table-outer .table-responsive {
+        max-width: 100%;
+      }
+
+      .table-outer table {
+        min-width: 720px;
+      }
+
+      #catalogRows td:nth-child(3) {
+        min-width: 220px;
+        white-space: normal;
+      }
+
+      #catalogRows td:nth-child(2),
+      #catalogRows td:nth-child(4) {
+        max-width: 180px;
+      }
+
+      .access-editor-grid {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: minmax(220px, 280px) 1fr;
+      }
+
+      .permission-grid {
+        display: grid;
+        gap: .65rem;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      }
+
+      .permission-check {
+        border: 1px solid #dde2ee;
+        border-radius: 12px;
+        padding: .75rem;
+      }
+
+      .permission-check small {
+        color: #7b8590;
+        display: block;
+      }
+
+      .cleanup-layout {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: minmax(280px, 1fr) minmax(280px, 420px);
+      }
+
+      .cleanup-panel,
+      .cleanup-summary {
+        border: 1px solid rgba(13, 110, 253, .12);
+        border-radius: 18px;
+        background: rgba(255, 255, 255, .82);
+        padding: 1rem;
+      }
+
+      .cleanup-ranges,
+      .cleanup-options {
+        display: grid;
+        gap: .65rem;
+      }
+
+      .cleanup-ranges {
+        grid-template-columns: repeat(auto-fit, minmax(140px, max-content));
+      }
+
+      .cleanup-option {
+        align-items: flex-start;
+        border: 1px solid #dde2ee;
+        border-radius: 14px;
+        cursor: pointer;
+        display: flex;
+        gap: .75rem;
+        padding: .85rem;
+        transition: border-color .2s ease, box-shadow .2s ease;
+      }
+
+      .cleanup-option:hover {
+        border-color: rgba(13, 110, 253, .45);
+        box-shadow: 0 10px 24px rgba(13, 110, 253, .08);
+      }
+
+      .cleanup-option small {
+        color: #7b8590;
+        display: block;
+        margin-top: .15rem;
+      }
+
+      .cleanup-preview-empty {
+        border: 1px dashed #b6c7d8;
+        border-radius: 14px;
+        color: #6c757d;
+        padding: 1rem;
+        text-align: center;
+      }
+
+      .cleanup-preview-item {
+        border: 1px solid #e5eaf3;
+        border-radius: 14px;
+        padding: .8rem;
+      }
+
+      .cleanup-preview-item + .cleanup-preview-item {
+        margin-top: .65rem;
+      }
+
+      .settings-tabs .tab-content {
+        padding: 1rem 0 0;
+        min-height: 0 !important;
+      }
+
+      .settings-tabs .tab-pane {
+        min-height: 0 !important;
+      }
+
+      .settings-tabs .tab-content > .tab-pane:not(.active),
+      .settings-tabs .tab-content > .tab-pane.fade:not(.show) {
+        display: none !important;
+      }
+
+      .settings-tabs .tab-content > .tab-pane.active.show {
+        display: block !important;
+        opacity: 1 !important;
+      }
+
+      .settings-tabs .tab-pane > :last-child {
+        margin-bottom: 0 !important;
+      }
+
+      .settings-actions {
+        margin-top: 1rem;
+      }
+
+      @media (min-width: 1200px) {
+        .page-wrapper.pinned:not(.sidebar-hovered) .sidebar-wrapper .brand-container {
+          justify-content: center !important;
+        }
+
+        .page-wrapper.pinned:not(.sidebar-hovered) .sidebar-wrapper .brand-container .app-brand {
+          justify-content: center;
+          margin-left: 0 !important;
+          min-width: 74px;
+          width: 74px;
+        }
+
+        .page-wrapper.pinned:not(.sidebar-hovered) .sidebar-wrapper .brand-container .app-brand a {
+          align-items: center;
+          display: flex;
+          justify-content: center;
+          width: 74px;
+        }
+
+        .page-wrapper.pinned:not(.sidebar-hovered) .sidebar-wrapper .brand-container .app-brand .logo {
+          max-height: 48px;
+          max-width: 48px;
+        }
+
+        .page-wrapper.pinned:not(.sidebar-hovered) .sidebar-wrapper .brand-container .pin-sidebar {
+          display: none;
+        }
+      }
+
+      @media (max-width: 991.98px) {
+        .catalog-grid,
+        .cleanup-layout {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 767.98px) {
+        .app-header {
+          align-items: center !important;
+          gap: .75rem;
+          min-height: auto;
+          padding: .8rem 1rem;
+        }
+
+        .brand-container-sm {
+          flex: 1 1 auto;
+          justify-content: space-between;
+          min-width: 0;
+        }
+
+        .brand-container-sm .app-brand .logo {
+          height: 54px;
+          max-width: 64px;
+          object-fit: contain;
+        }
+
+        .brand-container-sm .toggle-sidebar {
+          align-items: center;
+          background: rgba(255, 255, 255, .88);
+          border: 0;
+          border-radius: 8px;
+          color: var(--bs-primary);
+          display: inline-flex;
+          flex: 0 0 44px;
+          height: 44px;
+          justify-content: center;
+          margin-left: auto;
+          width: 44px;
+        }
+
+        .header-actions {
+          flex: 0 0 auto;
+          margin-left: 0 !important;
+        }
+
+        .header-actions > .dropdown.ms-3 {
+          margin-left: .25rem !important;
+        }
+
+        .app-hero-header {
+          align-items: flex-start !important;
+          min-height: auto;
+          padding: .85rem 1rem;
+        }
+
+        .app-body {
+          padding: 1rem;
+        }
+
+        .custom-tabs-container {
+          border-radius: 12px;
+          overflow: hidden;
+        }
+
+        .settings-tabs .nav-tabs {
+          background: #fff;
+          display: flex;
+          flex-wrap: nowrap;
+          gap: .5rem;
+          overflow-x: auto;
+          padding: .75rem;
+          scrollbar-width: thin;
+          white-space: nowrap;
+        }
+
+        .settings-tabs .nav-tabs .nav-item {
+          flex: 0 0 auto;
+        }
+
+        .settings-tabs .nav-tabs .nav-link {
+          align-items: center;
+          border: 1px solid #dde2ee;
+          border-radius: 999px;
+          display: inline-flex;
+          gap: .4rem;
+          min-height: 42px;
+          padding: .55rem .85rem;
+        }
+
+        .settings-tabs .nav-tabs .nav-link.active {
+          background: #f4f1ff;
+          border-color: var(--bs-primary);
+          color: var(--bs-primary);
+        }
+
+        .settings-tabs .tab-content {
+          padding: 1rem .75rem .75rem;
+        }
+
+        .settings-card-soft,
+        .cleanup-panel,
+        .cleanup-summary {
+          border-radius: 12px;
+          padding: 1rem !important;
+        }
+
+        .catalog-list {
+          display: flex;
+          gap: .5rem;
+          max-height: none;
+          overflow-x: auto;
+          padding-bottom: .25rem;
+        }
+
+        .catalog-list .list-group-item {
+          flex: 0 0 auto;
+          margin-bottom: 0;
+          min-width: 160px;
+        }
+
+        .access-editor-grid,
+        .permission-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .cleanup-ranges {
+          grid-template-columns: 1fr;
+        }
+
+        .table-outer {
+          overflow-x: auto;
+        }
+      }
+    </style>
+
+  </head>
+
+  <body>
+
+    <!-- Page wrapper starts -->
+    <div class="page-wrapper">
+
+      <!-- Main container starts -->
+      <div class="main-container">
+
+        <!-- Sidebar wrapper starts -->
+        <nav id="sidebar" class="sidebar-wrapper">
+
+          <!-- Brand container starts -->
+          <div class="brand-container d-flex align-items-center justify-content-between">
+
+            <!-- App brand starts -->
+            <div class="app-brand ms-3">
+              <a href="/admin/dash">
+                <img src="/images/cnc-logo-alt.svg" class="logo" alt="C&C Dental Studio">
+              </a>
+            </div>
+            <!-- App brand ends -->
+
+            <!-- Pin sidebar starts -->
+            <button type="button" class="pin-sidebar me-3">
+              <i class="ri-menu-line"></i>
+            </button>
+            <!-- Pin sidebar ends -->
+
+          </div>
+          <!-- Brand container ends -->
+
+          <!-- Sidebar profile starts -->
+          <div class="sidebar-profile">
+            <% if (headerPhoto) { %>
+              <img src="<%= headerPhoto %>" class="rounded-5 border border-primary border-3" alt="Foto de perfil">
+            <% } else { %>
+              <span class="profile-initials-badge rounded-5 border border-primary border-3 img-4x"><%= headerInitials %></span>
+            <% } %>
+            <h6 class="mb-1 profile-name text-nowrap text-truncate text-primary"><%= headerName %></h6>
+            <small class="profile-name text-nowrap text-truncate"><%= headerRole %></small>
+          </div>
+          <!-- Sidebar profile ends -->
+
+          <!-- Sidebar menu starts -->
+          <div class="sidebarMenuScroll">
+            <%- include('partials/adminSidebar', { activePage: 'settings', canFn }) %>
+          </div>
+          <!-- Sidebar menu ends -->
+
+
+        </nav>
+        <!-- Sidebar wrapper ends -->
+
+        <!-- App container starts -->
+        <div class="app-container">
+
+          <!-- App header starts -->
+          <div class="app-header d-flex align-items-center">
+
+            <!-- Brand container sm starts -->
+            <div class="brand-container-sm d-xl-none d-flex align-items-center">
+
+              <!-- App brand starts -->
+              <div class="app-brand">
+                <a href="/admin/dash">
+                  <img src="/images/cnc-logo-alt.svg" class="logo" alt="C&C Dental Studio">
+                </a>
+              </div>
+              <!-- App brand ends -->
+
+              <!-- Toggle sidebar starts -->
+              <button type="button" class="toggle-sidebar">
+                <i class="ri-menu-line"></i>
+              </button>
+              <!-- Toggle sidebar ends -->
+
+            </div>
+            <!-- Brand container sm ends -->
+
+            <!-- Search container starts -->
+            <div class="search-container d-xl-block d-none">
+              <input type="text" class="form-control" id="searchId" placeholder="Buscar">
+              <i class="ri-search-line"></i>
+            </div>
+            <!-- Search container ends -->
+
+            <!-- App header actions starts -->
+            <div class="header-actions">
+
+
+              <!-- Header user settings starts -->
+              <div class="dropdown ms-3">
+                <a id="userSettings" class="dropdown-toggle d-flex align-items-center" href="#!" role="button"
+                  data-bs-toggle="dropdown" aria-expanded="false">
+                  <div class="avatar-box">
+                    <% if (headerPhoto) { %>
+                      <img src="<%= headerPhoto %>" class="img-2xx rounded-5 border border-3 border-white" alt="Foto de perfil">
+                    <% } else { %>
+                      <span class="profile-initials-badge img-2xx rounded-5 border border-3 border-white"><%= headerInitials %></span>
+                    <% } %>
+                    <span class="status busy"></span>
+                  </div>
+                </a>
+                <div class="dropdown-menu dropdown-menu-end shadow-lg">
+                  <div class="px-3 py-2">
+                    <span class="small"><%= headerRole %></span>
+                    <h6 class="m-0"><%= headerName %></h6>
+                  </div>
+                  <div class="dropdown-divider"></div>
+                  <a href="/admin/perfil" class="dropdown-item">
+                    <i class="ri-user-line me-2"></i> Perfil
+                  </a>
+                  <a href="/admin/settings" class="dropdown-item">
+                    <i class="ri-settings-3-line me-2"></i> Configuración
+                  </a>
+                  <div class="dropdown-divider"></div>
+                  <div class="mx-3 my-2 d-grid">
+                    <a href="/logout" class="btn btn-danger">Cerrar sesión</a>
+                  </div>
+                </div>
+              </div>
+              <!-- Header user settings ends -->
+
+            </div>
+            <!-- App header actions ends -->
+
+          </div>
+          <!-- App header ends -->
+
+          <!-- App hero header starts -->
+          <div class="app-hero-header d-flex align-items-center">
+
+            <!-- Breadcrumb starts -->
+            <ol class="breadcrumb">
+              <li class="breadcrumb-item">
+                <a href="/admin/dash">
+                  <i class="ri-home-3-line"></i>
+                </a>
+              </li>
+              <li class="breadcrumb-item text-primary" aria-current="page">
+                Configuración
+              </li>
+            </ol>
+            <!-- Breadcrumb ends -->
+
+            <!-- Sales stats starts -->
+            <div class="ms-auto d-lg-flex d-none flex-row">
+              <div class="input-group">
+                <span class="input-group-text bg-primary-lighten">
+                  <i class="ri-calendar-2-line text-primary"></i>
+                </span>
+                <input type="text" id="abc" class="form-control custom-daterange">
+              </div>
+            </div>
+            <!-- Sales stats ends -->
+
+          </div>
+          <!-- App Hero header ends -->
+
+          <!-- App body starts -->
+          <div class="app-body">
+
+            <!-- Row starts -->
+            <div class="row gx-4">
+              <div class="col-xl-12">
+                <div class="card">
+                  <div class="card-body">
+
+                    <!-- Custom tabs starts -->
+                    <div class="custom-tabs-container settings-tabs">
+
+                      <!-- Nav tabs starts -->
+                      <ul class="nav nav-tabs" id="customTab2" role="tablist">
+                        <li class="nav-item" role="presentation">
+                          <a class="nav-link active" id="tab-oneA" data-bs-toggle="tab" href="#oneA" role="tab"
+                            aria-controls="oneA" aria-selected="true"><i class="ri-hospital-line"></i> Clínica</a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                          <a class="nav-link" id="tab-twoA" data-bs-toggle="tab" href="#twoA" role="tab"
+                            aria-controls="twoA" aria-selected="false"><i class="ri-notification-3-line"></i> Notificaciones</a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                          <a class="nav-link" id="tab-threeA" data-bs-toggle="tab" href="#threeA" role="tab"
+                            aria-controls="threeA" aria-selected="false"><i class="ri-list-settings-line"></i> Catálogos</a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                          <a class="nav-link" id="tab-fourA" data-bs-toggle="tab" href="#fourA" role="tab"
+                            aria-controls="fourA" aria-selected="false"><i class="ri-lock-password-line"></i> Seguridad</a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                          <a class="nav-link" id="tab-fiveA" data-bs-toggle="tab" href="#fiveA" role="tab"
+                            aria-controls="fiveA" aria-selected="false"><i class="ri-shield-user-line"></i> Accesos</a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                          <a class="nav-link" id="tab-sixA" data-bs-toggle="tab" href="#sixA" role="tab"
+                            aria-controls="sixA" aria-selected="false"><i class="ri-user-settings-line"></i> Usuarios</a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                          <a class="nav-link" id="tab-sevenA" data-bs-toggle="tab" href="#sevenA" role="tab"
+                            aria-controls="sevenA" aria-selected="false"><i class="ri-delete-bin-6-line"></i> Limpieza</a>
+                        </li>
+                      </ul>
+                      <!-- Nav tabs ends -->
+
+                      <!-- Tab content starts -->
+                      <div class="tab-content">
+                        <div class="tab-pane fade show active" id="oneA" role="tabpanel">
+                          <%- include('Configuracion/tabs/clinica') %>
+                        </div>
+                        <div class="tab-pane fade" id="twoA" role="tabpanel">
+                          <%- include('Configuracion/tabs/notificaciones') %>
+                        </div>
+                        <div class="tab-pane fade" id="threeA" role="tabpanel">
+                          <%- include('Configuracion/tabs/catalogos', { catalogs: catalogs || [] }) %>
+                        </div>
+                        <div class="tab-pane fade" id="fourA" role="tabpanel">
+                          <%- include('Configuracion/tabs/seguridad') %>
+                        </div>
+                        <div class="tab-pane fade" id="fiveA" role="tabpanel">
+                          <%- include('Configuracion/tabs/accesos') %>
+                        </div>
+                        <div class="tab-pane fade" id="sixA" role="tabpanel">
+                          <%- include('Configuracion/tabs/usuarios', { configUsers: configUsers || [] }) %>
+                        </div>
+                        <div class="tab-pane fade" id="sevenA" role="tabpanel">
+                          <%- include('Configuracion/tabs/limpieza') %>
+                        </div>
+                      </div>
+                      <!-- Tab content ends -->
+
+                    </div>
+                    <!-- Custom tabs ends -->
+
+                    <!-- Buttons starts -->
+                    <div class="settings-actions d-flex gap-2 justify-content-end">
+                      <a href="/admin/dash" class="btn btn-secondary">
+                        Volver al panel
+                      </a>
+                      <button type="button" class="btn btn-primary" id="refreshSettingsPage">
+                        Actualizar datos
+                      </button>
+                    </div>
+                    <!-- Buttons ends -->
+
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Row ends -->
+
+          </div>
+          <!-- App body ends -->
+
+          <!-- App footer starts -->
+          <div class="app-footer">
+            <span>© C&C Dental Studio 2026</span>
+          </div>
+          <!-- App footer ends -->
+
+        </div>
+        <!-- App container ends -->
+
+      </div>
+      <!-- Main container ends -->
+
+    </div>
+    <!-- Page wrapper ends -->
+
+    <!-- *************
+			************ JavaScript Files *************
+		************* -->
+    <!-- Required jQuery first, then Bootstrap Bundle JS -->
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/moment.min.js"></script>
+
+    <!-- *************
+			************ Vendor Js Files *************
+		************* -->
+
+    <!-- Overlay Scroll JS -->
+    <script src="assets/vendor/overlay-scroll/jquery.overlayScrollbars.min.js"></script>
+    <script src="assets/vendor/overlay-scroll/custom-scrollbar.js"></script>
+
+    <!-- Date Range JS -->
+    <script src="assets/vendor/daterange/daterange.js"></script>
+    <script src="assets/vendor/daterange/custom-daterange.js"></script>
+
+    <!-- Custom JS files -->
+    <script src="assets/js/custom.js"></script>
+    <%- include('Configuracion/scripts/settingsScripts') %>
+  </body>
+
+</html>
+

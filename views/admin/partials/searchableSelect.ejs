@@ -1,0 +1,322 @@
+<style>
+  .searchable-native-select {
+    display: none !important;
+  }
+  .ss-wrapper {
+    position: relative;
+    width: 100%;
+    user-select: none;
+  }
+  .ss-btn {
+    align-items: center;
+    background: #fff;
+    border: 1px solid #cfd7e6;
+    border-radius: 8px;
+    color: #243044;
+    cursor: pointer;
+    display: flex;
+    gap: .5rem;
+    justify-content: space-between;
+    min-height: 38px;
+    padding: .45rem .75rem;
+    transition: border-color .16s ease, box-shadow .16s ease;
+  }
+  .ss-wrapper.ss-open .ss-btn,
+  .ss-btn:focus {
+    border-color: var(--ss-focus-color, #7367f0);
+    box-shadow: 0 0 0 .2rem var(--ss-focus-shadow, rgba(115, 103, 240, .18));
+    outline: 0;
+  }
+  .ss-label {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .ss-label.placeholder {
+    color: #8a94a6;
+  }
+  .ss-arrow {
+    color: var(--ss-focus-color, #7367f0);
+    flex: 0 0 auto;
+    transition: transform .18s ease;
+  }
+  .ss-wrapper.ss-open .ss-arrow {
+    transform: rotate(180deg);
+  }
+  .ss-dropdown {
+    background: #fff;
+    border: 1px solid #cfd7e6;
+    border-radius: 8px;
+    box-shadow: 0 14px 30px rgba(15, 23, 42, .14);
+    display: none;
+    left: 0;
+    overflow: hidden;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 4px);
+    z-index: 1080;
+  }
+  .ss-wrapper.ss-open .ss-dropdown {
+    display: block;
+  }
+  .ss-search {
+    align-items: center;
+    background: #f7f9fc;
+    border-bottom: 1px solid #edf1f7;
+    display: flex;
+    gap: .45rem;
+    padding: .55rem .75rem;
+  }
+  .ss-search i {
+    color: #7c8798;
+    flex: 0 0 auto;
+  }
+  .ss-search input {
+    background: transparent;
+    border: 0;
+    color: #243044;
+    flex: 1;
+    min-width: 0;
+    outline: 0;
+  }
+  .ss-options {
+    list-style: none;
+    margin: 0;
+    max-height: 220px;
+    overflow-y: auto;
+    padding: .25rem;
+  }
+  .ss-options li {
+    align-items: center;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    gap: .45rem;
+    padding: .5rem .65rem;
+  }
+  .ss-options li:hover {
+    background: #f4f1ff;
+  }
+  .ss-options li.ss-selected {
+    background: var(--ss-selected-bg, #f4f1ff);
+    color: var(--ss-selected-color, #5b50d6);
+    font-weight: 700;
+  }
+  .ss-options li.ss-selected::after {
+    content: "\2713";
+    margin-left: auto;
+  }
+  .ss-empty {
+    color: #7b8590;
+    cursor: default !important;
+    justify-content: center;
+  }
+  .ss-wrapper.ss-disabled .ss-btn {
+    background: #eef1f6;
+    cursor: not-allowed;
+    opacity: .68;
+    pointer-events: none;
+  }
+  @media (max-width: 575.98px) {
+    .ss-dropdown {
+      max-height: min(320px, 55vh);
+    }
+    .ss-options {
+      max-height: min(240px, 44vh);
+    }
+  }
+</style>
+
+<script>
+  (function () {
+    if (window.SearchableSelect) return;
+
+    function escapeHtml(value) {
+      return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    class SearchableSelect {
+      constructor(container, opts = {}) {
+        this.container = typeof container === 'string' ? document.querySelector(container) : container;
+        if (!this.container) return;
+        this.opts = {
+          placeholder: opts.placeholder || 'Seleccionar',
+          searchPlaceholder: opts.searchPlaceholder || 'Buscar',
+          emptyText: opts.emptyText || 'Sin resultados',
+          onChange: opts.onChange || null,
+        };
+        this._currentValue = '';
+        this._currentLabel = '';
+        this._options = [];
+        this._build();
+        this._bind();
+      }
+
+      _build() {
+        this.container.classList.add('ss-wrapper');
+        this.container.innerHTML = `
+          <div class="ss-btn" tabindex="0" role="combobox" aria-expanded="false" aria-haspopup="listbox">
+            <span class="ss-label placeholder">${escapeHtml(this.opts.placeholder)}</span>
+            <i class="ri-arrow-down-s-line ss-arrow" aria-hidden="true"></i>
+          </div>
+          <div class="ss-dropdown" role="listbox">
+            <div class="ss-search">
+              <i class="ri-search-line" aria-hidden="true"></i>
+              <input type="text" autocomplete="off" spellcheck="false" placeholder="${escapeHtml(this.opts.searchPlaceholder)}">
+            </div>
+            <ul class="ss-options"></ul>
+          </div>`;
+        this._btn = this.container.querySelector('.ss-btn');
+        this._labelEl = this.container.querySelector('.ss-label');
+        this._search = this.container.querySelector('.ss-search input');
+        this._list = this.container.querySelector('.ss-options');
+      }
+
+      _bind() {
+        this._btn.addEventListener('click', () => this._toggle());
+        this._btn.addEventListener('keydown', event => {
+          if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            this._toggle();
+          }
+          if (event.key === 'Escape') this._close();
+        });
+        this._search.addEventListener('input', () => this._render(this._search.value));
+        document.addEventListener('click', event => {
+          if (!this.container.contains(event.target)) this._close();
+        });
+        this.container.addEventListener('ss:open', () => {
+          document.querySelectorAll('.ss-wrapper.ss-open').forEach(wrapper => {
+            if (wrapper !== this.container) wrapper.classList.remove('ss-open');
+          });
+        });
+      }
+
+      _toggle() {
+        if (this.container.classList.contains('ss-disabled')) return;
+        this.container.classList.contains('ss-open') ? this._close() : this._open();
+      }
+
+      _open() {
+        this.container.classList.add('ss-open');
+        this._btn.setAttribute('aria-expanded', 'true');
+        this.container.dispatchEvent(new Event('ss:open', { bubbles: true }));
+        this._search.value = '';
+        this._render('');
+        requestAnimationFrame(() => this._search.focus());
+      }
+
+      _close() {
+        this.container.classList.remove('ss-open');
+        this._btn.setAttribute('aria-expanded', 'false');
+      }
+
+      _render(filter = '') {
+        const term = filter.trim().toLowerCase();
+        const rows = term ? this._options.filter(option => option.label.toLowerCase().includes(term)) : this._options;
+        if (!rows.length) {
+          this._list.innerHTML = `<li class="ss-empty">${escapeHtml(this.opts.emptyText)}</li>`;
+          return;
+        }
+        this._list.innerHTML = rows.map(option => {
+          const selected = option.value === this._currentValue ? 'ss-selected' : '';
+          return `<li class="${selected}" data-value="${escapeHtml(option.value)}" data-label="${escapeHtml(option.label)}" role="option" aria-selected="${selected ? 'true' : 'false'}">${escapeHtml(option.label)}</li>`;
+        }).join('');
+        this._list.querySelectorAll('li[data-value]').forEach(item => {
+          item.addEventListener('click', () => this._select(item.dataset.value, item.dataset.label));
+        });
+      }
+
+      _select(value, label) {
+        this._currentValue = value;
+        this._currentLabel = label;
+        const selectedOption = this._options.find(option => option.value === String(value || '')) || null;
+        if (value) {
+          this._labelEl.textContent = label;
+          this._labelEl.classList.remove('placeholder');
+        } else {
+          this._labelEl.textContent = this.opts.placeholder;
+          this._labelEl.classList.add('placeholder');
+        }
+        this._close();
+        this._render('');
+        if (this.opts.onChange) this.opts.onChange(value, label, selectedOption);
+      }
+
+      setOptions(options) {
+        this._options = (options || []).map(option => ({
+          value: String(option.value ?? option.id ?? ''),
+          label: String(option.label ?? option.nombre ?? option.name ?? ''),
+          ...option,
+        }));
+        this._render('');
+      }
+
+      setValue(value) {
+        const option = this._options.find(item => item.value === String(value ?? ''));
+        option ? this._select(option.value, option.label) : this.reset();
+      }
+
+      getValue() {
+        return this._currentValue;
+      }
+
+      getLabel() {
+        return this._currentLabel;
+      }
+
+      reset() {
+        this._currentValue = '';
+        this._currentLabel = '';
+        if (this._labelEl) {
+          this._labelEl.textContent = this.opts.placeholder;
+          this._labelEl.classList.add('placeholder');
+        }
+        this._render('');
+      }
+
+      disable() {
+        this.container.classList.add('ss-disabled');
+      }
+
+      enable() {
+        this.container.classList.remove('ss-disabled');
+      }
+    }
+
+    function selectOptions(select) {
+      return Array.from(select?.options || []).map(option => ({
+        value: option.value,
+        label: option.textContent.trim(),
+      }));
+    }
+
+    window.SearchableSelect = SearchableSelect;
+    window.searchableSelectOptions = selectOptions;
+    window.initSearchableNativeSelect = function initSearchableNativeSelect(selectOrId, wrapperOrId, opts = {}) {
+      const select = typeof selectOrId === 'string' ? document.getElementById(selectOrId) : selectOrId;
+      const wrapper = typeof wrapperOrId === 'string' ? document.getElementById(wrapperOrId) : wrapperOrId;
+      if (!select || !wrapper || !window.SearchableSelect) return null;
+      select.classList.add('searchable-native-select');
+      const control = new SearchableSelect(wrapper, {
+        placeholder: opts.placeholder || select.options[0]?.textContent?.trim() || 'Seleccionar',
+        searchPlaceholder: opts.searchPlaceholder || 'Buscar',
+        emptyText: opts.emptyText || 'Sin resultados',
+        onChange: (value, label, option) => {
+          select.value = value;
+          select.dispatchEvent(new Event('change', { bubbles: true }));
+          if (opts.onChange) opts.onChange(value, label, option);
+        },
+      });
+      control.setOptions(selectOptions(select));
+      control.setValue(select.value || '');
+      return control;
+    };
+  })();
+</script>

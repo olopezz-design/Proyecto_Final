@@ -35,3 +35,4 @@ backups/
 # Cobertura y archivos generados
 coverage/
 .nyc_output/
+uploads/

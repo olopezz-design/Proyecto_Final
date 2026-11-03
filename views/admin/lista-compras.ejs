@@ -1,0 +1,418 @@
+<%
+  const headerProfile = typeof adminProfile !== 'undefined' ? adminProfile : {};
+  const headerName = headerProfile.displayName || 'Nombre pendiente';
+  const headerInitials = headerProfile.initials || headerName.split(/\s+/).slice(0, 2).map(part => part.charAt(0).toUpperCase()).join('') || 'AD';
+  const headerPhoto = headerProfile.photoUrl || '';
+  const headerRole = headerProfile.roleLabel || 'Usuario';
+  const canFn = typeof can === 'function' ? can : () => true;
+  const productRows = Array.isArray(productos) ? productos : [];
+  const suggestedRows = Array.isArray(sugeridos) ? sugeridos : [];
+  const listRows = Array.isArray(listas) ? listas : [];
+  const treatmentRows = Array.isArray(tiposServicios) ? tiposServicios : [];
+  const serviceRows = Array.isArray(servicios) ? servicios : [];
+  const safeJson = value => JSON.stringify(value || []).replace(/</g, '\\u003c');
+%>
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <base href="/" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Lista de compras - Inventario</title>
+    <link rel="shortcut icon" type="image/svg+xml" href="/images/cnc-favicon.svg">
+    <link rel="stylesheet" href="assets/fonts/remix/remixicon.css">
+    <link rel="stylesheet" href="assets/css/main.min.css">
+    <link rel="stylesheet" href="assets/vendor/overlay-scroll/OverlayScrollbars.min.css">
+    <style>
+      .profile-initials-badge {
+        align-items: center;
+        background: #f4f1ff;
+        color: #705df3;
+        display: inline-flex;
+        font-weight: 800;
+        justify-content: center;
+      }
+      .purchase-card,
+      .suggested-item,
+      .draft-row {
+        border: 1px solid #dde2ee;
+        border-radius: 8px;
+      }
+      .inventory-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .45rem;
+        justify-content: flex-end;
+      }
+      .inventory-nav-link {
+        align-items: center;
+        background: rgba(255, 255, 255, .14);
+        border: 1px solid rgba(255, 255, 255, .28);
+        border-radius: 8px;
+        color: #fff;
+        display: inline-flex;
+        font-weight: 700;
+        gap: .4rem;
+        min-height: 36px;
+        padding: .45rem .7rem;
+      }
+      .inventory-nav-link:hover,
+      .inventory-nav-link.active {
+        background: #fff;
+        color: #5b50d6;
+      }
+      .purchase-card {
+        background: #fff;
+        padding: 1rem;
+      }
+      .purchase-grid {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: minmax(0, 1.1fr) minmax(320px, .9fr);
+      }
+      .suggested-grid {
+        display: grid;
+        gap: .75rem;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      }
+      .suggested-item {
+        background: #fff;
+        padding: .85rem;
+      }
+      .status-pill {
+        border-radius: 999px;
+        font-size: .75rem;
+        font-weight: 700;
+        padding: .3rem .6rem;
+      }
+      .stock-bajo { background: #fff7db; color: #a16207; }
+      .stock-agotado { background: #fee2e2; color: #b91c1c; }
+      .draft-row {
+        align-items: center;
+        display: grid;
+        gap: .65rem;
+        grid-template-columns: minmax(0, 1fr) 88px minmax(0, 1fr) 38px;
+        padding: .65rem;
+      }
+      @media (max-width: 991.98px) {
+        .purchase-grid { grid-template-columns: 1fr; }
+      }
+      @media (max-width: 575.98px) {
+        .draft-row { grid-template-columns: 1fr; }
+      }
+    </style>
+    <%- include('partials/searchableSelect') %>
+  </head>
+  <body>
+    <div class="page-wrapper">
+      <div class="main-container">
+        <nav id="sidebar" class="sidebar-wrapper">
+          <div class="brand-container d-flex align-items-center justify-content-between">
+            <div class="app-brand ms-3">
+              <a href="/admin/dash"><img src="/images/cnc-logo-alt.svg" class="logo" alt="C&C Dental Studio"></a>
+            </div>
+            <button type="button" class="pin-sidebar me-3"><i class="ri-menu-line"></i></button>
+          </div>
+          <div class="sidebar-profile">
+            <% if (headerPhoto) { %>
+              <img src="<%= headerPhoto %>" class="rounded-5 border border-primary border-3" alt="Foto de perfil">
+            <% } else { %>
+              <span class="profile-initials-badge rounded-5 border border-primary border-3 img-4x"><%= headerInitials %></span>
+            <% } %>
+            <h6 class="mb-1 profile-name text-nowrap text-truncate text-primary"><%= headerName %></h6>
+            <small class="profile-name text-nowrap text-truncate"><%= headerRole %></small>
+          </div>
+          <div class="sidebarMenuScroll">
+            <%- include('partials/adminSidebar', { activePage: 'lista-compras', canFn }) %>
+          </div>
+        </nav>
+
+        <div class="app-container">
+          <div class="app-header d-flex align-items-center">
+            <div class="search-container d-xl-block d-none">
+              <input type="text" class="form-control" placeholder="Buscar">
+              <i class="ri-search-line"></i>
+            </div>
+            <div class="header-actions ms-auto d-flex align-items-center gap-2">
+              <div class="dropdown ms-2">
+                <a id="userSettings" class="dropdown-toggle d-flex align-items-center" href="#!" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <div class="avatar-box">
+                    <% if (headerPhoto) { %>
+                      <img src="<%= headerPhoto %>" class="img-2xx rounded-5 border border-3 border-white" alt="Foto de perfil">
+                    <% } else { %>
+                      <span class="profile-initials-badge img-2xx rounded-5 border border-3 border-white"><%= headerInitials %></span>
+                    <% } %>
+                    <span class="status busy"></span>
+                  </div>
+                </a>
+                <div class="dropdown-menu dropdown-menu-end shadow-lg">
+                  <div class="px-3 py-2"><span class="small"><%= headerRole %></span><h6 class="m-0"><%= headerName %></h6></div>
+                  <div class="dropdown-divider"></div>
+                  <a href="/admin/perfil" class="dropdown-item"><i class="ri-user-line me-2"></i> Perfil</a>
+                  <a href="/logout" class="dropdown-item"><i class="ri-logout-circle-r-line me-2"></i> Cerrar sesión</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="app-hero-header d-flex align-items-center">
+            <ol class="breadcrumb">
+              <li class="breadcrumb-item"><a href="/admin/dash"><i class="ri-home-3-line"></i></a></li>
+              <li class="breadcrumb-item"><a href="/admin/productos">Inventario</a></li>
+              <li class="breadcrumb-item text-primary" aria-current="page">Lista de compras</li>
+            </ol>
+            <span class="badge bg-primary-subtle text-primary ms-auto"><%= suggestedRows.length %> sugerido(s)</span>
+          </div>
+
+          <div class="app-body">
+            <%- include('partials/inventoryNav', { activeInventoryPage: 'lista-compras', canFn }) %>
+
+            <div class="purchase-grid">
+              <section class="purchase-card">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                  <div>
+                    <h5 class="mb-1">Productos sugeridos</h5>
+                    <small class="text-muted">Basado en stock bajo y agotado.</small>
+                  </div>
+                  <button class="btn btn-outline-primary btn-sm" id="addSuggestedBtn"><i class="ri-add-line me-1"></i> Agregar sugeridos</button>
+                </div>
+                <% if (!suggestedRows.length) { %>
+                  <div class="text-muted mb-3">No hay productos bajo stock o agotados.</div>
+                <% } %>
+                <div class="suggested-grid mb-4">
+                  <% suggestedRows.forEach(item => {
+                    const stock = Number(item.stock_actual || 0);
+                    const minimo = Number(item.stock_minimo || 0);
+                    const agotado = stock <= 0;
+                  %>
+                    <div class="suggested-item">
+                      <div class="d-flex justify-content-between gap-2">
+                        <strong><%= item.nombre %></strong>
+                        <span class="status-pill <%= agotado ? 'stock-agotado' : 'stock-bajo' %>"><%= agotado ? 'Agotado' : 'Bajo' %></span>
+                      </div>
+                      <div class="small text-muted">Stock <%= stock %> · minimo <%= minimo %></div>
+                      <button class="btn btn-link btn-sm p-0 mt-2" data-add-product="<%= item.id %>" data-qty="<%= Math.max(minimo - stock, 1) %>" data-reason="<%= agotado ? 'Producto agotado' : 'Stock bajo' %>">Agregar</button>
+                    </div>
+                  <% }) %>
+                </div>
+
+                <hr>
+                <h5 class="mb-3">Agregar manualmente</h5>
+                <div class="row gx-3 align-items-end">
+                  <div class="col-md-5 mb-2">
+                    <label class="form-label">Producto</label>
+                    <select class="form-select searchable-native-select" id="manualProductSelect">
+                      <option value="">Seleccionar producto</option>
+                      <% productRows.forEach(item => { %>
+                        <option value="<%= item.id %>"><%= item.nombre %> · stock <%= Number(item.stock_actual || 0) %></option>
+                      <% }) %>
+                    </select>
+                    <div id="manualProductSearch"></div>
+                  </div>
+                  <div class="col-md-2 mb-2">
+                    <label class="form-label">Cantidad</label>
+                    <input type="number" class="form-control" id="manualQuantity" min="1" step="1" value="1">
+                  </div>
+                  <div class="col-md-3 mb-2">
+                    <label class="form-label">Motivo</label>
+                    <input class="form-control" id="manualReason" value="Compra manual">
+                  </div>
+                  <div class="col-md-2 mb-2 d-grid">
+                    <button class="btn btn-primary" id="addManualBtn"><i class="ri-add-line me-1"></i> Agregar</button>
+                  </div>
+                </div>
+
+                <div class="row gx-3 align-items-end mt-2">
+                  <div class="col-md-5 mb-2">
+                    <label class="form-label">Tratamiento</label>
+                    <select class="form-select searchable-native-select" id="treatmentSelect">
+                      <option value="">Seleccionar tratamiento</option>
+                      <% treatmentRows.forEach(item => { %>
+                        <option value="<%= item.idtiposervicio %>"><%= item.nombre %></option>
+                      <% }) %>
+                    </select>
+                    <div id="treatmentSearch"></div>
+                  </div>
+                  <div class="col-md-5 mb-2">
+                    <label class="form-label">Servicio</label>
+                    <select class="form-select searchable-native-select" id="serviceSelect">
+                      <option value="">Referencia de servicio</option>
+                      <% serviceRows.forEach(item => { %>
+                        <option value="<%= item.idservicio %>"><%= item.nombre %></option>
+                      <% }) %>
+                    </select>
+                    <div id="serviceSearch"></div>
+                  </div>
+                  <div class="col-md-2 mb-2 d-grid">
+                    <button class="btn btn-outline-primary" id="addTreatmentMaterialsBtn"><i class="ri-tooth-line me-1"></i> Materiales</button>
+                  </div>
+                </div>
+              </section>
+
+              <aside class="purchase-card">
+                <h5 class="mb-3">Lista actual</h5>
+                <div class="mb-3">
+                  <label class="form-label">Nombre</label>
+                  <input class="form-control" id="listName" value="Lista de compras">
+                </div>
+                <div class="d-grid gap-2 mb-3" id="draftRows">
+                  <div class="text-muted" id="emptyDraft">Sin productos agregados.</div>
+                </div>
+                <button class="btn btn-success w-100" id="saveListBtn"><i class="ri-save-line me-1"></i> Guardar lista</button>
+              </aside>
+            </div>
+
+            <section class="purchase-card mt-4">
+              <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                <h5 class="mb-0">Listas guardadas</h5>
+                <span class="badge bg-light text-primary"><%= listRows.length %></span>
+              </div>
+              <% if (!listRows.length) { %>
+                <div class="text-muted">Aun no hay listas guardadas.</div>
+              <% } %>
+              <div class="row gx-3">
+                <% listRows.forEach(lista => { %>
+                  <div class="col-lg-4 col-md-6 mb-3">
+                    <div class="border rounded-2 p-3 h-100">
+                      <div class="d-flex justify-content-between gap-2">
+                        <strong><%= lista.nombre %></strong>
+                        <span class="badge bg-primary"><%= lista.estado %></span>
+                      </div>
+                      <div class="text-muted small mt-1"><%= Number(lista.total_items || 0) %> producto(s) · <%= Number(lista.total_unidades || 0) %> unidad(es)</div>
+                      <div class="mt-3 d-flex flex-wrap gap-2">
+                        <a class="btn btn-outline-primary btn-sm" href="/admin/listas-compras/<%= lista.idlistaCompra %>/pdf" target="_blank">PDF</a>
+                        <a class="btn btn-outline-secondary btn-sm" href="/admin/listas-compras/<%= lista.idlistaCompra %>/imagen">Imagen</a>
+                        <select class="form-select form-select-sm" style="max-width: 150px;" data-list-status="<%= lista.idlistaCompra %>">
+                          <% ['borrador','pendiente','comprada','cancelada'].forEach(estado => { %>
+                            <option value="<%= estado %>" <%= estado === lista.estado ? 'selected' : '' %>><%= estado %></option>
+                          <% }) %>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                <% }) %>
+              </div>
+            </section>
+          </div>
+
+          <div class="app-footer"><span>© C&C Dental Studio 2026</span></div>
+        </div>
+      </div>
+    </div>
+
+    <%- include('partials/uiFeedback') %>
+
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/vendor/overlay-scroll/jquery.overlayScrollbars.min.js"></script>
+    <script src="assets/vendor/overlay-scroll/custom-scrollbar.js"></script>
+    <script src="assets/js/custom.js"></script>
+    <script>
+      const products = <%- safeJson(productRows) %>;
+      const suggested = <%- safeJson(suggestedRows) %>;
+      const draft = [];
+      const manualProductControl = window.initSearchableNativeSelect?.('manualProductSelect', 'manualProductSearch', {
+        placeholder: 'Seleccionar producto',
+        searchPlaceholder: 'Buscar producto',
+      });
+      window.initSearchableNativeSelect?.('treatmentSelect', 'treatmentSearch', {
+        placeholder: 'Seleccionar tratamiento',
+        searchPlaceholder: 'Buscar tratamiento',
+      });
+      window.initSearchableNativeSelect?.('serviceSelect', 'serviceSearch', {
+        placeholder: 'Referencia de servicio',
+        searchPlaceholder: 'Buscar servicio',
+      });
+
+      function findProduct(id) {
+        return products.find(item => Number(item.id) === Number(id));
+      }
+      function escapeHtml(value) {
+        return String(value || '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+      }
+      function renderDraft() {
+        const container = document.getElementById('draftRows');
+        if (!draft.length) {
+          container.innerHTML = '<div class="text-muted" id="emptyDraft">Sin productos agregados.</div>';
+          return;
+        }
+        container.innerHTML = draft.map((item, index) => `
+          <div class="draft-row">
+            <strong>${escapeHtml(item.nombre_producto)}</strong>
+            <input type="number" class="form-control form-control-sm" min="1" value="${item.cantidad}" data-draft-qty="${index}">
+            <input class="form-control form-control-sm" value="${escapeHtml(item.motivo || '')}" data-draft-reason="${index}">
+            <button class="btn btn-outline-danger btn-sm" data-draft-remove="${index}"><i class="ri-delete-bin-line"></i></button>
+          </div>
+        `).join('');
+      }
+      function addProductToDraft(id, quantity = 1, reason = 'Reposicion de inventario') {
+        const product = findProduct(id);
+        if (!product) return;
+        const existing = draft.find(item => Number(item.producto_id) === Number(id) && item.motivo === reason);
+        if (existing) existing.cantidad += Math.max(Number(quantity || 1), 1);
+        else draft.push({ producto_id: Number(id), nombre_producto: product.nombre, cantidad: Math.max(Number(quantity || 1), 1), motivo: reason });
+        renderDraft();
+      }
+
+      document.body.addEventListener('click', event => {
+        const suggestedButton = event.target.closest('[data-add-product]');
+        if (suggestedButton) addProductToDraft(suggestedButton.dataset.addProduct, suggestedButton.dataset.qty, suggestedButton.dataset.reason);
+
+        const removeButton = event.target.closest('[data-draft-remove]');
+        if (removeButton) {
+          draft.splice(Number(removeButton.dataset.draftRemove), 1);
+          renderDraft();
+        }
+      });
+      document.body.addEventListener('input', event => {
+        if (event.target.matches('[data-draft-qty]')) draft[Number(event.target.dataset.draftQty)].cantidad = Number(event.target.value || 1);
+        if (event.target.matches('[data-draft-reason]')) draft[Number(event.target.dataset.draftReason)].motivo = event.target.value;
+      });
+      document.getElementById('addSuggestedBtn')?.addEventListener('click', () => {
+        suggested.forEach(item => {
+          const stock = Number(item.stock_actual || 0);
+          const minimo = Number(item.stock_minimo || 0);
+          addProductToDraft(item.id, Math.max(minimo - stock, 1), stock <= 0 ? 'Producto agotado' : 'Stock bajo');
+        });
+      });
+      document.getElementById('addManualBtn')?.addEventListener('click', () => {
+        const id = document.getElementById('manualProductSelect').value;
+        if (!id) return showUiMessage('Selecciona un producto.', 'warning');
+        addProductToDraft(id, Number(document.getElementById('manualQuantity').value || 1), document.getElementById('manualReason').value || 'Compra manual');
+        document.getElementById('manualProductSelect').value = '';
+        manualProductControl?.reset();
+      });
+      document.getElementById('addTreatmentMaterialsBtn')?.addEventListener('click', async () => {
+        const id = document.getElementById('treatmentSelect').value;
+        if (!id) return showUiMessage('Selecciona un tratamiento.', 'warning');
+        const response = await fetch(`/api/admin/tratamientos/${id}/materiales`);
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || data.success === false) return showUiMessage(data.message || 'No se pudieron cargar materiales.', 'danger');
+        if (!data.materiales?.length) return showUiMessage('Este tratamiento aun no tiene materiales sugeridos configurados.', 'warning');
+        data.materiales.forEach(item => addProductToDraft(item.producto_id, item.cantidad || 1, item.motivo || 'Material requerido por tratamiento'));
+      });
+      document.getElementById('saveListBtn')?.addEventListener('click', async () => {
+        if (!draft.length) return showUiMessage('Agrega al menos un producto.', 'warning');
+        const response = await fetch('/api/admin/listas-compras', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ nombre: document.getElementById('listName').value || 'Lista de compras', items: draft }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok || data.success === false) return showUiMessage(data.message || data.error || 'No se pudo guardar la lista.', 'danger');
+        showUiMessage('Lista guardada correctamente.', 'success');
+        setTimeout(() => location.reload(), 700);
+      });
+      document.body.addEventListener('change', async event => {
+        if (!event.target.matches('[data-list-status]')) return;
+        const response = await fetch(`/api/admin/listas-compras/${event.target.dataset.listStatus}/estado`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ estado: event.target.value }),
+        });
+        if (!response.ok) showUiMessage('No se pudo actualizar el estado.', 'danger');
+        else showUiMessage('Estado actualizado.', 'success');
+      });
+    </script>
+  </body>
+</html>

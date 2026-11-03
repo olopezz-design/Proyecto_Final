@@ -1,0 +1,513 @@
+<%
+  const headerProfile = typeof adminProfile !== 'undefined' ? adminProfile : {};
+  const headerName = headerProfile.displayName || 'Nombre pendiente';
+  const headerInitials = headerProfile.initials || headerName.split(/\s+/).slice(0, 2).map(part => part.charAt(0).toUpperCase()).join('') || 'DR';
+  const headerPhoto = headerProfile.photoUrl || '';
+  const headerRole = headerProfile.roleLabel || 'Usuario';
+  const canFn = typeof can === 'function' ? can : () => true;
+  const generosList = Array.isArray(generos) ? generos : [];
+  const tiposList = Array.isArray(tiposPaciente) ? tiposPaciente : [];
+  const pendingPreregistros = Array.isArray(preregistrosPendientes) ? preregistrosPendientes : [];
+  const prefill = typeof prefillPaciente !== 'undefined' && prefillPaciente ? prefillPaciente : {};
+  const prefillDetails = prefill.fichaDetalles || {};
+  const initialGeneratedPreregisterLink = typeof generatedPreregisterLink !== 'undefined' && generatedPreregisterLink ? generatedPreregisterLink : '';
+  const fieldValue = name => prefill[name] || '';
+  const isSelected = (a, b) => Number(a) === Number(b) ? 'selected' : '';
+  const detailValue = name => prefillDetails[name] || prefill[`${name}_detalle`] || '';
+  const isChecked = name => Number(prefill[name] || 0) === 1 ? 'checked' : '';
+  const medicalFields = [
+    ['enfermedad_corazon', '¿Padece de alguna enfermedad del corazón?', 'Indique diagnóstico o tratamiento actual'], ['presion_alta_baja', '¿Padece de presión alta o baja?', 'Indique si es alta o baja y si está controlada'],
+    ['diabetico', '¿Es diabético/a?', 'Indique tipo, tratamiento o control actual'], ['operaciones_recientes', '¿Ha tenido operaciones en los últimos 6 meses?', 'Indique qué operación y cuándo fue'],
+    ['hepatitis', '¿Ha tenido hepatitis?', 'Indique tipo o fecha aproximada'], ['enfermedad_higado_rinones', '¿Padece de alguna enfermedad de los riñones o hígado?', 'Indique cuál enfermedad'],
+    ['convulsiones_desmayos', '¿Sufre de convulsiones o desmayos?', 'Indique cuándo ocurrió o con qué frecuencia'], ['enfermedad_transmision_sexual', '¿Ha tenido o tiene alguna enfermedad de transmisión sexual?', 'Indique detalle clínico relevante'],
+    ['alergias', '¿Padece de alergias?', 'Indique a qué es alérgico'], ['enfermedad_respiratoria', '¿Padece de alguna enfermedad respiratoria?', 'Indique cuál enfermedad respiratoria'],
+    ['embarazada', '¿Se encuentra embarazada?', 'Indique semanas o meses de embarazo'], ['artritis', '¿Padece de artritis?', ''],
+    ['fiebre_reumatica', '¿Padece o ha padecido fiebre reumática?', ''], ['hemorragias_espontaneas', '¿Sufre de hemorragias espontáneas?', 'Indique cuándo o en qué situación'],
+    ['enfermedad_no_mencionada', '¿Padece de alguna enfermedad no mencionada anteriormente?', 'Indique cuál enfermedad'],
+    ['alergia_material_odontologico', '¿Es alérgico/a a algún material odontológico?', 'Indique material, anestesia, látex u otro'],
+    ['sangrado_encias', '¿Le sangran las encías?', ''], ['halitosis', '¿Padece de halitosis o mal aliento?', ''],
+    ['alergia_medicamento', '¿Es alérgico/a a algún medicamento?', 'Indique cuáles medicamentos'], ['aftas', '¿Tiene fuegos o aftas dentro o fuera de la boca?', 'Indique frecuencia o ubicación'],
+    ['dolor_dental', '¿Tiene dolor dental?', 'Indique ubicación y desde cuándo'], ['sensibilidad', '¿Tiene sensibilidad dental?', 'Indique a qué presenta sensibilidad']
+  ];
+%>
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <base href="/" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Agregar paciente - C&C Dental Studio</title>
+    <link rel="shortcut icon" type="image/svg+xml" href="/images/cnc-favicon.svg">
+    <link rel="stylesheet" href="assets/fonts/remix/remixicon.css">
+    <link rel="stylesheet" href="assets/css/main.min.css">
+    <link rel="stylesheet" href="assets/vendor/overlay-scroll/OverlayScrollbars.min.css">
+    <link rel="stylesheet" href="assets/vendor/daterange/daterange.css">
+    <style>
+      .profile-initials-badge { align-items:center; background:#f4f1ff; color:#705df3; display:inline-flex; font-weight:800; justify-content:center; }
+      .patient-tabs .tab-pane { padding-top: 1.25rem; }
+      .medical-question-card {
+        align-items: center;
+        border: 1px solid #dde2ee;
+        border-radius: 14px;
+        display: flex;
+        gap: 1rem;
+        justify-content: space-between;
+        min-height: 64px;
+        padding: .85rem 1rem;
+      }
+      .medical-question-card .form-check-input {
+        cursor: pointer;
+        height: 1.25rem;
+        width: 2.4rem;
+      }
+      .medical-detail {
+        display: none;
+      }
+      .medical-detail.is-visible {
+        display: block;
+      }
+      .medical-note-box {
+        background: #f8fbff;
+        border: 1px dashed #b6c7d8;
+        border-radius: 16px;
+        padding: 1rem;
+      }
+      .preregister-share-modal .modal-content {
+        border: 0;
+        border-radius: 16px;
+        overflow: hidden;
+      }
+      .preregister-share-result {
+        background: #fbfcff;
+        border: 1px solid #dde2ee;
+        border-radius: 16px;
+        padding: 1rem;
+      }
+      .preregister-share-actions {
+        display: grid;
+        gap: .75rem;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+      .preregister-share-action {
+        align-items: center;
+        background: transparent;
+        border: 0;
+        color: #202938;
+        display: flex;
+        flex-direction: column;
+        font-size: .86rem;
+        font-weight: 700;
+        gap: .45rem;
+        padding: .25rem;
+        text-align: center;
+        text-decoration: none;
+      }
+      .preregister-share-action:hover {
+        color: #5b50d6;
+      }
+      .preregister-share-icon {
+        align-items: center;
+        background: #f4f1ff;
+        border: 1px solid #e1dcff;
+        border-radius: 50%;
+        color: #5b50d6;
+        display: inline-flex;
+        font-size: 1.55rem;
+        height: 56px;
+        justify-content: center;
+        width: 56px;
+      }
+      .preregister-share-icon.whatsapp {
+        background: #e9fbf0;
+        border-color: #c7f2d6;
+        color: #16a34a;
+      }
+      .preregister-share-icon.email {
+        background: #eff6ff;
+        border-color: #dbeafe;
+        color: #2563eb;
+      }
+      .preregister-share-icon.open {
+        background: #f8fafc;
+        border-color: #e2e8f0;
+        color: #334155;
+      }
+      .preregister-url-box {
+        align-items: center;
+        background: #fff;
+        border: 1px solid #d8deeb;
+        border-radius: 12px;
+        display: flex;
+        gap: .75rem;
+        padding: .55rem .6rem .55rem .85rem;
+      }
+      .preregister-url-text {
+        flex: 1;
+        font-size: .9rem;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      @media (max-width: 575.98px) {
+        .preregister-share-actions {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .preregister-url-box {
+          align-items: stretch;
+          flex-direction: column;
+        }
+        .preregister-url-text {
+          overflow: visible;
+          text-overflow: initial;
+          white-space: normal;
+          word-break: break-all;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page-wrapper">
+      <div class="main-container">
+        <nav id="sidebar" class="sidebar-wrapper">
+          <div class="brand-container d-flex align-items-center justify-content-between">
+            <div class="app-brand ms-3"><a href="/admin/dash"><img src="/images/cnc-logo-alt.svg" class="logo" alt="C&C Dental Studio"></a></div>
+            <button type="button" class="pin-sidebar me-3"><i class="ri-menu-line"></i></button>
+          </div>
+          <div class="sidebar-profile">
+            <% if (headerPhoto) { %><img src="<%= headerPhoto %>" class="rounded-5 border border-primary border-3" alt="Foto de perfil"><% } else { %><span class="profile-initials-badge rounded-5 border border-primary border-3 img-4x"><%= headerInitials %></span><% } %>
+            <h6 class="mb-1 profile-name text-nowrap text-truncate text-primary"><%= headerName %></h6>
+            <small class="profile-name text-nowrap text-truncate"><%= headerRole %></small>
+          </div>
+          <div class="sidebarMenuScroll"><%- include('partials/adminSidebar', { activePage: 'pacientes', canFn }) %></div>
+        </nav>
+
+        <div class="app-container">
+          <div class="app-header d-flex align-items-center">
+            <div class="d-flex">
+              <div class="search-container d-xl-block d-none">
+                <input type="text" class="form-control" id="searchId" placeholder="Buscar">
+                <i class="ri-search-line"></i>
+              </div>
+            </div>
+            <div class="header-actions ms-auto d-flex align-items-center gap-2">
+              <button type="button" class="btn btn-icon btn-light rounded-5"><i class="ri-star-line"></i></button>
+              <button type="button" class="btn btn-icon btn-light rounded-5"><i class="ri-notification-3-line"></i></button>
+              <div class="dropdown ms-2">
+                <a id="userSettings" class="dropdown-toggle d-flex align-items-center" href="#!" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <div class="avatar-box"><% if (headerPhoto) { %><img src="<%= headerPhoto %>" class="img-2xx rounded-5 border border-3 border-white" alt="Foto de perfil"><% } else { %><span class="profile-initials-badge img-2xx rounded-5 border border-3 border-white"><%= headerInitials %></span><% } %><span class="status busy"></span></div>
+                </a>
+                <div class="dropdown-menu dropdown-menu-end shadow-lg">
+                  <div class="px-3 py-2"><span class="small"><%= headerRole %></span><h6 class="m-0"><%= headerName %></h6></div>
+                  <div class="dropdown-divider"></div><a href="/admin/perfil" class="dropdown-item"><i class="ri-user-line me-2"></i> Perfil</a><a href="/admin/settings" class="dropdown-item"><i class="ri-settings-3-line me-2"></i> Configuración</a>
+                  <div class="dropdown-divider"></div><div class="mx-3 my-2 d-grid"><a href="/logout" class="btn btn-danger">Cerrar sesión</a></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="app-hero-header d-flex align-items-center">
+            <ol class="breadcrumb"><li class="breadcrumb-item"><a href="/admin/dash"><i class="ri-home-3-line"></i></a></li><li class="breadcrumb-item"><a href="/admin/pacientes">Pacientes</a></li><li class="breadcrumb-item text-primary" aria-current="page">Agregar paciente</li></ol>
+            <div class="ms-auto"><input type="text" id="abc" class="form-control custom-daterange"></div>
+          </div>
+
+          <div class="app-body">
+            <% if (error) { %><div class="alert alert-danger"><%= error %></div><% } %>
+            <div class="alert alert-success d-flex flex-wrap align-items-center gap-2 <%= initialGeneratedPreregisterLink ? '' : 'd-none' %>" data-preregister-banner>
+              <div class="me-auto">
+                <strong>Enlace de pre-registro generado.</strong>
+                <div class="small text-break" data-preregister-banner-link><%= initialGeneratedPreregisterLink %></div>
+              </div>
+              <button class="btn btn-sm btn-outline-success" type="button" data-copy-link="<%= initialGeneratedPreregisterLink %>">Copiar enlace</button>
+            </div>
+            <form action="/admin/pacientes/agregar" method="post" class="card">
+              <input type="hidden" name="preregistroId" value="<%= preregistroId || '' %>">
+              <div class="card-header d-flex flex-wrap align-items-center gap-2">
+                <h5 class="card-title mb-0 me-auto"><%= preregistroId ? 'Crear paciente desde pre-registro' : 'Agregar paciente' %></h5>
+                <button class="btn btn-outline-primary" type="button" data-bs-toggle="modal" data-bs-target="#preRegistroPacienteModal">
+                  <i class="ri-send-plane-line me-1"></i> Enviar formulario
+                </button>
+              </div>
+              <div class="card-body">
+                <div class="custom-tabs-container patient-tabs">
+                  <ul class="nav nav-tabs" role="tablist">
+                    <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#datos" role="tab"><i class="ri-user-line"></i> Información</a></li>
+                    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#ficha" role="tab"><i class="ri-heart-pulse-line"></i> Ficha médica</a></li>
+                    <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#contacto" role="tab"><i class="ri-phone-line"></i> Emergencia</a></li>
+                  </ul>
+                  <div class="tab-content">
+                    <div class="tab-pane fade show active" id="datos" role="tabpanel">
+                      <div class="row gx-3">
+                        <div class="col-md-6 mb-3"><label class="form-label">Nombre *</label><input name="nombre" class="form-control" value="<%= fieldValue('nombre') %>" required></div>
+                        <div class="col-md-6 mb-3"><label class="form-label">Apellido *</label><input name="apellido" class="form-control" value="<%= fieldValue('apellido') %>" required></div>
+                        <div class="col-md-4 mb-3"><label class="form-label">Fecha nacimiento *</label><input type="date" name="fechaNacimiento" class="form-control" value="<%= prefill.fechaNacimientoInput || fieldValue('fechaNacimiento') %>" data-birthdate required></div>
+                        <div class="col-md-2 mb-3"><label class="form-label">Edad</label><input type="number" name="edad" min="0" class="form-control" value="<%= fieldValue('edad') %>" data-age readonly></div>
+                        <div class="col-md-3 mb-3"><label class="form-label">Tipo de sangre</label><input name="tipoSangre" class="form-control" maxlength="5" value="<%= fieldValue('tipoSangre') %>" placeholder="Ej. O+"></div>
+                        <div class="col-md-3 mb-3"><label class="form-label">Género *</label><select name="genero_idGenero" class="form-select" required><option value="">Seleccionar</option><% generosList.forEach(g => { %><option value="<%= g.idGenero %>" <%= isSelected(g.idGenero, prefill.genero_idGenero) %>><%= g.nombre %></option><% }) %></select></div>
+                        <div class="col-md-3 mb-3"><label class="form-label">Tipo *</label><select name="tipoPaciente_idtipoPaciente" class="form-select" required><option value="">Seleccionar</option><% tiposList.forEach(t => { %><option value="<%= t.idtipoPaciente %>" <%= isSelected(t.idtipoPaciente, prefill.tipoPaciente_idtipoPaciente) %>><%= t.nombre %></option><% }) %></select></div>
+                        <div class="col-md-6 mb-3"><label class="form-label">Correo *</label><input type="email" name="email" class="form-control" value="<%= fieldValue('email') %>" required></div>
+                        <div class="col-md-6 mb-3"><label class="form-label">Teléfono *</label><input name="telefono" class="form-control" value="<%= fieldValue('telefono') %>" required></div>
+                        <div class="col-md-6 mb-3"><label class="form-label">DPI</label><input name="dpi" class="form-control" value="<%= fieldValue('dpi') %>"><div class="form-text">Opcional, especialmente si es menor de edad.</div></div>
+                        <div class="col-md-6 mb-3"><label class="form-label">NIT</label><input name="nit" class="form-control" value="<%= fieldValue('nit') %>"><div class="form-text">Opcional, especialmente si es menor de edad.</div></div>
+                        <div class="col-12 mb-3"><label class="form-label">Dirección *</label><input name="direccion" class="form-control" value="<%= fieldValue('direccion') %>" required></div>
+                      </div>
+                    </div>
+                    <div class="tab-pane fade" id="ficha" role="tabpanel">
+                      <div class="medical-note-box mb-3">
+                        <h6 class="mb-1">Cuestionario médico</h6>
+                        <p class="text-muted mb-0">Responde todas las preguntas. Si marcas “Sí” y se solicita detalle, completa la explicación.</p>
+                      </div>
+                      <div class="alert alert-danger d-none" data-form-errors></div>
+                      <div class="row">
+                        <% medicalFields.forEach(([name, label, prompt]) => { %>
+                          <div class="col-lg-6 mb-3">
+                            <div class="medical-question-card flex-column align-items-stretch">
+                              <div class="d-flex align-items-center justify-content-between gap-3">
+                                <span><%= label %></span>
+                                <div class="btn-group" role="group" aria-label="<%= label %>">
+                                  <input class="btn-check" type="radio" name="<%= name %>" value="1" id="<%= name %>_si" data-medical-toggle="<%= name %>" <%= isChecked(name) %> required>
+                                  <label class="btn btn-outline-primary btn-sm" for="<%= name %>_si">Sí</label>
+                                  <input class="btn-check" type="radio" name="<%= name %>" value="0" id="<%= name %>_no" data-medical-toggle="<%= name %>" <%= !isChecked(name) && typeof prefill[name] !== 'undefined' ? 'checked' : '' %> required>
+                                  <label class="btn btn-outline-secondary btn-sm" for="<%= name %>_no">No</label>
+                                </div>
+                              </div>
+                              <% if (prompt) { %>
+                                <div class="medical-detail <%= isChecked(name) ? 'is-visible' : '' %>" data-medical-detail="<%= name %>">
+                                  <label class="form-label small text-muted mt-2 mb-1"><%= prompt %></label>
+                                  <input class="form-control" name="<%= name %>_detalle" value="<%= detailValue(name) %>" maxlength="500">
+                                </div>
+                              <% } %>
+                            </div>
+                          </div>
+                        <% }) %>
+                        <div class="col-md-6 mb-3"><label class="form-label">Última visita al dentista</label><input name="ultima_visita_dentista" class="form-control" value="<%= fieldValue('ultima_visita_dentista') %>"></div>
+                        <div class="col-md-6 mb-3"><label class="form-label">Tratamiento realizado</label><input name="tratamiento_realizado" class="form-control" value="<%= fieldValue('tratamiento_realizado') %>"></div>
+                      </div>
+                    </div>
+                    <div class="tab-pane fade" id="contacto" role="tabpanel">
+                      <div class="row gx-3">
+                        <div class="col-md-4 mb-3"><label class="form-label">Nombre *</label><input name="contactoemergencia_nombre" class="form-control" value="<%= fieldValue('contactoemergencia_nombre') %>" required></div>
+                        <div class="col-md-4 mb-3"><label class="form-label">Teléfono *</label><input name="contactoemergencia_numero" class="form-control" value="<%= fieldValue('contactoemergencia_numero') %>" required></div>
+                        <div class="col-md-4 mb-3"><label class="form-label">Parentesco *</label><input name="contactoemergencia_parentesco" class="form-control" value="<%= fieldValue('contactoemergencia_parentesco') %>" required></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="d-flex justify-content-end gap-2 mt-4"><a href="/admin/pacientes" class="btn btn-outline-secondary">Cancelar</a><button class="btn btn-primary" type="submit">Crear paciente</button></div>
+              </div>
+            </form>
+          </div>
+          <div class="app-footer"><span>© C&C Dental Studio 2026</span></div>
+        </div>
+      </div>
+    </div>
+    <%- include('Pacientes/modals/preRegistroPaciente', { pendingPreregistros }) %>
+    <%- include('partials/uiFeedback') %>
+    <script src="assets/js/jquery.min.js"></script><script src="assets/js/bootstrap.bundle.min.js"></script><script src="assets/js/moment.min.js"></script><script src="assets/vendor/overlay-scroll/jquery.overlayScrollbars.min.js"></script><script src="assets/vendor/overlay-scroll/custom-scrollbar.js"></script><script src="assets/vendor/daterange/daterange.js"></script><script src="assets/vendor/daterange/custom-daterange.js"></script><script src="assets/js/custom.js"></script>
+    <script>
+      const calculateAgeFromBirthdate = value => {
+        if (!value) return '';
+        const birth = new Date(`${value}T00:00:00`);
+        if (Number.isNaN(birth.getTime())) return '';
+        const today = new Date();
+        let age = today.getFullYear() - birth.getFullYear();
+        const monthDiff = today.getMonth() - birth.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) age -= 1;
+        return age >= 0 ? age : '';
+      };
+
+      const birthdateInput = document.querySelector('[data-birthdate]');
+      const ageInput = document.querySelector('[data-age]');
+      const syncAge = () => {
+        if (ageInput) ageInput.value = calculateAgeFromBirthdate(birthdateInput?.value || '');
+      };
+      birthdateInput?.addEventListener('change', syncAge);
+      syncAge();
+
+      document.querySelectorAll('[data-medical-toggle]').forEach(toggle => {
+        const syncDetail = () => {
+          const detail = document.querySelector(`[data-medical-detail="${toggle.dataset.medicalToggle}"]`);
+          if (!detail) return;
+          const selectedYes = document.querySelector(`[name="${toggle.name}"][value="1"]`)?.checked;
+          detail.classList.toggle('is-visible', !!selectedYes);
+          if (!selectedYes) {
+            const input = detail.querySelector('input, textarea');
+            if (input) input.value = '';
+          }
+        };
+        toggle.addEventListener('change', syncDetail);
+        syncDetail();
+      });
+
+      document.querySelector('form[action="/admin/pacientes/agregar"]')?.addEventListener('submit', event => {
+        syncAge();
+        const form = event.currentTarget;
+        const errors = [];
+        form.querySelectorAll('[required]').forEach(input => {
+          if (input.type === 'radio') return;
+          if (!input.value.trim()) errors.push(input.closest('.mb-3')?.querySelector('.form-label')?.textContent?.replace('*', '').trim() || 'Campo obligatorio');
+        });
+        const answeredGroups = new Set();
+        form.querySelectorAll('[data-medical-toggle]').forEach(input => answeredGroups.add(input.name));
+        answeredGroups.forEach(name => {
+          const selected = form.querySelector(`[name="${name}"]:checked`);
+          if (!selected) errors.push(`Pregunta médica sin responder: ${form.querySelector(`label[for="${name}_si"]`)?.closest('.medical-question-card')?.querySelector('span')?.textContent || name}`);
+          const detail = form.querySelector(`[data-medical-detail="${name}"] input`);
+          if (selected?.value === '1' && detail && !detail.value.trim()) errors.push(`Falta explicación: ${detail.closest('.medical-detail')?.querySelector('label')?.textContent || name}`);
+        });
+        const box = form.querySelector('[data-form-errors]');
+        if (errors.length) {
+          event.preventDefault();
+          box.classList.remove('d-none');
+          box.innerHTML = `<strong>Completa lo siguiente:</strong><ul class="mb-0 mt-2">${errors.map(error => `<li>${error}</li>`).join('')}</ul>`;
+          box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      });
+
+      const notifyUi = (message, type = 'info') => {
+        if (typeof window.showUiMessage === 'function') {
+          window.showUiMessage(message, type);
+          return;
+        }
+        window.alert(message);
+      };
+
+      const fallbackCopyText = text => {
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      };
+
+      const copyTextToClipboard = async text => {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(text);
+          return;
+        }
+        fallbackCopyText(text);
+      };
+
+      const setTemporaryButtonLabel = (button, label) => {
+        const original = button.innerHTML;
+        button.innerHTML = label;
+        button.disabled = true;
+        setTimeout(() => {
+          button.innerHTML = original;
+          button.disabled = false;
+        }, 1600);
+      };
+
+      const getCurrentPreregisterLink = () => (
+        window.currentPreregisterLink
+        || document.querySelector('[data-share-url]')?.textContent?.trim()
+        || document.querySelector('[data-preregister-banner-link]')?.textContent?.trim()
+        || ''
+      );
+
+      const setPreregisterShareLink = (link, meta = {}) => {
+        if (!link) return;
+        window.currentPreregisterLink = link;
+
+        const banner = document.querySelector('[data-preregister-banner]');
+        const bannerLink = document.querySelector('[data-preregister-banner-link]');
+        const bannerCopy = document.querySelector('[data-copy-link]');
+        banner?.classList.remove('d-none');
+        if (bannerLink) bannerLink.textContent = link;
+        if (bannerCopy) bannerCopy.dataset.copyLink = link;
+
+        const sharePanel = document.querySelector('[data-share-result]');
+        const shareUrl = document.querySelector('[data-share-url]');
+        const shareExpiry = document.querySelector('[data-share-expiry]');
+        const whatsapp = document.querySelector('[data-share-whatsapp]');
+        const email = document.querySelector('[data-share-email]');
+        const openLink = document.querySelector('[data-open-prereg-link]');
+        const message = `Hola, completa tu pre-registro de C&C Dental Studio en este enlace: ${link}`;
+
+        sharePanel?.classList.remove('d-none');
+        if (shareUrl) shareUrl.textContent = link;
+        if (shareExpiry && meta.expiresAt) {
+          const expiresAt = new Date(meta.expiresAt);
+          shareExpiry.textContent = Number.isNaN(expiresAt.getTime())
+            ? 'El enlace queda listo para enviarlo al paciente.'
+            : `Disponible hasta ${new Intl.DateTimeFormat('es-GT', { dateStyle: 'medium', timeStyle: 'short' }).format(expiresAt)}.`;
+        }
+        if (whatsapp) whatsapp.href = `https://wa.me/?text=${encodeURIComponent(message)}`;
+        if (email) email.href = `mailto:?subject=${encodeURIComponent('Pre-registro C&C Dental Studio')}&body=${encodeURIComponent(message)}`;
+        if (openLink) openLink.href = link;
+      };
+
+      document.addEventListener('click', async event => {
+        const button = event.target.closest('[data-copy-link], [data-copy-prereg-link]');
+        if (!button) return;
+        const link = button.dataset.copyLink || getCurrentPreregisterLink();
+        if (!link) return;
+        try {
+          await copyTextToClipboard(link);
+          if (button.tagName === 'BUTTON') setTemporaryButtonLabel(button, 'Copiado');
+          notifyUi('Enlace copiado al portapapeles.', 'success');
+        } catch (copyError) {
+          notifyUi('No se pudo copiar el enlace. Selecciónalo manualmente.', 'warning');
+        }
+      });
+
+      document.querySelector('[data-preregister-form]')?.addEventListener('submit', async event => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const submitButton = form.querySelector('[data-preregister-submit]');
+        const errorBox = form.querySelector('[data-preregister-error]');
+        const originalButton = submitButton?.innerHTML;
+        if (errorBox) errorBox.classList.add('d-none');
+        if (submitButton) {
+          submitButton.disabled = true;
+          submitButton.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Generando';
+        }
+
+        try {
+          const response = await fetch(form.action, {
+            method: 'POST',
+            headers: {
+              Accept: 'application/json',
+              'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: new URLSearchParams(new FormData(form)),
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok || !data.ok || !data.link) {
+            throw new Error(data.error || 'No se pudo generar el enlace de pre-registro.');
+          }
+          setPreregisterShareLink(data.link, data);
+          form.reset();
+          notifyUi(data.message || 'Enlace de pre-registro generado.', 'success');
+          document.querySelector('[data-share-result]')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        } catch (requestError) {
+          const message = requestError.message || 'No se pudo generar el enlace de pre-registro.';
+          if (errorBox) {
+            errorBox.textContent = message;
+            errorBox.classList.remove('d-none');
+          }
+          notifyUi(message, 'danger');
+        } finally {
+          if (submitButton) {
+            submitButton.disabled = false;
+            submitButton.innerHTML = originalButton;
+          }
+        }
+      });
+
+      const initialPreregisterLink = getCurrentPreregisterLink();
+      if (initialPreregisterLink) setPreregisterShareLink(initialPreregisterLink);
+      try {
+        const currentUrl = new URL(window.location.href);
+        if (currentUrl.searchParams.has('prelink')) {
+          currentUrl.searchParams.delete('prelink');
+          window.history.replaceState({}, '', currentUrl.pathname + currentUrl.search + currentUrl.hash);
+        }
+      } catch (urlError) {}
+    </script>
+  </body>
+</html>
