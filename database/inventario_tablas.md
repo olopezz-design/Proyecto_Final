@@ -1,10 +1,10 @@
-
 # C&C Dental Studio
 ## Inventario de tablas de la base de datos
 
 **Responsable:** Área de Base de Datos y QA  
-**Base de datos:** clinica_dental_qa  
-**Total de tablas:** 37
+**Base de datos:** `clinica_dental_final_qa`  
+**Total de tablas:** 56  
+**Herramienta:** MySQL Workbench
 
 | No. | Tabla | Función principal |
 |---|---|---|
@@ -12,78 +12,83 @@
 | 2 | categoria | Clasificación de productos del inventario. |
 | 3 | cita | Registro de citas de pacientes. |
 | 4 | compraproducto | Registro de compras de productos. |
-| 5 | consulta | Información de consultas odontológicas. |
-| 6 | consulta_doctor | Relación entre consultas y doctores. |
-| 7 | contactoemergencia | Contactos de emergencia de pacientes. |
-| 8 | cotizaciones | Encabezados de cotizaciones. |
-| 9 | detalle_cotizaciones | Detalle de servicios o conceptos cotizados. |
-| 10 | detallefactura | Detalle de conceptos facturados. |
-| 11 | doctor | Información de profesionales odontológicos. |
-| 12 | especialidad | Catálogo de especialidades. |
-| 13 | estadocita | Estados de las citas. |
-| 14 | estadopaciente | Estados de los pacientes. |
-| 15 | estadousuario | Estados de las cuentas de usuario. |
-| 16 | factura | Encabezados de facturas. |
-| 17 | fichamedica | Información de fichas médicas. |
-| 18 | genero | Catálogo de géneros. |
-| 19 | historial_clinico | Registros del historial clínico. |
-| 20 | horarios_laborales | Horarios de trabajo registrados. |
-| 21 | inventario | Información de existencias del inventario. |
-| 22 | loteproducto | Registro de lotes de productos. |
-| 23 | marca | Catálogo de marcas. |
-| 24 | metodo_pago | Métodos de pago disponibles. |
-| 25 | movimientoinventario | Registro de movimientos de inventario. |
-| 26 | paciente | Información de pacientes. |
-| 27 | pago | Registro de pagos. |
-| 28 | portafolio_imagen | Imágenes del portafolio. |
-| 29 | producto | Información de productos. |
-| 30 | proveedor | Información de proveedores. |
-| 31 | recibo | Registro de recibos. |
-| 32 | rol | Catálogo de roles del sistema. |
-| 33 | servicio | Catálogo de servicios odontológicos. |
-| 34 | session_store | Almacenamiento de sesiones del sistema. |
-| 35 | tipopaciente | Clasificación de pacientes. |
-| 36 | tiposervicio | Clasificación de servicios. |
-| 37 | usuario | Información de usuarios del sistema. |
+| 5 | configuracion_sistema | Almacenamiento de parámetros de configuración del sistema. |
+| 6 | consulta | Información de consultas odontológicas. |
+| 7 | consulta_activa | Gestión de consultas odontológicas en curso. |
+| 8 | consulta_activa_archivos | Archivos asociados a consultas activas. |
+| 9 | consulta_activa_materiales | Materiales asociados a consultas activas. |
+| 10 | consulta_activa_medicamentos | Medicamentos asociados a consultas activas. |
+| 11 | consulta_doctor | Relación entre consultas y doctores. |
+| 12 | contactoemergencia | Contactos de emergencia de pacientes. |
+| 13 | controlpago | Información para el control de pagos. |
+| 14 | cotizaciones | Encabezados de cotizaciones. |
+| 15 | detalle_cotizaciones | Detalle de servicios o conceptos cotizados. |
+| 16 | detalle_pago_servicio | Detalle de pagos relacionados con servicios. |
+| 17 | detallefactura | Detalle de conceptos facturados. |
+| 18 | doctor | Información de profesionales odontológicos. |
+| 19 | especialidad | Catálogo de especialidades. |
+| 20 | estadocita | Estados de las citas. |
+| 21 | estadopaciente | Estados de los pacientes. |
+| 22 | estadousuario | Estados de las cuentas de usuario. |
+| 23 | factura | Encabezados de facturas. |
+| 24 | fichamedica | Información de fichas médicas. |
+| 25 | genero | Catálogo de géneros. |
+| 26 | historial_clinico | Registros del historial clínico. |
+| 27 | horarios_laborales | Horarios de trabajo registrados. |
+| 28 | inventario | Información de existencias del inventario. |
+| 29 | lista_compra | Registro de listas de compra. |
+| 30 | lista_compra_detalle | Detalle de productos incluidos en listas de compra. |
+| 31 | loteproducto | Registro de lotes de productos. |
+| 32 | marca | Catálogo de marcas. |
+| 33 | metodo_pago | Métodos de pago disponibles. |
+| 34 | movimientoinventario | Registro de movimientos de inventario. |
+| 35 | paciente | Información de pacientes. |
+| 36 | paciente_preregistro | Información de pacientes pendientes de completar su registro. |
+| 37 | pago | Registro de pagos. |
+| 38 | permisos | Catálogo de permisos del sistema. |
+| 39 | portafolio_imagen | Imágenes del portafolio. |
+| 40 | producto | Información de productos. |
+| 41 | producto_marca | Relación entre productos y marcas. |
+| 42 | producto_proveedor | Relación entre productos y proveedores. |
+| 43 | proveedor | Información de proveedores. |
+| 44 | proveedor_contacto | Información de contactos de proveedores. |
+| 45 | recibo | Registro de recibos. |
+| 46 | registro_pendiente | Registro de operaciones pendientes de completar. |
+| 47 | rol | Catálogo de roles del sistema. |
+| 48 | roles_permisos | Relación entre roles y permisos. |
+| 49 | servicio | Catálogo de servicios odontológicos. |
+| 50 | session_store | Almacenamiento de sesiones del sistema. |
+| 51 | solicitudes_autorizacion | Registro de solicitudes de autorización. |
+| 52 | tipopaciente | Clasificación de pacientes. |
+| 53 | tiposervicio | Clasificación de servicios. |
+| 54 | tratamiento_material | Relación entre tratamientos y materiales utilizados. |
+| 55 | usuario | Información de usuarios del sistema. |
+| 56 | usuarios_permisos | Relación entre usuarios y permisos. |
 
 ## Observaciones
 
-El inventario identifica las 37 tablas existentes en la base de datos de pruebas de C&C Dental Studio.
+El inventario identifica las 56 tablas existentes en la base de datos `clinica_dental_final_qa` de C&C Dental Studio, consultadas mediante MySQL Workbench.
 
-Las funciones descritas son preliminares y deberán verificarse con la estructura SQL y las consultas utilizadas por la aplicación.
+En comparación con el inventario anterior, que contenía 37 tablas, se identificaron 19 tablas adicionales relacionadas principalmente con la gestión de consultas activas, inventario, proveedores, permisos, autorizaciones y procesos administrativos.
 
-La revisión de claves primarias, claves foráneas y dependencias se documentará por separado antes de considerar validado el modelo relacional.
-
+Las funciones descritas corresponden a una interpretación inicial de los nombres de las tablas y deberán verificarse con sus columnas, claves y reglas de negocio.
 
 ## Verificación de claves y relaciones
 
-Se consultó information_schema.KEY_COLUMN_USAGE en MySQL
-para identificar las claves primarias y foráneas de la
-base de datos clinica_dental_qa.
+Se realizó anteriormente una revisión de claves primarias y foráneas mediante `information_schema.KEY_COLUMN_USAGE` sobre la base de datos `clinica_dental_qa`.
 
-Se verificaron las relaciones declaradas entre las tablas
-de pacientes, citas, consultas, doctores, productos,
-inventario, pagos, usuarios y otros módulos del sistema.
-
-La revisión permitió identificar las tablas relacionadas
-y las columnas utilizadas como claves foráneas.
-
-Queda pendiente comparar estas relaciones con el
-Diagrama Entidad-Relación de la versión final del sistema.
+Para la versión actual `clinica_dental_final_qa`, queda pendiente repetir la verificación detallada de las relaciones, claves primarias, claves foráneas y cardinalidades.
 
 ## Diagrama Entidad-Relación
 
-Se dispone de un Diagrama Entidad-Relación (DER)
-de C&C Dental Studio, elaborado en MySQL Workbench.
+Se generó un nuevo Diagrama Entidad-Relación (DER) mediante ingeniería inversa en MySQL Workbench, utilizando la base de datos `clinica_dental_final_qa`.
 
-El modelo contiene las 37 tablas identificadas
-en el inventario de la base de datos.
+El modelo actualizado incorpora las 56 tablas identificadas en el inventario y representa gráficamente las relaciones declaradas en la base de datos.
 
-Se conservan los siguientes archivos:
+Se conservan los archivos del diagrama anterior como referencia histórica y se agregan los siguientes archivos actualizados:
 
-- DER_Final_CyC_Dental_Studio_Entrega.mwb
-- DER_Final_CyC_Dental_Studio.pdf
+- `Diagrama_ER_Clinica_Dental_Actualizado.mwb`
+- `Diagrama_ER_Clinica_Dental_Actualizado.png`
+- `Diagrama_ER_Clinica_Dental_Actualizado.pdf`
 
-La correspondencia de las relaciones y cardinalidades
-entre el DER y el SQL de entrega queda pendiente
-de validación detallada.
+La correspondencia detallada entre el diagrama, las restricciones SQL y las reglas de negocio deberá verificarse antes de considerar completamente validado el modelo relacional.
