@@ -546,3 +546,26 @@ Antes de la liberación definitiva, el equipo deberá confirmar las funcionalida
 **Responsable del registro:** Kimberly  
 **Área:** Base de Datos y Control de Calidad  
 **Resultado general:** Validación parcial satisfactoria, con pruebas pendientes.
+
+
+### CP-20: Validación de importación del SQL limpio
+
+**Módulo:** Base de datos  
+**Responsable:** Kimberly  
+**Objetivo:** Verificar que la estructura SQL pueda importarse en una base de datos nueva sin utilizar información real de pacientes.
+
+**Procedimiento realizado:**
+1. Se creó la base de prueba `clinica_dental_prueba_entrega`.
+2. Se importó la estructura SQL.
+3. Se verificaron 56 tablas, 70 referencias de claves foráneas y 3 triggers.
+4. Se importaron los datos ficticios.
+5. Se confirmó la existencia de 3 pacientes ficticios.
+6. Se revisó el archivo SQL buscando instrucciones INSERT INTO, REPLACE INTO y VALUES, sin encontrar coincidencias.
+
+**Resultado esperado:** Importación correcta de la estructura y los datos ficticios.
+
+**Resultado obtenido:** Importación y verificaciones realizadas correctamente.
+
+**Estado:** APROBADO
+
+**Observación:** No se encontraron instrucciones de inserción de registros en el archivo de estructura. La revisión no constituye una auditoría exhaustiva de información sensible.
