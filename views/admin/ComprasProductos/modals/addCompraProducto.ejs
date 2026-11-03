@@ -1,0 +1,79 @@
+<!-- Modal para registrar compra de producto -->
+<div class="modal fade" id="addProductoModal" tabindex="-1" aria-labelledby="addProductoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addProductoModalLabel">Agregar Compra de Producto</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <form id="comprarProductoForm">
+            <!-- Fecha de Emisión -->
+            <div class="mb-3">
+              <label for="fechaEmision" class="form-label">Fecha de Emisión</label>
+              <input type="date" class="form-control" id="fechaEmision" required>
+            </div>
+            <br>
+
+            <!-- Tipo de Pago -->
+            <div class="mb-3">
+              <label for="tipoPago" class="form-label">Tipo de Pago</label>
+              <select class="form-control" id="tipoPago" required>
+                <option value="1">Efectivo</option>
+                <option value="2">Transferencia</option>
+                <option value="3">Tarjeta</option>
+              </select>
+            </div>
+            <br>
+
+            <!-- Proveedor -->
+            <div class="mb-3">
+              <label for="proveedor" class="form-label">Proveedor</label>
+              <select class="form-control" id="proveedor" required>
+                <option value="">Seleccione un proveedor</option>
+              </select>
+            </div>
+            <br>
+
+            <!-- Lista de productos -->
+            <div id="productosContainer">
+              <div class="producto-item mb-3">
+                <label for="producto" class="form-label">Producto</label>
+                <br>
+                
+                <select class="form-control producto-select" required>
+                  <option value="">Seleccione un producto</option>
+                </select>
+                <br>
+                <br>
+                <label for="cantidad" class="form-label">Cantidad</label>
+                <input type="number" class="form-control cantidad" required>
+                <br>
+                <label for="precioCompra" class="form-label">Precio de Compra</label>
+                <input type="number" class="form-control precioCompra" step="0.01" required>
+                <br>
+                <label for="subtotal" class="form-label">Subtotal</label>
+                <input type="number" class="form-control subtotal" readonly>
+                <br>
+                <br>
+                <button type="button" class="btn btn-danger mt-2" onclick="eliminarProducto(this)">Eliminar Producto</button>
+              </div>
+            </div>
+
+            <!-- Botón para agregar más productos -->
+            <button type="button" class="btn btn-secondary mb-3" onclick="agregarProducto()">Agregar Producto</button>
+
+            <!-- Total Global -->
+            <div class="mb-3">
+              <label for="totalGlobal" class="form-label">Total Global</label>
+              <input type="number" class="form-control" id="totalGlobal" readonly>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Registrar Compra</button>
+          </form>
+        </div>
+      </div>
+    </div>
+</div>

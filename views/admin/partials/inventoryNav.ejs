@@ -1,0 +1,97 @@
+<%
+  const activeInventory = typeof activeInventoryPage !== 'undefined' ? activeInventoryPage : '';
+  const inventoryCan = typeof canFn === 'function' ? canFn : (typeof can === 'function' ? can : () => true);
+  const inventoryLinks = [
+    { key: 'lista-compras', label: 'Lista de compras', href: '/admin/lista-compras', icon: 'ri-file-list-3-line', permission: 'inventario:ver' },
+    { key: 'productos', label: 'Productos', href: '/admin/productos', icon: 'ri-archive-2-line', permission: 'inventario:ver' },
+    { key: 'proveedores', label: 'Proveedores', href: '/admin/proveedores', icon: 'ri-truck-line', permission: 'inventario:ver' },
+    { key: 'compras', label: 'Compras', href: '/admin/comprasProductos', icon: 'ri-shopping-cart-2-line', permission: 'inventario:compras' },
+    { key: 'kardex', label: 'Kardex', href: '/admin/salidasProductos', icon: 'ri-history-line', permission: 'inventario:salidas' },
+  ].filter(item => inventoryCan(item.permission));
+%>
+<style>
+  .inventory-tabs-container {
+    background: #fff;
+    border: 1px solid #dde2ee;
+    border-radius: 8px;
+    box-shadow: 0 10px 28px rgba(115, 103, 240, .06);
+    margin-bottom: 1rem;
+    overflow: hidden;
+  }
+  .inventory-tabs-label {
+    color: #705df3;
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+    margin: 0;
+    padding: .85rem 1rem 0;
+    text-transform: uppercase;
+  }
+  .inventory-nav {
+    background: #fff;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: .5rem;
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding: .85rem 1rem 1rem;
+    scrollbar-width: thin;
+    white-space: nowrap;
+  }
+  .inventory-nav-link {
+    align-items: center;
+    background: #fff;
+    border: 1px solid #dde2ee;
+    border-radius: 8px;
+    color: #4b5563;
+    display: inline-flex;
+    flex: 0 0 auto;
+    font-weight: 700;
+    gap: .45rem;
+    min-height: 42px;
+    padding: .55rem .85rem;
+    text-decoration: none;
+  }
+  .inventory-nav-link:hover {
+    background: #f8f7ff;
+    border-color: #c7c2f9;
+    color: #5b50d6;
+    text-decoration: none;
+  }
+  .inventory-nav-link.active {
+    background: #f4f1ff;
+    border-color: #7367f0;
+    color: #5b50d6;
+  }
+  .inventory-nav-link i {
+    font-size: 1.05rem;
+    line-height: 1;
+  }
+  @media (max-width: 767.98px) {
+    .inventory-tabs-container {
+      margin: 0 0 1rem;
+    }
+    .inventory-tabs-label {
+      padding: .75rem .85rem 0;
+    }
+    .inventory-nav {
+      gap: .45rem;
+      padding: .75rem .85rem .85rem;
+    }
+    .inventory-nav-link {
+      min-height: 40px;
+      padding: .5rem .75rem;
+    }
+  }
+</style>
+<section class="inventory-tabs-container" aria-label="Menú de inventario">
+  <p class="inventory-tabs-label">Inventario</p>
+  <nav class="inventory-nav" aria-label="Navegación de inventario">
+  <% inventoryLinks.forEach(item => { %>
+    <a href="<%= item.href %>" class="inventory-nav-link <%= activeInventory === item.key ? 'active' : '' %>" <%= activeInventory === item.key ? 'aria-current="page"' : '' %>>
+      <i class="<%= item.icon %>"></i>
+      <span><%= item.label %></span>
+    </a>
+  <% }) %>
+  </nav>
+</section>

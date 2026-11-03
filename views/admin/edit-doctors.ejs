@@ -1,0 +1,307 @@
+<%
+  const displayName = doctor ? `Dr. ${doctor.nombre || ''} ${doctor.apellido || ''}`.trim() : 'Perfil no vinculado';
+  const photoUrl = doctor?.fotoPerfil || '';
+  const dateValue = doctor?.fechaNacimiento ? new Date(doctor.fechaNacimiento).toISOString().slice(0, 10) : '';
+  const headerProfile = typeof adminProfile !== 'undefined' ? adminProfile : {};
+  const headerName = headerProfile.displayName || displayName;
+  const headerInitials = headerProfile.initials || initials || 'DR';
+  const headerPhoto = headerProfile.photoUrl || photoUrl;
+  const headerRole = headerProfile.roleLabel || doctor?.especialidad_nombre || 'Doctor';
+  const canFn = typeof can === 'function' ? can : () => true;
+  const scheduleRows = typeof horarios !== 'undefined' && Array.isArray(horarios) ? horarios : [];
+%>
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Editar perfil - C&C Dental Studio</title>
+    <link rel="shortcut icon" type="image/svg+xml" href="/images/cnc-favicon.svg">
+    <link rel="stylesheet" href="/assets/fonts/remix/remixicon.css">
+    <link rel="stylesheet" href="/assets/css/main.min.css">
+    <link rel="stylesheet" href="/assets/vendor/overlay-scroll/OverlayScrollbars.min.css">
+    <link rel="stylesheet" href="/assets/vendor/daterange/daterange.css">
+    <style>
+      .header-actions > .d-lg-flex.d-none.gap-2 { display: none !important; }
+      .profile-initials-badge,
+      .profile-initials {
+        align-items: center;
+        background: #f4f1ff;
+        color: #705df3;
+        display: inline-flex;
+        font-weight: 800;
+        justify-content: center;
+      }
+      .profile-avatar,
+      .profile-initials {
+        width: 116px;
+        height: 116px;
+        border-radius: 24px;
+        border: 4px solid #705df3;
+      }
+      .profile-avatar { object-fit: cover; }
+      .profile-initials { font-size: 1.8rem; }
+      .edit-profile-hero {
+        background: linear-gradient(135deg, #f1efff, #f9fbff);
+        border: 1px solid #dde2ee;
+        border-radius: 18px;
+      }
+      .schedule-editor-row {
+        background: #f8f9fe;
+        border: 1px solid #dde2ee;
+        border-radius: 8px;
+        padding: .75rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page-wrapper">
+      <div class="main-container">
+        <nav id="sidebar" class="sidebar-wrapper">
+          <div class="brand-container d-flex align-items-center justify-content-between">
+            <div class="app-brand ms-3">
+              <a href="/admin/dash"><img src="/images/cnc-logo-alt.svg" class="logo" alt="C&C Dental Studio"></a>
+            </div>
+            <button type="button" class="pin-sidebar me-3"><i class="ri-menu-line"></i></button>
+          </div>
+          <div class="sidebar-profile">
+            <% if (headerPhoto) { %>
+              <img src="<%= headerPhoto %>" class="rounded-5 border border-primary border-3" alt="Foto de perfil">
+            <% } else { %>
+              <span class="profile-initials-badge rounded-5 border border-primary border-3 img-4x"><%= headerInitials %></span>
+            <% } %>
+            <h6 class="mb-1 profile-name text-nowrap text-truncate text-primary"><%= headerName %></h6>
+            <small class="profile-name text-nowrap text-truncate"><%= headerRole %></small>
+          </div>
+          <div class="sidebarMenuScroll">
+            <%- include('partials/adminSidebar', { activePage: 'perfil', canFn }) %>
+          </div>
+        </nav>
+
+        <div class="app-container">
+          <div class="app-header d-flex align-items-center">
+            <div class="d-flex">
+              <button type="button" id="toggle-sidebar" class="btn btn-outline-primary me-2"><i class="ri-menu-line"></i></button>
+              <div class="search-container d-xl-block d-none">
+                <input type="text" class="form-control" placeholder="Buscar">
+                <i class="ri-search-line"></i>
+              </div>
+            </div>
+            <div class="header-actions ms-auto">
+              <div class="dropdown ms-3">
+                <a id="userSettings" class="dropdown-toggle d-flex align-items-center" href="#!" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <div class="avatar-box">
+                    <% if (headerPhoto) { %>
+                      <img src="<%= headerPhoto %>" class="img-2xx rounded-5 border border-3 border-white" alt="Foto de perfil">
+                    <% } else { %>
+                      <span class="profile-initials-badge img-2xx rounded-5 border border-3 border-white"><%= headerInitials %></span>
+                    <% } %>
+                    <span class="status busy"></span>
+                  </div>
+                </a>
+                <div class="dropdown-menu dropdown-menu-end shadow-lg">
+                  <div class="px-3 py-2">
+                    <span class="small"><%= headerRole %></span>
+                    <h6 class="m-0"><%= headerName %></h6>
+                  </div>
+                  <div class="dropdown-divider"></div>
+                  <a href="/admin/perfil" class="dropdown-item"><i class="ri-user-line me-2"></i> Perfil</a>
+                  <a href="/admin/settings" class="dropdown-item"><i class="ri-settings-3-line me-2"></i> Configuración</a>
+                  <div class="dropdown-divider"></div>
+                  <div class="mx-3 my-2 d-grid"><a href="/logout" class="btn btn-danger">Cerrar sesión</a></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="app-hero-header d-flex align-items-center">
+            <ol class="breadcrumb">
+              <li class="breadcrumb-item"><a href="/admin/dash"><i class="ri-home-3-line"></i></a></li>
+              <li class="breadcrumb-item"><a href="/admin/perfil">Mi perfil</a></li>
+              <li class="breadcrumb-item text-primary" aria-current="page">Editar</li>
+            </ol>
+          </div>
+
+          <div class="app-body">
+            <% if (!doctor) { %>
+              <div class="alert alert-warning">Este usuario todavía no tiene un doctor vinculado.</div>
+            <% } else { %>
+              <% if (error) { %><div class="alert alert-danger"><%= error %></div><% } %>
+              <% if (saved) { %><div class="alert alert-success">Perfil guardado correctamente.</div><% } %>
+              <% if (!photoReady) { %>
+                <div class="alert alert-warning">Para guardar foto de perfil falta agregar una columna de foto en la tabla doctor.</div>
+              <% } %>
+
+              <form action="/admin/perfil/editar" method="post" enctype="multipart/form-data" class="card mb-4">
+                <div class="card-body">
+                  <div class="edit-profile-hero p-4 d-flex flex-wrap align-items-center gap-4 mb-4">
+                    <% if (photoUrl) { %>
+                      <img src="<%= photoUrl %>" class="profile-avatar" alt="Foto de perfil">
+                    <% } else { %>
+                      <span class="profile-initials"><%= initials %></span>
+                    <% } %>
+                    <div class="flex-grow-1">
+                      <span class="badge bg-primary-subtle text-primary mb-2">Editar doctor</span>
+                      <h3 class="mb-1"><%= displayName %></h3>
+                      <label class="form-label mt-3" for="fotoPerfil">Foto de perfil</label>
+                      <input type="file" id="fotoPerfil" name="fotoPerfil" class="form-control" accept="image/png,image/jpeg,image/webp" <%= photoReady ? '' : 'disabled' %>>
+                      <small class="text-muted">JPG, PNG o WebP. Máximo 3 MB.</small>
+                    </div>
+                  </div>
+
+                  <div class="row gx-3">
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label" for="nombre">Nombre</label>
+                      <input type="text" id="nombre" name="nombre" class="form-control" value="<%= doctor.nombre || '' %>" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label" for="apellido">Apellido</label>
+                      <input type="text" id="apellido" name="apellido" class="form-control" value="<%= doctor.apellido || '' %>">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label" for="telefono">Teléfono</label>
+                      <input type="text" id="telefono" name="telefono" class="form-control" value="<%= doctor.telefono || '' %>">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label" for="email">Correo</label>
+                      <input type="email" id="email" name="email" class="form-control" value="<%= doctor.email || '' %>">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label" for="especialidad_idespecialidad">Especialidad</label>
+                      <select id="especialidad_idespecialidad" name="especialidad_idespecialidad" class="form-control" required>
+                        <% (especialidades || []).forEach(item => { %>
+                          <option value="<%= item.idespecialidad %>" <%= Number(item.idespecialidad) === Number(doctor.especialidad_idespecialidad) ? 'selected' : '' %>><%= item.nombre %></option>
+                        <% }) %>
+                      </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label" for="genero_idGenero">Género</label>
+                      <select id="genero_idGenero" name="genero_idGenero" class="form-control">
+                        <option value="">Sin especificar</option>
+                        <% (generos || []).forEach(item => { %>
+                          <option value="<%= item.idGenero %>" <%= Number(item.idGenero) === Number(doctor.genero_idGenero) ? 'selected' : '' %>><%= item.nombre %></option>
+                        <% }) %>
+                      </select>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                      <label class="form-label" for="dpi">DPI</label>
+                      <input type="text" id="dpi" name="dpi" class="form-control" value="<%= doctor.dpi || '' %>">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                      <label class="form-label" for="fechaNacimiento">Fecha de nacimiento</label>
+                      <input type="date" id="fechaNacimiento" name="fechaNacimiento" class="form-control" value="<%= dateValue %>">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                      <label class="form-label" for="tipoSangre">Tipo de sangre</label>
+                      <input type="text" id="tipoSangre" name="tipoSangre" class="form-control" value="<%= doctor.tipoSangre || '' %>">
+                    </div>
+                    <div class="col-12 mb-3">
+                      <label class="form-label" for="domicilio">Domicilio</label>
+                      <input type="text" id="domicilio" name="domicilio" class="form-control" value="<%= doctor.domicilio || '' %>">
+                    </div>
+                    <div class="col-12 mb-3">
+                      <label class="form-label" for="observacion">Observación</label>
+                      <textarea id="observacion" name="observacion" class="form-control" rows="4"><%= doctor.observacion || '' %></textarea>
+                    </div>
+                    <div class="col-12 mb-3">
+                      <input type="hidden" id="horariosJson" name="horariosJson">
+                      <div class="border rounded-3 p-3">
+                        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                          <div>
+                            <h6 class="mb-1">Horario laboral</h6>
+                            <p class="text-muted mb-0">Define los días y rangos en los que el doctor atiende pacientes.</p>
+                          </div>
+                          <button type="button" class="btn btn-outline-primary ms-auto" id="addProfileScheduleRow">
+                            <i class="ri-add-line me-1"></i> Agregar horario
+                          </button>
+                        </div>
+                        <div class="d-grid gap-2" id="profileScheduleRows"></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="d-flex justify-content-end gap-2">
+                    <a href="/admin/perfil" class="btn btn-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">Guardar perfil</button>
+                  </div>
+                </div>
+              </form>
+            <% } %>
+          </div>
+
+          <div class="app-footer"><span>© C&C Dental Studio 2026</span></div>
+        </div>
+      </div>
+    </div>
+    <script src="/assets/js/jquery.min.js"></script>
+    <script src="/assets/js/bootstrap.bundle.min.js"></script>
+    <script src="/assets/vendor/overlay-scroll/jquery.overlayScrollbars.min.js"></script>
+    <script src="/assets/vendor/overlay-scroll/custom-scrollbar.js"></script>
+    <script src="/assets/vendor/daterange/daterange.js"></script>
+    <script src="/assets/vendor/daterange/custom-daterange.js"></script>
+    <script src="/assets/js/custom.js"></script>
+    <script>
+      (function () {
+        const days = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+        const initialSchedules = <%- JSON.stringify(scheduleRows).replace(/</g, '\\u003c') %>;
+        const container = document.getElementById('profileScheduleRows');
+        const addButton = document.getElementById('addProfileScheduleRow');
+        const hiddenInput = document.getElementById('horariosJson');
+        const form = hiddenInput ? hiddenInput.closest('form') : null;
+
+        if (!container || !addButton || !hiddenInput || !form) return;
+
+        function options(selected) {
+          return days.map(day => `<option value="${day}" ${day === selected ? 'selected' : ''}>${day}</option>`).join('');
+        }
+
+        function createRow(item = {}) {
+          const row = document.createElement('div');
+          row.className = 'schedule-editor-row';
+          row.innerHTML = `
+            <div class="row gx-3 align-items-end">
+              <div class="col-md-4 mb-2 mb-md-0">
+                <label class="form-label">Día</label>
+                <select class="form-control schedule-day">${options(item.dia_semana || 'Lunes')}</select>
+              </div>
+              <div class="col-md-3 mb-2 mb-md-0">
+                <label class="form-label">Desde</label>
+                <input type="time" class="form-control schedule-start" value="${item.hora_inicio || '08:00'}">
+              </div>
+              <div class="col-md-3 mb-2 mb-md-0">
+                <label class="form-label">Hasta</label>
+                <input type="time" class="form-control schedule-end" value="${item.hora_fin || '17:00'}">
+              </div>
+              <div class="col-md-2 d-grid">
+                <button type="button" class="btn btn-outline-danger remove-schedule-row">
+                  <i class="ri-delete-bin-line"></i>
+                </button>
+              </div>
+            </div>
+          `;
+          row.querySelector('.remove-schedule-row').addEventListener('click', () => row.remove());
+          return row;
+        }
+
+        function renderRows(rows) {
+          container.innerHTML = '';
+          rows.forEach(row => container.appendChild(createRow(row)));
+        }
+
+        function collectRows() {
+          return Array.from(container.querySelectorAll('.schedule-editor-row')).map(row => ({
+            dia_semana: row.querySelector('.schedule-day').value,
+            hora_inicio: row.querySelector('.schedule-start').value,
+            hora_fin: row.querySelector('.schedule-end').value,
+          })).filter(row => row.dia_semana || row.hora_inicio || row.hora_fin);
+        }
+
+        addButton.addEventListener('click', () => container.appendChild(createRow()));
+        form.addEventListener('submit', () => {
+          hiddenInput.value = JSON.stringify(collectRows());
+        });
+        renderRows(initialSchedules);
+      })();
+    </script>
+  </body>
+</html>

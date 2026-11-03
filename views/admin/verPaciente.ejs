@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paciente - C&C Dental Studio</title>
+  <link rel="shortcut icon" type="image/svg+xml" href="/images/cnc-favicon.svg">
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <style>
+    body { background: #f4f7fb; }
+    .profile-shell { max-width: 980px; margin: 32px auto; }
+    .label { color: #6c757d; font-size: .85rem; margin-bottom: .15rem; }
+    .value { font-weight: 600; color: #243041; }
+  </style>
+</head>
+<body>
+  <main class="profile-shell px-3">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-4">
+      <div>
+        <h1 class="h3 mb-1"><%= paciente.nombre %> <%= paciente.apellido %></h1>
+        <p class="text-muted mb-0">Ficha general del paciente.</p>
+      </div>
+      <a href="/admin/pacientes" class="btn btn-outline-secondary mt-3 mt-md-0">Volver a pacientes</a>
+    </div>
+
+    <section class="card mb-4">
+      <div class="card-header bg-dark text-white">Datos personales</div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <p class="label">Nombre completo</p>
+            <p class="value"><%= paciente.nombre %> <%= paciente.apellido %></p>
+          </div>
+          <div class="col-md-3 mb-3">
+            <p class="label">Edad</p>
+            <p class="value"><%= paciente.edad ?? 'No registrada' %></p>
+          </div>
+          <div class="col-md-3 mb-3">
+            <p class="label">Fecha de nacimiento</p>
+            <p class="value"><%= paciente.fechaNacimiento ? new Date(paciente.fechaNacimiento).toLocaleDateString('es-GT') : 'No registrada' %></p>
+          </div>
+          <div class="col-md-4 mb-3">
+            <p class="label">Teléfono</p>
+            <p class="value"><%= paciente.telefono || 'No registrado' %></p>
+          </div>
+          <div class="col-md-4 mb-3">
+            <p class="label">Correo</p>
+            <p class="value"><%= paciente.email || 'No registrado' %></p>
+          </div>
+          <div class="col-md-4 mb-3">
+            <p class="label">Estado</p>
+            <p class="value"><%= paciente.idestado === 2 ? 'Archivado' : 'Activo' %></p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <p class="label">NIT</p>
+            <p class="value"><%= paciente.nit || 'No registrado' %></p>
+          </div>
+          <div class="col-md-6 mb-3">
+            <p class="label">DPI</p>
+            <p class="value"><%= paciente.dpi || 'No registrado' %></p>
+          </div>
+          <div class="col-12">
+            <p class="label">Dirección</p>
+            <p class="value"><%= paciente.direccion || 'No registrada' %></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-header bg-light">Referencias internas</div>
+      <div class="card-body">
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <p class="label">ID Paciente</p>
+            <p class="value"><%= paciente.idPaciente %></p>
+          </div>
+          <div class="col-md-4 mb-3">
+            <p class="label">ID Género</p>
+            <p class="value"><%= paciente.genero_idGenero || 'No registrado' %></p>
+          </div>
+          <div class="col-md-4 mb-3">
+            <p class="label">ID Tipo de Paciente</p>
+            <p class="value"><%= paciente.tipoPaciente_idtipoPaciente || 'No registrado' %></p>
+          </div>
+          <div class="col-md-4 mb-3">
+            <p class="label">ID Ficha Médica</p>
+            <p class="value"><%= paciente.fichaMedica_idfichaMedica || 'No registrada' %></p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+<%- include('partials/pageLoader') %>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!-- Modal para agregar abono -->
+<div class="modal fade" id="addAbonoModal" tabindex="-1" aria-labelledby="addAbonoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="addAbonoLabel">Agregar Abono</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="addAbonoForm" class="p-3">
+                <div class="modal-body">
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="fechaAbono">Fecha de Abono</label>
+                            <input type="date" class="form-control" id="fechaAbono" name="fecha" required>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="valorAbono">Valor del Abono</label>
+                            <input type="number" step="0.01" class="form-control" id="valorAbono" name="valor" placeholder="0.00" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="descripcionAbono">Descripción</label>
+                        <textarea class="form-control" id="descripcionAbono" name="descripcion" placeholder="Descripción del abono" rows="3" required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Saldo Restante</label>
+                        <p id="saldoRestanteModal" class="font-weight-bold"></p>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-success">Guardar Abono</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

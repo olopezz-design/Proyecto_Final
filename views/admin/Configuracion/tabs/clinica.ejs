@@ -1,0 +1,51 @@
+<form id="clinicSettingsForm" class="settings-card-soft p-4 mb-4">
+  <div class="row gx-4">
+    <div class="col-12 mb-3">
+      <span class="settings-kicker">Datos de la clínica</span>
+      <h5 class="mb-1">Información general</h5>
+      <p class="text-muted mb-0">Estos datos sirven como base para vistas públicas, contacto y documentos del sistema.</p>
+    </div>
+    <div class="col-xxl-4 col-lg-6 col-sm-12">
+      <div class="mb-3">
+        <label class="form-label" for="clinic_name">Nombre de la clínica</label>
+        <input type="text" class="form-control" id="clinic_name" name="clinic_name" placeholder="C&C Dental Studio">
+      </div>
+    </div>
+    <div class="col-xxl-4 col-lg-6 col-sm-12">
+      <div class="mb-3">
+        <label class="form-label" for="doctor_name">Doctor principal</label>
+        <input type="text" class="form-control" id="doctor_name" name="doctor_name" placeholder="Dr. Herbert Castillo">
+      </div>
+    </div>
+    <div class="col-xxl-4 col-lg-6 col-sm-12">
+      <div class="mb-3">
+        <label class="form-label" for="clinic_phone">Teléfono</label>
+        <input type="text" class="form-control" id="clinic_phone" name="clinic_phone" placeholder="+502 0000-0000">
+      </div>
+    </div>
+    <div class="col-xxl-4 col-lg-6 col-sm-12">
+      <div class="mb-3">
+        <label class="form-label" for="clinic_email">Correo</label>
+        <input type="email" class="form-control" id="clinic_email" name="clinic_email" placeholder="correo@clinica.com">
+      </div>
+    </div>
+    <div class="col-xxl-8 col-lg-12 col-sm-12">
+      <div class="mb-3">
+        <label class="form-label" for="clinic_address">Dirección</label>
+        <input type="text" class="form-control" id="clinic_address" name="clinic_address" placeholder="Dirección completa">
+      </div>
+    </div>
+    <div class="col-xxl-4 col-lg-6 col-sm-12">
+      <div class="mb-3">
+        <label class="form-label" for="clinic_coordinates">Coordenadas</label>
+        <input type="text" class="form-control" id="clinic_coordinates" name="clinic_coordinates" placeholder="latitud, longitud">
+      </div>
+    </div>
+    <div class="col-12 d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div class="settings-status alert mb-0" id="clinicSettingsStatus"></div>
+      <button type="submit" class="btn btn-primary">
+        <i class="ri-save-3-line"></i> Guardar información
+      </button>
+    </div>
+  </div>
+</form>

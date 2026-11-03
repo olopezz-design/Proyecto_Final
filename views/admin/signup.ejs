@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Registro - C&C Dental Studio</title>
+
+    <link rel="shortcut icon" type="image/svg+xml" href="/images/cnc-favicon.svg">
+    <link rel="stylesheet" href="/assets/fonts/remix/remixicon.css" />
+    <link rel="stylesheet" href="/assets/css/main.min.css" />
+    <style>
+      html, body { height: 100%; overflow: hidden; }
+      .auth-wrapper { height: 100vh; overflow: hidden; }
+      .signup-box { max-height: calc(100vh - 56px); overflow-y: auto; scrollbar-width: thin; }
+      .signup-box::-webkit-scrollbar { width: 6px; }
+      .signup-box::-webkit-scrollbar-thumb { background: rgba(90, 111, 128, .35); border-radius: 20px; }
+      .setup-pill { display: inline-flex; gap: 8px; align-items: center; padding: 6px 12px; border-radius: 999px; background: #fff3cd; color: #7a5700; font-weight: 600; font-size: .85rem; }
+      .muted-panel { background: #f7fafc; border: 1px solid #e6eef5; border-radius: 12px; padding: 12px 14px; }
+      .password-hints { font-size: .82rem; }
+      .password-hints .ok { color: #198754; }
+      .password-hints .bad { color: #8796a8; }
+    </style>
+  </head>
+
+  <body class="login-bg">
+    <div class="container">
+      <div class="auth-wrapper">
+        <div class="auth-box signup-box">
+            <a href="/" class="auth-brand mb-4">
+              <img src="/images/cnc-favicon.svg" alt="C&C Dental Studio">
+              <span>C&C Dental Studio<small>Clínica dental</small></span>
+            </a>
+
+            <%
+              const isFirstUser = Boolean(firstUser);
+              const wasAdminCreated = Boolean(adminCreated);
+              const showAccessGate = Boolean(needsAccessCode);
+              const showLockedMessage = Boolean(registrationLocked);
+              let errMsg = err || null;
+            %>
+
+            <div class="mb-4">
+              <% if (isFirstUser || wasAdminCreated) { %>
+                <span class="setup-pill mb-3"><i class="ri-shield-keyhole-line"></i> Configuración inicial</span>
+              <% } %>
+              <h4 class="mb-2"><%= wasAdminCreated ? 'Administrador creado' : (isFirstUser ? 'Crear primer administrador' : 'Solicitar acceso') %></h4>
+              <p class="text-muted mb-0">
+                <%= wasAdminCreated
+                  ? 'La cuenta inicial ya está lista.'
+                  : isFirstUser
+                  ? 'Esta es la configuración inicial del sistema.'
+                  : 'Ingresa el código autorizado para continuar con la solicitud.' %>
+              </p>
+            </div>
+
+            <% if (sent) { %>
+              <div class="alert alert-success">
+                <strong><%= wasAdminCreated ? 'Administrador creado.' : 'Solicitud enviada.' %></strong>
+                <div class="mt-1">
+                  <%= wasAdminCreated
+                    ? 'Ya puedes iniciar sesión con tu nuevo usuario administrador.'
+                    : 'El administrador podrá revisar tu solicitud desde Configuración.' %>
+                </div>
+              </div>
+              <div class="d-grid gap-2">
+                <a href="/admin/login" class="btn btn-primary">Ir al inicio de sesión</a>
+                <a href="/" class="btn btn-secondary">Regresar</a>
+              </div>
+            <% } else if (showLockedMessage) { %>
+              <% if (errMsg) { %>
+                <div class="alert alert-danger"><%= errMsg %></div>
+              <% } %>
+              <div class="alert alert-warning">
+                El registro de nuevos usuarios no está habilitado en este momento.
+              </div>
+              <div class="d-grid gap-2">
+                <a href="/admin/login" class="btn btn-primary">Ir al inicio de sesión</a>
+                <a href="/" class="btn btn-secondary">Regresar</a>
+              </div>
+            <% } else if (showAccessGate) { %>
+              <% if (errMsg) { %>
+                <div class="alert alert-danger"><%= errMsg %></div>
+              <% } %>
+              <form action="/signup/access" method="post" autocomplete="off">
+                <div class="mb-3">
+                  <label class="form-label" for="access_code">Código de acceso <span class="text-danger">*</span></label>
+                  <input type="password" id="access_code" name="access_code" class="form-control" placeholder="Ingresa el código de acceso" required autocomplete="off">
+                </div>
+                <div class="muted-panel mb-3">
+                  Este código lo proporciona el administrador de la clínica.
+                </div>
+                <div class="d-grid gap-2">
+                  <button type="submit" class="btn btn-primary">Continuar</button>
+                  <a href="/admin/login" class="btn btn-secondary">Ya tengo cuenta</a>
+                </div>
+              </form>
+            <% } else { %>
+              <% if (errMsg) { %>
+                <div class="alert alert-danger"><%= errMsg %></div>
+              <% } %>
+
+              <form action="/auth/register" method="post" id="signupForm" autocomplete="off">
+
+              <div class="mb-3">
+                <label class="form-label" for="nombre">Nombre completo <span class="text-danger">*</span></label>
+                <input type="text" id="nombre" name="nombre" class="form-control" placeholder="Nombre y apellido" required minlength="2" autocomplete="name">
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label" for="user">Usuario o correo <span class="text-danger">*</span></label>
+                <input type="text" id="user" name="user" class="form-control" placeholder="usuario@correo.com" required minlength="3" autocomplete="username">
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label" for="telefono">Teléfono</label>
+                <input type="tel" id="telefono" name="telefono" class="form-control" placeholder="+502 0000-0000" autocomplete="tel">
+              </div>
+
+              <% if (!isFirstUser) { %>
+                <div class="mb-3">
+                  <label class="form-label" for="rol_idrol">Rol solicitado <span class="text-danger">*</span></label>
+                  <select id="rol_idrol" name="rol_idrol" class="form-control" required>
+                    <option value="">Selecciona un rol</option>
+                    <% (roles || []).forEach(function(role) { %>
+                      <option value="<%= role.idrol %>"><%= role.nombre %></option>
+                    <% }); %>
+                  </select>
+                </div>
+              <% } %>
+
+              <% if (isFirstUser) { %>
+                <div class="mb-3">
+                  <label class="form-label" for="setup_pin">PIN / código de acceso <span class="text-danger">*</span></label>
+                  <input type="password" id="setup_pin" name="setup_pin" class="form-control" placeholder="Ingresa el código de acceso" required autocomplete="off">
+                  <div class="form-text">Solicítalo al responsable del sistema.</div>
+                </div>
+              <% } %>
+
+              <div class="mb-3">
+                <label class="form-label" for="password">Contraseña <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <input type="password" id="password" name="password" class="form-control" placeholder="Mínimo 8 caracteres" required minlength="8" autocomplete="new-password">
+                  <button class="btn btn-outline-secondary" type="button" id="togglePwd" aria-label="Mostrar u ocultar contraseña">
+                    <i class="ri-eye-line text-primary" id="eyeOpen"></i>
+                    <i class="ri-eye-off-line text-primary d-none" id="eyeOff"></i>
+                  </button>
+                </div>
+                <div class="password-hints mt-2">
+                  <div id="hintLen" class="bad">Mínimo 8 caracteres</div>
+                  <div id="hintUpper" class="bad">Al menos una mayúscula</div>
+                  <div id="hintNumber" class="bad">Al menos un número</div>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label" for="confirm">Confirmar contraseña <span class="text-danger">*</span></label>
+                <input type="password" id="confirm" name="confirm" class="form-control" placeholder="Repite la contraseña" required autocomplete="new-password">
+                <div class="password-hints mt-2">
+                  <div id="hintMatch" class="bad">Las contraseñas deben coincidir</div>
+                </div>
+              </div>
+
+              <div class="muted-panel mb-3">
+                <% if (isFirstUser) { %>
+                  Esta cuenta tendrá permiso <strong>Acceso total</strong>. Úsala para aprobar solicitudes y configurar catálogos.
+                <% } else { %>
+                  Al enviar, no podrás entrar todavía. El administrador revisará tu solicitud y activará tu cuenta si corresponde.
+                <% } %>
+              </div>
+
+              <div class="mb-3 d-grid gap-2">
+                <button type="submit" class="btn btn-primary" id="submitBtn">
+                  <%= isFirstUser ? 'Crear administrador' : 'Enviar solicitud' %>
+                </button>
+                <a href="/admin/login" class="btn btn-secondary">Ya tengo cuenta</a>
+              </div>
+              </form>
+            <% } %>
+          </div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const pwd = document.getElementById('password');
+        const confirm = document.getElementById('confirm');
+        const form = document.getElementById('signupForm');
+        const submit = document.getElementById('submitBtn');
+        const btn = document.getElementById('togglePwd');
+        const eyeOpen = document.getElementById('eyeOpen');
+        const eyeOff = document.getElementById('eyeOff');
+
+        function mark(id, ok) {
+          const el = document.getElementById(id);
+          if (!el) return;
+          el.classList.toggle('ok', ok);
+          el.classList.toggle('bad', !ok);
+        }
+
+        function validatePassword() {
+          if (!pwd || !confirm) return true;
+          const value = pwd.value || '';
+          const checks = {
+            len: value.length >= 8,
+            upper: /[A-ZÁÉÍÓÚÑ]/.test(value),
+            number: /\d/.test(value),
+            match: value && value === confirm.value,
+          };
+          mark('hintLen', checks.len);
+          mark('hintUpper', checks.upper);
+          mark('hintNumber', checks.number);
+          mark('hintMatch', checks.match);
+          const ok = checks.len && checks.upper && checks.number && checks.match;
+          if (submit) submit.disabled = !ok;
+          return ok;
+        }
+
+        btn?.addEventListener('click', () => {
+          const show = pwd.type === 'password';
+          pwd.type = show ? 'text' : 'password';
+          eyeOpen.classList.toggle('d-none', show);
+          eyeOff.classList.toggle('d-none', !show);
+        });
+
+        pwd?.addEventListener('input', validatePassword);
+        confirm?.addEventListener('input', validatePassword);
+        form?.addEventListener('submit', (event) => {
+          if (!validatePassword()) {
+            event.preventDefault();
+            return;
+          }
+          if (submit) {
+            submit.dataset.originalText = submit.innerHTML;
+            submit.disabled = true;
+            submit.innerHTML = '<span class="spinner-border spinner-border-sm me-2" aria-hidden="true"></span>Procesando';
+          }
+        });
+        validatePassword();
+      })();
+    </script>
+  
+<%- include('partials/pageLoader') %>
+</body>
+</html>

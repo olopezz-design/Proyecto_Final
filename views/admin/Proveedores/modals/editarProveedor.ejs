@@ -1,0 +1,53 @@
+<!-- Modal para editar la información de un proveedor -->
+<div class="modal fade" id="editarProveedorModal" tabindex="-1" role="dialog" aria-labelledby="editarProveedorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title" id="editarProveedorModalLabel">Editar Información del Proveedor</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="editarProveedorForm" onsubmit="guardarCambiosProveedor(event)">
+                <div class="modal-body">
+                    <input type="hidden" id="idProveedorEdit" name="id">
+                    <div class="form-group">
+                        <label for="nombreProveedorEdit">Nombre empresa</label>
+                        <input type="text" class="form-control" id="nombreProveedorEdit" name="nombre" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="nitProveedorEdit">NIT</label>
+                        <input type="text" class="form-control" id="nitProveedorEdit" name="nit">
+                    </div>
+                    <div class="form-group">
+                        <label for="emailProveedorEdit">Correo empresa</label>
+                        <input type="email" class="form-control" id="emailProveedorEdit" name="email">
+                    </div>
+                    <div class="form-group">
+                        <label for="telefonoProveedorEdit">Teléfono empresa</label>
+                        <input type="text" class="form-control" id="telefonoProveedorEdit" name="telefono">
+                    </div>
+                    <div class="form-group">
+                        <label for="direccionProveedorEdit">Dirección</label>
+                        <input type="text" class="form-control" id="direccionProveedorEdit" name="direccion">
+                    </div>
+                    <div class="form-group">
+                        <label for="observacionesProveedorEdit">Observaciones</label>
+                        <textarea class="form-control" id="observacionesProveedorEdit" name="observaciones" rows="3"></textarea>
+                    </div>
+                    <div class="border rounded p-3 mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <strong>Contactos</strong>
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="agregarContactoProveedor('contactosProveedorEditRows')"><i class="fas fa-plus mr-1"></i> Agregar contacto</button>
+                        </div>
+                        <div id="contactosProveedorEditRows"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

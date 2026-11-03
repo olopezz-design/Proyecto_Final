@@ -1,0 +1,287 @@
+/* dashboard.css */
+body {
+    overflow-x: hidden;
+}
+
+#wrapper {
+    display: flex;
+    width: 100%;
+    align-items: stretch;
+}
+
+#sidebar-wrapper {
+    min-width: 250px;
+    max-width: 250px;
+    background-color: #343a40;
+    transition: all 0.3s;
+    position: relative;
+}
+
+#sidebar-wrapper .sidebar-heading {
+    padding: 1rem;
+    font-size: 1.2rem;
+    background: #343a40;
+    text-align: center;
+}
+
+#sidebar-wrapper .list-group {
+    width: 100%;
+}
+
+#sidebar-wrapper .list-group-item {
+    padding: 15px 20px;
+    font-size: 1.1rem;
+    color: #ffffff;
+}
+
+#sidebar-wrapper .list-group-item:hover {
+    background-color: #0069d9;
+    color: white;
+}
+
+#page-content-wrapper {
+    width: 100%;
+    padding: 20px;
+}
+
+#menu-toggle {
+    position: absolute;
+    top: 50%;
+    right: -20px;
+    transform: translateY(-50%);
+    background-color: #343a40;
+    border: none;
+    outline: none;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+#menu-toggle i {
+    color: white;
+    font-size: 1.2rem;
+}
+
+.toggled #sidebar-wrapper {
+    margin-left: -250px;
+}
+
+.toggled #menu-toggle {
+    right: -20px;
+    transition: right 0.3s ease;
+}
+
+.toggled #page-content-wrapper {
+    margin-left: 0;
+}
+
+
+/* Estilo para la barra de búsqueda */
+.input-group .form-control {
+    border-radius: 5px;
+    border: 1px solid #ced4da;
+    padding: 10px;
+    box-shadow: none;
+}
+
+.input-group .form-control:focus {
+    border-color: #007bff;
+    box-shadow: none;
+}
+
+.input-group .input-group-text {
+    border-radius: 5px;
+    background-color: #007bff;
+    color: #fff;
+}
+
+.input-group .input-group-text i {
+    font-size: 1.2rem;
+}
+
+footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    background-color: #343a40; /* Color de fondo del pie de página */
+    color: #ffffff; /* Color del texto */
+}
+
+footer a {
+    color: #ffffff; /* Color del enlace */
+    text-decoration: none; /* Elimina el subrayado */
+}
+
+footer a:hover {
+    text-decoration: underline; /* Subrayado al pasar el ratón */
+}
+
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+#page-content-wrapper {
+    flex: 1;
+}
+
+footer {
+    background-color: #343a40;
+    color: white;
+    text-align: center;
+    padding: 10px 0;
+    width: 100%;
+}
+
+/* Responsive fixes for legacy admin screens */
+footer {
+    margin-top: auto;
+    position: relative;
+}
+
+img,
+svg,
+video,
+canvas {
+    max-width: 100%;
+}
+
+.container-fluid,
+.card,
+.card-body,
+.modal-content,
+.modal-body {
+    min-width: 0;
+}
+
+.card-body {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table {
+    min-width: 680px;
+}
+
+.dataTables_wrapper {
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.modal-body {
+    max-height: calc(100dvh - 9rem);
+}
+
+@media (max-width: 991.98px) {
+    html,
+    body {
+        height: auto;
+        min-height: 100%;
+    }
+
+    #wrapper {
+        display: block;
+        min-width: 0;
+    }
+
+    #sidebar-wrapper {
+        max-width: none;
+        min-width: 0;
+        position: relative;
+        width: 100%;
+    }
+
+    #sidebar-wrapper .sidebar-heading {
+        align-items: center;
+        display: flex;
+        gap: .75rem;
+        justify-content: center;
+        padding: .85rem 1rem;
+    }
+
+    #sidebar-wrapper .sidebar-heading img {
+        margin-bottom: 0 !important;
+        max-width: 42px !important;
+    }
+
+    #sidebar-wrapper .sidebar-heading h4 {
+        font-size: 1.05rem;
+        margin: 0;
+    }
+
+    #sidebar-wrapper .list-group-item {
+        font-size: .98rem;
+        padding: .8rem 1rem;
+    }
+
+    #page-content-wrapper {
+        padding: 1rem;
+        width: 100%;
+    }
+
+    #page-content-wrapper .container-fluid {
+        padding-left: 0;
+        padding-right: 0;
+    }
+
+    #page-content-wrapper h1 {
+        font-size: 1.65rem;
+        line-height: 1.2;
+    }
+
+    #page-content-wrapper .btn {
+        margin-bottom: .35rem;
+        white-space: normal;
+    }
+
+    .modal-dialog {
+        margin: .5rem auto;
+        max-width: calc(100% - 1rem);
+    }
+}
+
+@media (max-width: 575.98px) {
+    #page-content-wrapper {
+        padding: .75rem;
+    }
+
+    #sidebar-wrapper .sidebar-heading {
+        justify-content: flex-start;
+    }
+
+    #sidebar-wrapper .sidebar-heading h4 {
+        font-size: .95rem;
+    }
+
+    .card {
+        border-radius: .5rem;
+    }
+
+    .card-body {
+        padding: .85rem;
+    }
+
+    .modal-body {
+        max-height: calc(100dvh - 7rem);
+        padding: 1rem;
+    }
+
+    .modal-footer,
+    .modal-header {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .form-control,
+    .form-select,
+    .ss-btn {
+        min-height: 40px;
+    }
+}

@@ -1,0 +1,146 @@
+<div class="settings-card-soft p-4 mb-4">
+  <div class="d-flex align-items-start justify-content-between flex-wrap gap-3 mb-3">
+    <div>
+      <span class="settings-kicker">Control de acceso</span>
+      <h5 class="mb-1">Roles, permisos y solicitudes</h5>
+      <p class="text-muted mb-0">Administra aprobaciones, permisos por rol y permisos especiales por usuario.</p>
+    </div>
+    <button type="button" class="btn btn-outline-primary" id="reloadAccessSettings">
+      <i class="ri-refresh-line"></i> Actualizar
+    </button>
+  </div>
+
+  <div class="settings-status alert" id="accessSettingsStatus"></div>
+
+  <ul class="nav nav-pills gap-2 mb-3" id="accessSettingsTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="registrationRequestsTab" data-bs-toggle="pill" data-bs-target="#registrationRequestsPane" type="button" role="tab">
+        Solicitudes de registro
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="authorizationRequestsTab" data-bs-toggle="pill" data-bs-target="#authorizationRequestsPane" type="button" role="tab">
+        Solicitudes de permisos
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="rolePermissionsTab" data-bs-toggle="pill" data-bs-target="#rolePermissionsPane" type="button" role="tab">
+        Permisos por rol
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="userPermissionsTab" data-bs-toggle="pill" data-bs-target="#userPermissionsPane" type="button" role="tab">
+        Permisos por usuario
+      </button>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+    <div class="tab-pane fade show active" id="registrationRequestsPane" role="tabpanel" aria-labelledby="registrationRequestsTab">
+      <div class="table-outer">
+        <div class="table-responsive">
+          <table class="table truncate align-middle m-0">
+            <thead>
+              <tr>
+                <th>Usuario</th>
+                <th>Nombre</th>
+                <th>Rol solicitado</th>
+                <th>Estado</th>
+                <th>Fecha</th>
+                <th class="config-table-actions">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="registrationRequestsRows"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="authorizationRequestsPane" role="tabpanel" aria-labelledby="authorizationRequestsTab">
+      <div class="table-outer">
+        <div class="table-responsive">
+          <table class="table truncate align-middle m-0">
+            <thead>
+              <tr>
+                <th>Usuario</th>
+                <th>Permiso</th>
+                <th>Motivo</th>
+                <th>Estado</th>
+                <th>Fecha</th>
+                <th class="config-table-actions">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="authorizationRequestsRows"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="rolePermissionsPane" role="tabpanel" aria-labelledby="rolePermissionsTab">
+      <div class="access-editor-grid">
+        <aside>
+          <div class="list-group catalog-list" id="rolePermissionsList"></div>
+        </aside>
+        <section>
+          <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-3">
+            <div>
+              <h5 class="mb-1" id="rolePermissionsTitle">Seleccione un rol</h5>
+              <p class="text-muted mb-0">Define los permisos base que recibirá cada rol.</p>
+            </div>
+            <button type="button" class="btn btn-primary" id="saveRolePermissions">Guardar permisos</button>
+          </div>
+          <div class="permission-grid" id="rolePermissionsChecks"></div>
+        </section>
+      </div>
+    </div>
+
+    <div class="tab-pane fade" id="userPermissionsPane" role="tabpanel" aria-labelledby="userPermissionsTab">
+      <div class="access-editor-grid">
+        <aside>
+          <div class="list-group catalog-list" id="userPermissionsList"></div>
+        </aside>
+        <section>
+          <div class="d-flex align-items-start justify-content-between flex-wrap gap-2 mb-3">
+            <div>
+              <h5 class="mb-1" id="userPermissionsTitle">Seleccione un usuario</h5>
+              <p class="text-muted mb-0">Estos permisos se agregan al rol del usuario sin cambiar su rol.</p>
+            </div>
+            <button type="button" class="btn btn-primary" id="saveUserPermissions">Guardar permisos</button>
+          </div>
+          <div class="permission-grid" id="userPermissionsChecks"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="accessResponseModal" tabindex="-1" aria-labelledby="accessResponseModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <form class="modal-content" id="accessResponseForm">
+      <div class="modal-header">
+        <div>
+          <h5 class="modal-title" id="accessResponseModalLabel">Responder solicitud</h5>
+          <small class="text-muted" id="accessResponseSubtitle"></small>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="accessResponseType">
+        <input type="hidden" id="accessResponseAction">
+        <input type="hidden" id="accessResponseId">
+        <div class="mb-3" id="accessResponseRoleGroup" style="display:none;">
+          <label class="form-label" for="accessResponseRole">Rol a asignar</label>
+          <select class="form-select" id="accessResponseRole"></select>
+        </div>
+        <div class="mb-0">
+          <label class="form-label" for="accessResponseText">Comentario</label>
+          <textarea class="form-control" id="accessResponseText" rows="3" maxlength="255"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="accessResponseSubmit">Guardar respuesta</button>
+      </div>
+    </form>
+  </div>
+</div>

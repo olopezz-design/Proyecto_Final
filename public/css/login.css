@@ -1,0 +1,20 @@
+body {
+    background-color: #cde2f7;
+}
+
+.logo {
+    max-width: 250px;
+}
+
+.login-box {
+    background-color: white;
+    border-radius: 8px;
+}
+
+footer.footer {
+    background-color: #1d53e6;
+    color: white;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}

@@ -1,0 +1,42 @@
+<!-- Modal para ver información de factura -->
+<div class="modal fade" id="informacionFacturaModal" tabindex="-1" aria-labelledby="informacionFacturaModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="informacionFacturaModalLabel">Información de Factura</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <!-- Información de la factura -->
+          <div>
+            <strong>ID Factura:</strong> <span id="facturaId"></span><br>
+            <strong>Fecha de Emisión:</strong> <span id="facturaFecha"></span><br>
+            <strong>Monto Total:</strong> <span id="facturaMontoTotal"></span><br>
+            <strong>Tipo de Pago:</strong> <span id="facturaTipoPago"></span><br>
+          </div>
+          
+          <hr>
+
+          <!-- Detalles de la factura -->
+          <h5>Detalles de la Compra</h5>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Cantidad</th>
+                <th>Subtotal</th>
+              </tr>
+            </thead>
+            <tbody id="detalleFacturaTable">
+              <!-- Los detalles se llenarán aquí con JavaScript -->
+            </tbody>
+          </table>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>

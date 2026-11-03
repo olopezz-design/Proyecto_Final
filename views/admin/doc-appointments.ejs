@@ -1,0 +1,460 @@
+<%
+  const headerProfile = typeof adminProfile !== 'undefined' ? adminProfile : {};
+  const headerName = headerProfile.displayName || 'Nombre pendiente';
+  const headerInitials = headerProfile.initials || headerName.split(/\s+/).slice(0, 2).map(part => part.charAt(0).toUpperCase()).join('') || 'DR';
+  const headerPhoto = headerProfile.photoUrl || '';
+  const headerRole = headerProfile.roleLabel || 'Usuario';
+  const canFn = typeof can === 'function' ? can : () => true;
+  const list = Array.isArray(citas) ? citas : [];
+  const scope = typeof appointmentScope !== 'undefined' ? appointmentScope : {};
+  const currentDoctorId = Number(scope.currentDoctorId || 0);
+  const canManageAllAppointments = Boolean(scope.isAdmin);
+  const statuses = Array.isArray(estadosCita) ? estadosCita : [
+    { idestadoCita: 1, nombre: 'Pendiente' },
+    { idestadoCita: 2, nombre: 'Atendida' },
+    { idestadoCita: 3, nombre: 'Cancelada' }
+  ];
+  const toLocalDate = value => {
+    if (!value) return null;
+    if (value instanceof Date) return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+    const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (match) return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+    return new Date(value);
+  };
+  const normalizeDate = value => {
+    const date = toLocalDate(value);
+    if (!date || Number.isNaN(date.getTime())) return '';
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${date.getFullYear()}-${month}-${day}`;
+  };
+  const formatDate = value => {
+    const date = toLocalDate(value);
+    return !date || Number.isNaN(date.getTime()) ? 'Sin fecha' : date.toLocaleDateString('es-GT', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+  const todayValue = normalizeDate(new Date());
+  const isFutureDate = value => {
+    const normalized = normalizeDate(value);
+    return normalized && todayValue && normalized > todayValue;
+  };
+  const formatTime = value => String(value || '').slice(0, 5) || '--:--';
+  const fullName = item => `${item.nombrePaciente || ''} ${item.apellidoPaciente || ''}`.trim() || 'Paciente sin nombre';
+  const initialsFor = name => String(name || '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(part => part.charAt(0).toUpperCase())
+    .join('') || 'P';
+  const doctorName = item => `${item.nombreDoctor || ''} ${item.apellidoDoctor || ''}`.trim() || 'Doctor sin nombre';
+  const statusName = item => item.estado_nombre || statuses.find(status => Number(status.idestadoCita) === Number(item.estadoCita_idestadoCita))?.nombre || 'Sin estado';
+  const statusText = item => statusName(item).toLowerCase();
+  const formatMoney = value => `Q${Number(value || 0).toFixed(2)}`;
+  const paymentInfo = item => {
+    const consultaId = Number(item.consultaId || 0);
+    const pagos = Number(item.totalPagos || 0);
+    const saldo = Number(item.saldoRestantePago || 0);
+    if (!consultaId || !pagos) return { label: 'Sin pago', className: 'text-muted' };
+    if (saldo <= 0) return { label: 'Pagado', className: 'text-success' };
+    return { label: `Saldo ${formatMoney(saldo)}`, className: 'text-warning' };
+  };
+  const canManageAppointment = item => canManageAllAppointments || (currentDoctorId && Number(item.doctor_iddoctor) === currentDoctorId);
+  const appointmentSections = currentDoctorId
+    ? [
+        { key: 'mine', title: 'Mis citas', subtitle: 'Citas asignadas a tu usuario', empty: 'No tienes citas en esta fecha.', items: list.filter(item => Number(item.doctor_iddoctor) === currentDoctorId) },
+        { key: 'others', title: 'Otras citas', subtitle: 'Citas asignadas a otros doctores', empty: 'No hay citas de otros doctores en esta fecha.', items: list.filter(item => Number(item.doctor_iddoctor) !== currentDoctorId) },
+      ]
+    : [
+        { key: 'all', title: canManageAllAppointments ? 'Todas las citas' : 'Citas de doctores', subtitle: canManageAllAppointments ? 'Puedes administrar cualquier cita' : 'Solo lectura para citas asignadas a doctores', empty: 'No hay citas para esta fecha.', items: list },
+      ];
+  const stats = {
+    pendientes: list.filter(item => Number(item.estadoCita_idestadoCita) === 1 || statusText(item) === 'pendiente').length,
+    enConsulta: list.filter(item => statusText(item) === 'en consulta').length,
+    canceladas: list.filter(item => Number(item.estadoCita_idestadoCita) === 3 || statusText(item) === 'cancelada').length,
+    atendidas: list.filter(item => Number(item.estadoCita_idestadoCita) === 2 || statusText(item) === 'atendida').length,
+    finalizadas: list.filter(item => statusText(item) === 'finalizada').length,
+  };
+  const selectedDateLabel = selectedDate ? formatDate(selectedDate) : 'Todas las citas';
+%>
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <base href="/" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Citas - C&C Dental Studio</title>
+    <link rel="shortcut icon" type="image/svg+xml" href="/images/cnc-favicon.svg">
+    <link rel="stylesheet" href="assets/fonts/remix/remixicon.css">
+    <link rel="stylesheet" href="assets/css/main.min.css">
+    <link rel="stylesheet" href="assets/vendor/overlay-scroll/OverlayScrollbars.min.css">
+    <link rel="stylesheet" href="assets/vendor/daterange/daterange.css">
+    <style>
+      .profile-initials-badge {
+        align-items: center;
+        background: #f4f1ff;
+        color: #705df3;
+        display: inline-flex;
+        font-weight: 800;
+        justify-content: center;
+      }
+      .appointment-row-card {
+        border: 1px solid #dde2ee;
+        border-radius: 8px;
+      }
+      .appointment-patient-initials {
+        align-items: center;
+        background: #f4f1ff;
+        border: 2px solid #7367f0;
+        border-radius: 50%;
+        color: #705df3;
+        display: inline-flex;
+        flex: 0 0 48px;
+        font-weight: 800;
+        height: 48px;
+        justify-content: center;
+        width: 48px;
+      }
+      .appointment-row-card[hidden] {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page-wrapper">
+      <div class="main-container">
+        <nav id="sidebar" class="sidebar-wrapper">
+          <div class="brand-container d-flex align-items-center justify-content-between">
+            <div class="app-brand ms-3">
+              <a href="/admin/dash"><img src="/images/cnc-logo-alt.svg" class="logo" alt="C&C Dental Studio"></a>
+            </div>
+            <button type="button" class="pin-sidebar me-3"><i class="ri-menu-line"></i></button>
+          </div>
+          <div class="sidebar-profile">
+            <% if (headerPhoto) { %>
+              <img src="<%= headerPhoto %>" class="rounded-5 border border-primary border-3" alt="Foto de perfil">
+            <% } else { %>
+              <span class="profile-initials-badge rounded-5 border border-primary border-3 img-4x"><%= headerInitials %></span>
+            <% } %>
+            <h6 class="mb-1 profile-name text-nowrap text-truncate text-primary"><%= headerName %></h6>
+            <small class="profile-name text-nowrap text-truncate"><%= headerRole %></small>
+          </div>
+          <div class="sidebarMenuScroll">
+            <%- include('partials/adminSidebar', { activePage: 'citas', canFn }) %>
+          </div>
+        </nav>
+
+        <div class="app-container">
+          <div class="app-header d-flex align-items-center">
+            <div class="d-flex">
+              <div class="search-container d-xl-block d-none">
+                <input type="text" class="form-control" id="headerAppointmentSearch" placeholder="Buscar">
+                <i class="ri-search-line"></i>
+              </div>
+            </div>
+            <div class="header-actions ms-auto d-flex align-items-center gap-2">
+              <div class="dropdown ms-2">
+                <a id="userSettings" class="dropdown-toggle d-flex align-items-center" href="#!" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <div class="avatar-box">
+                    <% if (headerPhoto) { %>
+                      <img src="<%= headerPhoto %>" class="img-2xx rounded-5 border border-3 border-white" alt="Foto de perfil">
+                    <% } else { %>
+                      <span class="profile-initials-badge img-2xx rounded-5 border border-3 border-white"><%= headerInitials %></span>
+                    <% } %>
+                    <span class="status busy"></span>
+                  </div>
+                </a>
+                <div class="dropdown-menu dropdown-menu-end shadow-lg">
+                  <div class="px-3 py-2"><span class="small"><%= headerRole %></span><h6 class="m-0"><%= headerName %></h6></div>
+                  <div class="dropdown-divider"></div>
+                  <a href="/admin/perfil" class="dropdown-item"><i class="ri-user-line me-2"></i> Perfil</a>
+                  <a href="/admin/settings" class="dropdown-item"><i class="ri-settings-3-line me-2"></i> Configuración</a>
+                  <div class="dropdown-divider"></div>
+                  <div class="mx-3 my-2 d-grid"><a href="/logout" class="btn btn-danger">Cerrar sesión</a></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="app-hero-header d-flex align-items-center">
+            <ol class="breadcrumb">
+              <li class="breadcrumb-item"><a href="/admin/dash"><i class="ri-home-3-line"></i></a></li>
+              <li class="breadcrumb-item"><a href="/admin/appointments">Citas</a></li>
+              <li class="breadcrumb-item text-primary" aria-current="page"><%= selectedDateLabel %></li>
+            </ol>
+            <div class="ms-auto d-lg-flex d-none flex-row">
+              <div class="input-group">
+                <span class="input-group-text bg-primary-lighten"><i class="ri-calendar-2-line text-primary"></i></span>
+                <input type="text" id="abc" class="form-control custom-daterange">
+              </div>
+            </div>
+          </div>
+
+          <div class="app-body">
+            <div class="row gx-4">
+              <div class="col-sm-12">
+                <div class="card mb-4">
+                  <div class="card-footer border-top">
+                    <div class="d-flex align-items-center flex-row flex-wrap gap-1">
+                      <div class="d-flex align-items-center">
+                        <div class="bg-primary-subtle text-primary rounded-2 py-1 px-2 lh-1">
+                          Pendientes <span class="badge bg-primary"><%= stats.pendientes %></span>
+                        </div>
+                      </div>
+                      <div class="d-flex align-items-center">
+                        <div class="bg-info-subtle text-info rounded-2 py-1 px-2 lh-1">
+                          En consulta <span class="badge bg-info"><%= stats.enConsulta %></span>
+                        </div>
+                      </div>
+                      <div class="d-flex align-items-center">
+                        <div class="bg-danger-subtle text-danger rounded-2 py-1 px-2 lh-1">
+                          Canceladas <span class="badge bg-danger"><%= stats.canceladas %></span>
+                        </div>
+                      </div>
+                      <div class="d-flex align-items-center">
+                        <div class="bg-warning-subtle text-warning rounded-2 py-1 px-2 lh-1">
+                          Atendidas <span class="badge bg-warning"><%= stats.atendidas %></span>
+                        </div>
+                      </div>
+                      <div class="d-flex align-items-center">
+                        <div class="bg-success-subtle text-success rounded-2 py-1 px-2 lh-1">
+                          Finalizadas <span class="badge bg-success"><%= stats.finalizadas %></span>
+                        </div>
+                      </div>
+                      <div class="ms-auto">
+                        <a href="/admin/pacientes" class="btn btn-primary">Lista de pacientes</a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="row gx-4">
+              <div class="col-sm-12">
+                <div class="card">
+                  <div class="card-header">
+                    <div class="d-flex align-items-center justify-content-between gap-2">
+                      <h5 class="card-title m-0">Citas</h5>
+                      <div class="ms-auto d-flex gap-2">
+                        <div class="search-container d-xl-block d-none">
+                          <input type="text" class="form-control border" id="searchPatient" placeholder="Buscar">
+                          <i class="ri-search-line"></i>
+                        </div>
+                        <div class="ms-2 d-flex gap-2">
+                          <a href="/admin/pacientes" class="btn btn-outline-primary btn-sm"><i class="ri-group-line me-1"></i> Pacientes</a>
+                          <a href="/admin/appointments" class="btn btn-outline-primary btn-sm"><i class="ri-calendar-2-line me-1"></i> Calendario</a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="card-body">
+                    <% if (!list.length) { %>
+                      <div class="text-center text-muted py-4">No hay citas para esta fecha.</div>
+                    <% } %>
+                    <div class="d-grid gap-2" id="appointmentList">
+                      <% appointmentSections.forEach(section => { %>
+                        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mt-2">
+                          <div>
+                            <h6 class="mb-0"><%= section.title %></h6>
+                            <small class="text-muted"><%= section.subtitle %></small>
+                          </div>
+                          <span class="badge bg-primary-subtle text-primary"><%= section.items.length %></span>
+                        </div>
+                        <% if (!section.items.length && list.length) { %>
+                          <div class="text-muted border rounded-2 px-3 py-2"><%= section.empty %></div>
+                        <% } %>
+                        <% section.items.forEach(cita => {
+                          const patient = fullName(cita);
+                          const doctor = doctorName(cita);
+                          const search = `${patient} ${doctor} ${cita.emailPaciente || ''} ${cita.telefonoPaciente || ''} ${cita.motivoCita || ''} ${statusName(cita)} ${section.title}`.toLowerCase();
+                          const rowStatus = statusText(cita);
+                          const inConsultation = rowStatus === 'en consulta' && cita.consultaActivaId;
+                          const isClosed = Number(cita.estadoCita_idestadoCita) === 2 || Number(cita.estadoCita_idestadoCita) === 3 || ['atendida', 'cancelada', 'finalizada'].includes(rowStatus);
+                          const isFutureAppointment = isFutureDate(cita.fechaCita);
+                          const canManageThisAppointment = canManageAppointment(cita);
+                          const patientInitials = initialsFor(patient);
+                          const payment = paymentInfo(cita);
+                          const paymentUrl = cita.consultaId
+                            ? `/admin/pago?consulta=${cita.consultaId}`
+                            : (rowStatus === 'finalizada' ? `/admin/pago?cita=${cita.idcita}` : '/admin/pago');
+                        %>
+                        <div class="appointment-row-card" data-appointment-search="<%= search %>">
+                          <div class="card-body">
+                            <div class="d-flex align-items-center flex-wrap gap-4">
+                              <span class="appointment-patient-initials"><%= patientInitials %></span>
+                              <div class="d-flex flex-column mw-90">
+                                <div class="text-primary">#APT<%= String(cita.idcita).padStart(3, '0') %></div>
+                                <div class="fw-semibold text-truncate"><%= patient %></div>
+                              </div>
+                              <div class="d-flex flex-column mw-180">
+                                <div class="text-primary"><%= selectedDate ? 'Fecha seleccionada' : formatDate(cita.fechaCita) %></div>
+                                <div><%= cita.motivoCita || 'Consulta general' %></div>
+                              </div>
+                              <div class="d-flex flex-column mw-120">
+                                <div class="text-primary">Hora</div>
+                                <div><%= formatTime(cita.horaCita) %></div>
+                              </div>
+                              <div class="d-flex flex-column">
+                                <div class="text-primary"><%= cita.emailPaciente || 'Sin correo' %></div>
+                                <div><i class="ri-phone-line"></i> <%= cita.telefonoPaciente || 'Sin teléfono' %></div>
+                              </div>
+                              <div class="d-flex flex-column">
+                                <div class="text-primary">Doctor</div>
+                                <div><%= doctor %></div>
+                              </div>
+                              <div class="ms-auto d-flex align-items-center gap-3">
+                                <div class="d-flex flex-column">
+                                  <div class="text-primary">Pago</div>
+                                  <a href="<%= paymentUrl %>" class="<%= payment.className %> text-decoration-none"><%= payment.label %></a>
+                                </div>
+                                <div class="d-flex flex-column">
+                                  <div class="text-primary">Estado</div>
+                                  <div><%= statusName(cita) %></div>
+                                </div>
+                                <div class="d-flex gap-2">
+                                  <% if (canFn('citas:atender') || canManageThisAppointment) { %>
+                                    <% if (inConsultation) { %>
+                                      <% if (canManageThisAppointment) { %>
+                                        <a href="/admin/consultas/activas/<%= cita.consultaActivaId %>" class="icon-box xs icon-box-hover rounded-5 border-0" title="Abrir consulta">
+                                          <i class="ri-stethoscope-line text-primary"></i>
+                                        </a>
+                                      <% } else { %>
+                                        <button type="button" class="icon-box xs icon-box-hover rounded-5 border-0" disabled title="Consulta asignada a otro doctor">
+                                          <i class="ri-stethoscope-line text-muted"></i>
+                                        </button>
+                                      <% } %>
+                                    <% } else { %>
+                                      <button type="button" class="icon-box xs icon-box-hover rounded-5 border-0 js-update-appointment" data-action="iniciar-consulta" data-appointment-id="<%= cita.idcita %>" <%= (isClosed || isFutureAppointment || !canManageThisAppointment) ? 'disabled' : '' %> title="<%= !canManageThisAppointment ? 'Cita asignada a otro doctor' : (isFutureAppointment ? 'La consulta se puede iniciar el día de la cita' : 'Iniciar consulta') %>">
+                                        <i class="ri-checkbox-circle-line text-primary"></i>
+                                      </button>
+                                    <% } %>
+                                  <% } %>
+                                  <% if (canFn('citas:cancelar') || canManageThisAppointment) { %>
+                                    <button type="button" class="icon-box xs icon-box-hover rounded-5 border-0 js-update-appointment" data-action="cancelar" data-appointment-id="<%= cita.idcita %>" <%= (isClosed || inConsultation || !canManageThisAppointment) ? 'disabled' : '' %> title="<%= canManageThisAppointment ? 'Cancelar cita' : 'Cita asignada a otro doctor' %>">
+                                      <i class="ri-close-circle-line text-primary"></i>
+                                    </button>
+                                  <% } %>
+                                  <% if (isFutureAppointment && !isClosed && canManageThisAppointment) { %>
+                                    <a href="/admin/edit-appointment?id=<%= cita.idcita %>" class="icon-box xs icon-box-hover rounded-5 border-0" title="Editar cita">
+                                      <i class="ri-pencil-line text-primary"></i>
+                                    </a>
+                                  <% } %>
+                                </div>
+                                <div class="fw-semibold text-primary">
+                                  <button
+                                    type="button"
+                                    class="bg-primary-subtle text-primary py-2 px-3 rounded-5 border-0 js-view-appointment"
+                                    data-fecha="<%= formatDate(cita.fechaCita) %>"
+                                    data-hora="<%= formatTime(cita.horaCita) %>"
+                                    data-motivo="<%= cita.motivoCita || '' %>"
+                                    data-notas="<%= cita.notasAdicionales || '' %>"
+                                    data-estado="<%= statusName(cita) %>"
+                                    data-paciente="<%= patient %>"
+                                    data-doctor="<%= doctor %>">
+                                    Detalles
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      <% }) %>
+                      <% }) %>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="app-footer"><span>© C&C Dental Studio 2026</span></div>
+        </div>
+      </div>
+    </div>
+
+    <%- include('Citas/modals/infoCita') %>
+    <%- include('partials/uiFeedback') %>
+
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/js/moment.min.js"></script>
+    <script src="assets/vendor/overlay-scroll/jquery.overlayScrollbars.min.js"></script>
+    <script src="assets/vendor/overlay-scroll/custom-scrollbar.js"></script>
+    <script src="assets/vendor/daterange/daterange.js"></script>
+    <script src="assets/vendor/daterange/custom-daterange.js"></script>
+    <script src="assets/js/custom.js"></script>
+    <script>
+      (function () {
+        function applySearch(value) {
+          const term = String(value || '').trim().toLowerCase();
+          document.querySelectorAll('[data-appointment-search]').forEach(item => {
+            item.hidden = term && !item.dataset.appointmentSearch.includes(term);
+          });
+        }
+
+        document.getElementById('searchPatient')?.addEventListener('input', event => applySearch(event.target.value));
+        document.getElementById('headerAppointmentSearch')?.addEventListener('input', event => applySearch(event.target.value));
+
+        document.querySelectorAll('.js-view-appointment').forEach(button => {
+          button.addEventListener('click', () => {
+            document.getElementById('infoCitaFecha').textContent = button.dataset.fecha || 'Sin fecha';
+            document.getElementById('infoCitaHora').textContent = button.dataset.hora || '--:--';
+            document.getElementById('infoCitaMotivo').textContent = button.dataset.motivo || 'Sin motivo registrado';
+            document.getElementById('infoCitaNotas').textContent = button.dataset.notas || 'Sin notas adicionales';
+            document.getElementById('infoCitaEstado').textContent = button.dataset.estado || 'Sin estado';
+            document.getElementById('infoCitaPaciente').textContent = button.dataset.paciente || 'Paciente sin nombre';
+            document.getElementById('infoCitaDoctor').textContent = button.dataset.doctor || 'Doctor sin nombre';
+            const modal = document.getElementById('infoCitaModal');
+            if (modal && window.bootstrap) new bootstrap.Modal(modal).show();
+          });
+        });
+
+        async function updateAppointment(button) {
+          const id = button.dataset.appointmentId;
+          const action = button.dataset.action;
+          const isStart = action === 'iniciar-consulta';
+          const endpoint = isStart
+            ? `/api/admin/citas/${id}/iniciar-consulta`
+            : `/api/admin/citas/${id}/cancelar`;
+          const options = isStart
+            ? { title: 'Iniciar consulta', confirmText: 'Iniciar consulta', confirmType: 'success' }
+            : { title: 'Cancelar cita', confirmText: 'Cancelar cita', confirmType: 'danger' };
+
+          const run = async () => {
+            button.disabled = true;
+            try {
+              const response = await fetch(endpoint, {
+                method: isStart ? 'POST' : 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: options.body
+              });
+              const data = await response.json().catch(() => ({}));
+              if (!response.ok || data.success === false) throw new Error(data.message || 'No se pudo actualizar la cita.');
+              showUiMessage(isStart ? 'Consulta iniciada correctamente.' : 'Cita cancelada correctamente.', 'success');
+              setTimeout(() => {
+                if (data.redirectUrl) {
+                  window.location.href = data.redirectUrl;
+                } else {
+                  window.location.reload();
+                }
+              }, 650);
+            } catch (error) {
+              button.disabled = false;
+              showUiMessage(error.message || 'Hubo un problema al actualizar la cita.', 'danger');
+            }
+          };
+
+          confirmUiAction(
+            isStart ? '¿Deseas iniciar la consulta activa de esta cita?' : '¿Deseas cancelar esta cita?',
+            run,
+            options
+          );
+        }
+
+        document.querySelectorAll('.js-update-appointment').forEach(button => {
+          button.addEventListener('click', () => updateAppointment(button));
+        });
+      })();
+    </script>
+  </body>
+</html>

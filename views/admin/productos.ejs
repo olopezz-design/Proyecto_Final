@@ -1,0 +1,736 @@
+<%
+  const headerProfile = typeof adminProfile !== 'undefined' ? adminProfile : {};
+  const headerName = headerProfile.displayName || 'Nombre pendiente';
+  const headerInitials = headerProfile.initials || headerName.split(/\s+/).slice(0, 2).map(part => part.charAt(0).toUpperCase()).join('') || 'AD';
+  const headerPhoto = headerProfile.photoUrl || '';
+  const headerRole = headerProfile.roleLabel || 'Usuario';
+  const canFn = typeof can === 'function' ? can : () => true;
+  const productRows = Array.isArray(productos) ? productos : [];
+  const brandRows = Array.isArray(marcas) ? marcas : [];
+  const categoryRows = Array.isArray(categorias) ? categorias : [];
+  const providerRows = Array.isArray(proveedores) ? proveedores : [];
+  const safeJson = value => JSON.stringify(value || []).replace(/</g, '\\u003c');
+  const money = value => `Q${Number(value || 0).toFixed(2)}`;
+  const dateForInput = value => {
+    if (!value) return '';
+    const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (match) return `${match[1]}-${match[2]}-${match[3]}`;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? '' : date.toISOString().slice(0, 10);
+  };
+  const formatDate = value => {
+    if (!value) return 'Sin registro';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? 'Sin registro' : date.toLocaleDateString('es-GT');
+  };
+  const totalProductos = productRows.length;
+  const agotados = productRows.filter(item => Number(item.stock_actual || 0) <= 0).length;
+  const bajos = productRows.filter(item => Number(item.stock_actual || 0) > 0 && Number(item.stock_minimo || 0) > 0 && Number(item.stock_actual || 0) <= Number(item.stock_minimo || 0)).length;
+  const normales = Math.max(totalProductos - agotados - bajos, 0);
+%>
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <base href="/" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Inventario - Productos</title>
+    <link rel="shortcut icon" type="image/svg+xml" href="/images/cnc-favicon.svg">
+    <link rel="stylesheet" href="assets/fonts/remix/remixicon.css">
+    <link rel="stylesheet" href="assets/css/main.min.css">
+    <link rel="stylesheet" href="assets/vendor/overlay-scroll/OverlayScrollbars.min.css">
+    <style>
+      .profile-initials-badge {
+        align-items: center;
+        background: #f4f1ff;
+        color: #705df3;
+        display: inline-flex;
+        font-weight: 800;
+        justify-content: center;
+      }
+      .inventory-summary-grid {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      }
+      .inventory-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .45rem;
+        justify-content: flex-end;
+      }
+      .inventory-nav-link {
+        align-items: center;
+        background: rgba(255, 255, 255, .14);
+        border: 1px solid rgba(255, 255, 255, .28);
+        border-radius: 8px;
+        color: #fff;
+        display: inline-flex;
+        font-weight: 700;
+        gap: .4rem;
+        min-height: 36px;
+        padding: .45rem .7rem;
+      }
+      .inventory-nav-link:hover,
+      .inventory-nav-link.active {
+        background: #fff;
+        color: #5b50d6;
+      }
+      .inventory-stat,
+      .inventory-card,
+      .inventory-toolbar {
+        border: 1px solid #dde2ee;
+        border-radius: 8px;
+      }
+      .inventory-stat {
+        background: #fff;
+        padding: 1rem;
+      }
+      .inventory-stat small {
+        color: #6b7280;
+        display: block;
+      }
+      .inventory-stat strong {
+        color: #111827;
+        display: block;
+        font-size: 1.65rem;
+        line-height: 1.1;
+      }
+      .inventory-toolbar {
+        background: #fff;
+        padding: 1rem;
+      }
+      .products-grid {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+      }
+      .inventory-card {
+        background: #fff;
+        display: flex;
+        flex-direction: column;
+        min-height: 100%;
+        padding: 1rem;
+        transition: transform .18s ease, box-shadow .18s ease;
+      }
+      .inventory-card:hover {
+        box-shadow: 0 14px 30px rgba(17, 24, 39, .08);
+        transform: translateY(-2px);
+      }
+      .product-icon {
+        align-items: center;
+        background: #f4f1ff;
+        border-radius: 8px;
+        color: #7367f0;
+        display: inline-flex;
+        flex: 0 0 48px;
+        font-size: 1.35rem;
+        height: 48px;
+        justify-content: center;
+        width: 48px;
+      }
+      .stock-badge {
+        border-radius: 999px;
+        font-size: .75rem;
+        font-weight: 700;
+        padding: .35rem .65rem;
+      }
+      .stock-normal { background: #e8f8ee; color: #15803d; }
+      .stock-bajo { background: #fff7db; color: #a16207; }
+      .stock-agotado { background: #fee2e2; color: #b91c1c; }
+      .product-meta {
+        display: grid;
+        gap: .65rem;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .product-meta-item {
+        background: #fbfbff;
+        border: 1px solid #eef1f7;
+        border-radius: 8px;
+        padding: .65rem;
+      }
+      .product-meta-item small {
+        color: #6b7280;
+        display: block;
+        font-size: .72rem;
+      }
+      .product-meta-item strong {
+        display: block;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .product-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .5rem;
+        margin-top: auto;
+      }
+      .inventory-native-select {
+        display: none !important;
+      }
+      .multi-select-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .4rem;
+        margin-top: .5rem;
+        min-height: 30px;
+      }
+      .multi-select-chip {
+        align-items: center;
+        background: #f4f1ff;
+        border-radius: 999px;
+        color: #5b50d6;
+        display: inline-flex;
+        font-weight: 700;
+        gap: .35rem;
+        padding: .3rem .55rem;
+      }
+      .multi-select-chip button {
+        background: transparent;
+        border: 0;
+        color: inherit;
+        line-height: 1;
+        padding: 0;
+      }
+      @media (max-width: 575.98px) {
+        .products-grid,
+        .product-meta {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+    <%- include('partials/searchableSelect') %>
+  </head>
+  <body>
+    <div class="page-wrapper">
+      <div class="main-container">
+        <nav id="sidebar" class="sidebar-wrapper">
+          <div class="brand-container d-flex align-items-center justify-content-between">
+            <div class="app-brand ms-3">
+              <a href="/admin/dash"><img src="/images/cnc-logo-alt.svg" class="logo" alt="C&C Dental Studio"></a>
+            </div>
+            <button type="button" class="pin-sidebar me-3"><i class="ri-menu-line"></i></button>
+          </div>
+          <div class="sidebar-profile">
+            <% if (headerPhoto) { %>
+              <img src="<%= headerPhoto %>" class="rounded-5 border border-primary border-3" alt="Foto de perfil">
+            <% } else { %>
+              <span class="profile-initials-badge rounded-5 border border-primary border-3 img-4x"><%= headerInitials %></span>
+            <% } %>
+            <h6 class="mb-1 profile-name text-nowrap text-truncate text-primary"><%= headerName %></h6>
+            <small class="profile-name text-nowrap text-truncate"><%= headerRole %></small>
+          </div>
+          <div class="sidebarMenuScroll">
+            <%- include('partials/adminSidebar', { activePage: 'inventario', canFn }) %>
+          </div>
+        </nav>
+
+        <div class="app-container">
+          <div class="app-header d-flex align-items-center">
+            <div class="search-container d-xl-block d-none">
+              <input type="text" class="form-control" placeholder="Buscar" id="topSearch">
+              <i class="ri-search-line"></i>
+            </div>
+            <div class="header-actions ms-auto d-flex align-items-center gap-2">
+              <div class="dropdown ms-2">
+                <a id="userSettings" class="dropdown-toggle d-flex align-items-center" href="#!" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <div class="avatar-box">
+                    <% if (headerPhoto) { %>
+                      <img src="<%= headerPhoto %>" class="img-2xx rounded-5 border border-3 border-white" alt="Foto de perfil">
+                    <% } else { %>
+                      <span class="profile-initials-badge img-2xx rounded-5 border border-3 border-white"><%= headerInitials %></span>
+                    <% } %>
+                    <span class="status busy"></span>
+                  </div>
+                </a>
+                <div class="dropdown-menu dropdown-menu-end shadow-lg">
+                  <div class="px-3 py-2"><span class="small"><%= headerRole %></span><h6 class="m-0"><%= headerName %></h6></div>
+                  <div class="dropdown-divider"></div>
+                  <a href="/admin/perfil" class="dropdown-item"><i class="ri-user-line me-2"></i> Perfil</a>
+                  <a href="/logout" class="dropdown-item"><i class="ri-logout-circle-r-line me-2"></i> Cerrar sesión</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="app-hero-header d-flex align-items-center">
+            <ol class="breadcrumb">
+              <li class="breadcrumb-item"><a href="/admin/dash"><i class="ri-home-3-line"></i></a></li>
+              <li class="breadcrumb-item text-primary" aria-current="page">Inventario</li>
+              <li class="breadcrumb-item text-primary" aria-current="page">Productos</li>
+            </ol>
+            <% if (canFn('inventario:crear')) { %>
+              <button class="btn btn-primary ms-auto" data-bs-toggle="modal" data-bs-target="#productModal" data-mode="create"><i class="ri-add-line me-1"></i> Agregar producto</button>
+            <% } %>
+          </div>
+
+          <div class="app-body">
+            <%- include('partials/inventoryNav', { activeInventoryPage: 'productos', canFn }) %>
+
+            <div class="inventory-summary-grid mb-4">
+              <div class="inventory-stat"><small>Productos</small><strong><%= totalProductos %></strong></div>
+              <div class="inventory-stat"><small>Stock normal</small><strong class="text-success"><%= normales %></strong></div>
+              <div class="inventory-stat"><small>Stock bajo</small><strong class="text-warning"><%= bajos %></strong></div>
+              <div class="inventory-stat"><small>Agotados</small><strong class="text-danger"><%= agotados %></strong></div>
+            </div>
+
+            <div class="inventory-toolbar mb-4">
+              <div class="row gx-3 align-items-center">
+                <div class="col-lg-6 mb-2 mb-lg-0">
+                  <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="ri-search-line text-primary"></i></span>
+                    <input type="text" class="form-control" id="productSearch" placeholder="Buscar producto, categoria, marca o proveedor">
+                  </div>
+                </div>
+                <div class="col-lg-6 d-flex justify-content-lg-end gap-2 flex-wrap">
+                  <a href="/admin/proveedores" class="btn btn-outline-primary"><i class="ri-truck-line me-1"></i> Proveedores</a>
+                  <a href="/admin/salidasProductos" class="btn btn-outline-secondary"><i class="ri-history-line me-1"></i> Movimientos</a>
+                </div>
+              </div>
+            </div>
+
+            <div class="products-grid" id="productsGrid">
+              <% productRows.forEach(producto => {
+                const stock = Number(producto.stock_actual || producto.stock || 0);
+                const minimo = Number(producto.stock_minimo || 0);
+                const stockClass = stock <= 0 ? 'stock-agotado' : (minimo > 0 && stock <= minimo ? 'stock-bajo' : 'stock-normal');
+                const stockText = stock <= 0 ? 'Agotado' : (minimo > 0 && stock <= minimo ? 'Bajo' : 'Normal');
+                const updated = producto.ultima_actualizacion || producto.fecha_expiracion;
+              %>
+                <article class="inventory-card" data-product-card data-search="<%= [producto.nombre, producto.descripcion, producto.nombre_categoria, producto.marcas || producto.nombre_marca, producto.proveedores].join(' ').toLowerCase() %>">
+                  <div class="d-flex align-items-start justify-content-between gap-3 mb-3">
+                    <div class="d-flex align-items-center min-w-0">
+                      <span class="product-icon me-3"><i class="ri-archive-2-line"></i></span>
+                      <div class="min-w-0">
+                        <h5 class="mb-1 text-truncate"><%= producto.nombre %></h5>
+                        <div class="text-muted small"><%= producto.nombre_categoria || 'Sin categoria' %></div>
+                      </div>
+                    </div>
+                    <span class="stock-badge <%= stockClass %>"><%= stockText %></span>
+                  </div>
+                  <p class="text-muted mb-3"><%= producto.descripcion || 'Sin descripcion registrada.' %></p>
+                  <div class="product-meta mb-3">
+                    <div class="product-meta-item"><small>Stock actual</small><strong><%= stock %></strong></div>
+                    <div class="product-meta-item"><small>Stock minimo</small><strong><%= minimo %></strong></div>
+                    <div class="product-meta-item"><small>Precio</small><strong><%= money(producto.precio) %></strong></div>
+                    <div class="product-meta-item"><small>Marca</small><strong><%= producto.marcas || producto.nombre_marca || 'Sin marca' %></strong></div>
+                    <div class="product-meta-item"><small>Proveedor</small><strong><%= producto.proveedores || 'Sin proveedor' %></strong></div>
+                    <div class="product-meta-item"><small>Actualizado</small><strong><%= formatDate(updated) %></strong></div>
+                  </div>
+                  <div class="d-flex justify-content-between text-muted small mb-3">
+                    <span><i class="ri-arrow-down-line text-success me-1"></i> Entradas: <%= Number(producto.entradas || 0) %></span>
+                    <span><i class="ri-arrow-up-line text-danger me-1"></i> Salidas: <%= Number(producto.salidas || 0) %></span>
+                  </div>
+                  <div class="product-actions">
+                    <button class="btn btn-outline-primary btn-sm" type="button" data-action="details" data-id="<%= producto.id %>"><i class="ri-information-line me-1"></i> Detalles</button>
+                    <% if (canFn('inventario:editar')) { %>
+                      <button class="btn btn-outline-warning btn-sm" type="button" data-action="edit" data-id="<%= producto.id %>"><i class="ri-edit-line me-1"></i> Editar</button>
+                    <% } %>
+                    <% if (canFn('inventario:salidas')) { %>
+                      <button class="btn btn-outline-success btn-sm" type="button" data-action="movement" data-type="entrada_manual" data-id="<%= producto.id %>"><i class="ri-add-line me-1"></i> Entrada</button>
+                      <button class="btn btn-outline-secondary btn-sm" type="button" data-action="movement" data-type="salida_manual" data-id="<%= producto.id %>"><i class="ri-subtract-line me-1"></i> Salida</button>
+                      <button class="btn btn-outline-dark btn-sm" type="button" data-action="history" data-id="<%= producto.id %>"><i class="ri-history-line me-1"></i> Historial</button>
+                    <% } %>
+                  </div>
+                </article>
+              <% }) %>
+            </div>
+          </div>
+
+          <div class="app-footer"><span>© C&C Dental Studio 2026</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <form class="modal-content" method="POST" id="productForm" action="/admin/agregarProducto">
+          <div class="modal-header">
+            <h5 class="modal-title" id="productModalTitle">Agregar producto</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" name="productoId" id="productoId">
+            <div class="row gx-3">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Nombre</label>
+                <input class="form-control" name="nombreProducto" id="nombreProducto" required>
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Precio</label>
+                <input type="number" step="0.01" min="0" class="form-control" name="precioProducto" id="precioProducto" required>
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Expiracion</label>
+                <input type="date" class="form-control" name="fechaExpiracionProducto" id="fechaExpiracionProducto">
+              </div>
+              <div class="col-12 mb-3">
+                <label class="form-label">Descripcion</label>
+                <textarea class="form-control" name="descripcionProducto" id="descripcionProducto" rows="3"></textarea>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Marca principal</label>
+                <select class="form-select inventory-native-select" name="marcaProducto" id="marcaProducto" required>
+                  <% brandRows.forEach(item => { %><option value="<%= item.id %>"><%= item.nombre %></option><% }) %>
+                </select>
+                <div id="ss-marcaProducto"></div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Categoria</label>
+                <select class="form-select inventory-native-select" name="categoriaProducto" id="categoriaProducto" required>
+                  <% categoryRows.forEach(item => { %><option value="<%= item.idcategoria %>"><%= item.nombre %></option><% }) %>
+                </select>
+                <div id="ss-categoriaProducto"></div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Stock actual</label>
+                <input type="number" min="0" step="1" class="form-control" name="stockInicialProducto" id="stockInicialProducto" value="0" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Stock minimo</label>
+                <input type="number" min="0" step="1" class="form-control" name="stockMinimoProducto" id="stockMinimoProducto" value="0" required>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Marcas adicionales</label>
+                <select class="form-select inventory-native-select" name="marcasProducto" id="marcasProducto" multiple>
+                  <% brandRows.forEach(item => { %><option value="<%= item.id %>"><%= item.nombre %></option><% }) %>
+                </select>
+                <div id="ss-marcasProducto"></div>
+                <div class="multi-select-chips" id="chips-marcasProducto"></div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Proveedor(es)</label>
+                <select class="form-select inventory-native-select" name="proveedoresProducto" id="proveedoresProducto" multiple>
+                  <% providerRows.forEach(item => { %><option value="<%= item.id %>"><%= item.nombre %></option><% }) %>
+                </select>
+                <div id="ss-proveedoresProducto"></div>
+                <div class="multi-select-chips" id="chips-proveedoresProducto"></div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+            <button type="submit" class="btn btn-primary">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="modal fade" id="detailsModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Detalle del producto</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body" id="detailsBody"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="movementModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog">
+        <form class="modal-content" id="movementForm">
+          <div class="modal-header">
+            <h5 class="modal-title" id="movementTitle">Movimiento de inventario</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="movementProductId">
+            <input type="hidden" id="movementType">
+            <div class="alert alert-light border">
+              <strong id="movementProductName">Producto</strong>
+              <div class="small text-muted" id="movementProductStock">Stock actual: 0</div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Cantidad</label>
+              <input type="number" class="form-control" id="movementQuantity" min="1" step="1" value="1" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Motivo</label>
+              <textarea class="form-control" id="movementReason" rows="3"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cerrar</button>
+            <button type="submit" class="btn btn-primary">Guardar movimiento</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="modal fade" id="historyModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Historial de movimientos</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body" id="historyBody"></div>
+        </div>
+      </div>
+    </div>
+
+    <%- include('partials/uiFeedback') %>
+
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/vendor/overlay-scroll/jquery.overlayScrollbars.min.js"></script>
+    <script src="assets/vendor/overlay-scroll/custom-scrollbar.js"></script>
+    <script src="assets/js/custom.js"></script>
+    <script>
+      const products = <%- safeJson(productRows) %>;
+      const productModal = new bootstrap.Modal(document.getElementById('productModal'));
+      const detailsModal = new bootstrap.Modal(document.getElementById('detailsModal'));
+      const movementModal = new bootstrap.Modal(document.getElementById('movementModal'));
+      const historyModal = new bootstrap.Modal(document.getElementById('historyModal'));
+      const searchableProductControls = {};
+
+      function escapeHtml(value) {
+        return String(value || '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+      }
+      function findProduct(id) {
+        return products.find(item => Number(item.id) === Number(id));
+      }
+      function selectOptions(select) {
+        return Array.from(select.options).map(option => ({ value: option.value, label: option.textContent.trim() }));
+      }
+      function initSingleSearchable(selectId, wrapperId, placeholder, searchPlaceholder) {
+        const select = document.getElementById(selectId);
+        const wrapper = document.getElementById(wrapperId);
+        if (!select || !wrapper) return;
+        const ss = new SearchableSelect(wrapper, {
+          placeholder,
+          searchPlaceholder,
+          onChange: value => {
+            select.value = value;
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+          },
+        });
+        ss.setOptions(selectOptions(select));
+        const control = {
+          type: 'single',
+          select,
+          ss,
+          syncFromSelect() {
+            ss.setValue(select.value || select.options[0]?.value || '');
+          },
+          reset() {
+            select.value = select.options[0]?.value || '';
+            this.syncFromSelect();
+          },
+        };
+        searchableProductControls[selectId] = control;
+        control.syncFromSelect();
+      }
+      function initMultiSearchable(selectId, wrapperId, chipsId, placeholder, searchPlaceholder) {
+        const select = document.getElementById(selectId);
+        const wrapper = document.getElementById(wrapperId);
+        const chips = document.getElementById(chipsId);
+        if (!select || !wrapper || !chips) return;
+        const selectedValues = new Set();
+        const ss = new SearchableSelect(wrapper, {
+          placeholder,
+          searchPlaceholder,
+          onChange: value => {
+            if (!value) return;
+            selectedValues.add(String(value));
+            syncSelect();
+            renderChips();
+            ss.reset();
+          },
+        });
+        ss.setOptions(selectOptions(select));
+
+        function syncSelect() {
+          Array.from(select.options).forEach(option => {
+            option.selected = selectedValues.has(option.value);
+          });
+          select.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        function renderChips() {
+          const selectedOptions = Array.from(select.options).filter(option => selectedValues.has(option.value));
+          chips.innerHTML = selectedOptions.map(option => `
+            <span class="multi-select-chip">
+              ${escapeHtml(option.textContent.trim())}
+              <button type="button" aria-label="Quitar" data-remove-value="${escapeHtml(option.value)}">×</button>
+            </span>
+          `).join('');
+        }
+        chips.addEventListener('click', event => {
+          const button = event.target.closest('[data-remove-value]');
+          if (!button) return;
+          selectedValues.delete(button.dataset.removeValue);
+          syncSelect();
+          renderChips();
+        });
+        const control = {
+          type: 'multi',
+          select,
+          syncFromSelect() {
+            selectedValues.clear();
+            Array.from(select.selectedOptions).forEach(option => selectedValues.add(option.value));
+            renderChips();
+          },
+          setValues(values) {
+            selectedValues.clear();
+            const normalized = new Set((values || []).map(value => String(value).trim()).filter(Boolean));
+            Array.from(select.options).forEach(option => {
+              const label = option.textContent.trim();
+              if (normalized.has(option.value) || normalized.has(label)) selectedValues.add(option.value);
+            });
+            syncSelect();
+            renderChips();
+            ss.reset();
+          },
+          reset() {
+            selectedValues.clear();
+            syncSelect();
+            renderChips();
+            ss.reset();
+          },
+        };
+        searchableProductControls[selectId] = control;
+        control.syncFromSelect();
+      }
+      function syncSearchableControls() {
+        Object.values(searchableProductControls).forEach(control => control.syncFromSelect?.());
+      }
+      function resetSearchableControls() {
+        Object.values(searchableProductControls).forEach(control => control.reset?.());
+      }
+      function setMultiSelect(select, namesOrIds) {
+        const values = String(namesOrIds || '').split(',').map(item => item.trim()).filter(Boolean);
+        Array.from(select.options).forEach(option => {
+          option.selected = values.includes(option.value) || values.includes(option.textContent.trim());
+        });
+        searchableProductControls[select.id]?.setValues(values);
+      }
+      function dateInput(value) {
+        if (!value) return '';
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? '' : date.toISOString().slice(0, 10);
+      }
+      function filterCards(value) {
+        const term = String(value || '').trim().toLowerCase();
+        document.querySelectorAll('[data-product-card]').forEach(card => {
+          card.style.display = !term || card.dataset.search.includes(term) ? '' : 'none';
+        });
+      }
+
+      document.getElementById('productSearch')?.addEventListener('input', event => filterCards(event.target.value));
+      document.getElementById('topSearch')?.addEventListener('input', event => filterCards(event.target.value));
+      initSingleSearchable('marcaProducto', 'ss-marcaProducto', 'Seleccione marca', 'Buscar marca');
+      initSingleSearchable('categoriaProducto', 'ss-categoriaProducto', 'Seleccione categoria', 'Buscar categoria');
+      initMultiSearchable('marcasProducto', 'ss-marcasProducto', 'chips-marcasProducto', 'Buscar y agregar marca', 'Buscar marca');
+      initMultiSearchable('proveedoresProducto', 'ss-proveedoresProducto', 'chips-proveedoresProducto', 'Buscar y agregar proveedor', 'Buscar proveedor');
+
+      document.getElementById('productModal')?.addEventListener('show.bs.modal', event => {
+        const button = event.relatedTarget;
+        if (button?.dataset.mode !== 'create') return;
+        document.getElementById('productModalTitle').textContent = 'Agregar producto';
+        document.getElementById('productForm').action = '/admin/agregarProducto';
+        document.getElementById('productForm').reset();
+        document.getElementById('productoId').value = '';
+        resetSearchableControls();
+      });
+
+      document.getElementById('productsGrid')?.addEventListener('click', async event => {
+        const button = event.target.closest('[data-action]');
+        if (!button) return;
+        const product = findProduct(button.dataset.id);
+        if (!product) return;
+
+        if (button.dataset.action === 'details') {
+          document.getElementById('detailsBody').innerHTML = `
+            <h5>${escapeHtml(product.nombre)}</h5>
+            <p class="text-muted">${escapeHtml(product.descripcion || 'Sin descripcion')}</p>
+            <div class="row gx-3">
+              <div class="col-6 mb-2"><small class="text-muted d-block">Precio</small><strong>Q${Number(product.precio || 0).toFixed(2)}</strong></div>
+              <div class="col-6 mb-2"><small class="text-muted d-block">Stock</small><strong>${Number(product.stock_actual || product.stock || 0)}</strong></div>
+              <div class="col-6 mb-2"><small class="text-muted d-block">Marca</small><strong>${escapeHtml(product.marcas || product.nombre_marca || 'Sin marca')}</strong></div>
+              <div class="col-6 mb-2"><small class="text-muted d-block">Categoria</small><strong>${escapeHtml(product.nombre_categoria || 'Sin categoria')}</strong></div>
+              <div class="col-12 mb-2"><small class="text-muted d-block">Proveedor</small><strong>${escapeHtml(product.proveedores || 'Sin proveedor')}</strong></div>
+            </div>`;
+          detailsModal.show();
+        }
+
+        if (button.dataset.action === 'edit') {
+          document.getElementById('productModalTitle').textContent = 'Editar producto';
+          document.getElementById('productForm').action = '/admin/editarProducto';
+          document.getElementById('productoId').value = product.id;
+          document.getElementById('nombreProducto').value = product.nombre || '';
+          document.getElementById('descripcionProducto').value = product.descripcion || '';
+          document.getElementById('precioProducto').value = Number(product.precio || 0).toFixed(2);
+          document.getElementById('fechaExpiracionProducto').value = dateInput(product.fecha_expiracion);
+          document.getElementById('marcaProducto').value = product.marca_id || '';
+          document.getElementById('categoriaProducto').value = product.categoria_idcategoria || '';
+          document.getElementById('stockInicialProducto').value = Number(product.stock_actual || product.stock || 0);
+          document.getElementById('stockMinimoProducto').value = Number(product.stock_minimo || 0);
+          setMultiSelect(document.getElementById('marcasProducto'), product.marcas || product.nombre_marca);
+          setMultiSelect(document.getElementById('proveedoresProducto'), product.proveedores || '');
+          syncSearchableControls();
+          productModal.show();
+        }
+
+        if (button.dataset.action === 'movement') {
+          const type = button.dataset.type;
+          document.getElementById('movementTitle').textContent = type === 'entrada_manual' ? 'Entrada manual' : 'Salida manual';
+          document.getElementById('movementProductId').value = product.id;
+          document.getElementById('movementType').value = type;
+          document.getElementById('movementProductName').textContent = product.nombre || 'Producto';
+          document.getElementById('movementProductStock').textContent = `Stock actual: ${Number(product.stock_actual || product.stock || 0)}`;
+          document.getElementById('movementQuantity').value = 1;
+          document.getElementById('movementReason').value = '';
+          movementModal.show();
+        }
+
+        if (button.dataset.action === 'history') {
+          const body = document.getElementById('historyBody');
+          body.innerHTML = '<div class="text-muted py-3">Cargando movimientos...</div>';
+          historyModal.show();
+          try {
+            const response = await fetch(`/api/admin/productos/${product.id}/historial`);
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || data.success === false) throw new Error(data.message || data.error || 'No se pudo cargar el historial.');
+            const rows = data.movimientos || [];
+            body.innerHTML = rows.length ? rows.map(item => `
+              <div class="border rounded-2 p-3 mb-2">
+                <div class="d-flex justify-content-between flex-wrap gap-2">
+                  <strong>${escapeHtml(item.tipo || 'movimiento')}</strong>
+                  <span class="text-muted">${new Date(item.fecha).toLocaleString('es-GT')}</span>
+                </div>
+                <div>Cantidad: <strong>${Number(item.cantidad || 0)}</strong>${item.stock_resultante !== null && item.stock_resultante !== undefined ? ` · Stock resultante: <strong>${Number(item.stock_resultante)}</strong>` : ''}</div>
+                <div class="text-muted">${escapeHtml(item.motivo || item.descripcion || 'Sin motivo')}</div>
+              </div>`).join('') : '<div class="text-muted py-3">Sin movimientos registrados.</div>';
+          } catch (error) {
+            body.innerHTML = `<div class="alert alert-danger">${escapeHtml(error.message)}</div>`;
+          }
+        }
+      });
+
+      document.getElementById('movementForm')?.addEventListener('submit', async event => {
+        event.preventDefault();
+        try {
+          const response = await fetch('/api/admin/inventario/movimientos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              producto_id: Number(document.getElementById('movementProductId').value),
+              tipo: document.getElementById('movementType').value,
+              cantidad: Number(document.getElementById('movementQuantity').value),
+              motivo: document.getElementById('movementReason').value,
+            }),
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok || data.success === false) throw new Error(data.message || data.error || 'No se pudo guardar el movimiento.');
+          showUiMessage('Movimiento registrado correctamente.', 'success');
+          setTimeout(() => window.location.reload(), 600);
+        } catch (error) {
+          showUiMessage(error.message, 'danger');
+        }
+      });
+    </script>
+  </body>
+</html>

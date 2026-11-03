@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Pacientes - C&C Dental Studio</title>
+    <link rel="shortcut icon" type="image/svg+xml" href="/images/cnc-favicon.svg">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="/css/dashboard.css">
+    <style>
+        /* Estilo de paginación */
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            color: #007bff;
+            background-color: transparent;
+            border: none;
+            padding: 0;
+            margin: 0 5px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            font-weight: bold;
+            color: white;
+            background-color: #007bff;
+            border-radius: 4px;
+        }
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+            color: white;
+            background-color: #0056b3;
+            border-radius: 4px;
+        }
+        
+        /* Ocultar filtro por defecto */
+        .dataTables_filter {
+            display: none;
+        }
+
+        /* Ajustes generales */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        #page-content-wrapper {
+            flex: 1;
+        }
+        footer {
+            position: relative;
+            bottom: 0;
+            width: 100%;
+            background-color: #343a40;
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+        }
+        .modal-body {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        /* Estilo personalizado de la tabla */
+        .table-striped tbody tr:nth-of-type(odd) {
+            background-color: rgba(0, 0, 0, .05);
+        }
+        .table thead th {
+            background-color: #343a40;
+            color: white;
+            text-align: center;
+            font-weight: bold;
+        }
+        .table tbody td {
+            vertical-align: middle;
+            text-align: center;
+        }
+        .btn-sm {
+            font-size: 0.875rem;
+            padding: 0.25rem 0.5rem;
+        }
+    </style>
+</head>
+<body class="d-flex flex-column min-vh-100">
+    <div class="d-flex flex-grow-1" id="wrapper">
+        <!-- Sidebar -->
+        <div class="bg-dark border-right" id="sidebar-wrapper">
+            <div class="sidebar-heading text-center py-4">
+                <img src="/images/cnc-logo-alt.svg" alt="Logo" class="img-fluid mb-2" style="max-width: 50px;">
+                <h4 class="text-white font-weight-bold">C&C Dental Studio</h4>
+            </div>
+            <div class="list-group list-group-flush">
+                
+                <!-- Pacientes -->
+                <a href="#clientes-pacientes-submenu" class="list-group-item list-group-item-action bg-dark text-white d-flex justify-content-between align-items-center" data-toggle="collapse">
+                    <i class="fas fa-user mr-2"></i> Pacientes
+                    <i class="fas fa-chevron-down"></i>
+                </a>
+                <div id="clientes-pacientes-submenu" class="collapse">
+                    <a href="/admin/pacientes" class="list-group-item list-group-item-action bg-dark text-white pl-5 active">
+                        <i class="fas fa-user-friends"></i> Lista de Pacientes
+                    </a>
+                    <a href="/admin/citas" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-calendar-alt"></i> Citas
+                    </a>
+                    <a href="/admin/historial" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-file-medical-alt"></i> Historial Tratamiento
+                    </a>
+                    <a href="/admin/pago" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-wallet"></i> Control de Pago
+                    </a>
+                    <a href="/admin/archivados" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-archive"></i> Pacientes Archivados
+                    </a>
+                </div>
+
+                <!-- Doctores -->
+                <a href="#doctores-submenu" class="list-group-item list-group-item-action bg-dark text-white d-flex justify-content-between align-items-center" data-toggle="collapse">
+                    <i class="fas fa-user-md mr-2"></i> Doctores
+                    <i class="fas fa-chevron-down"></i>
+                </a>
+                <div id="doctores-submenu" class="collapse">
+                    <a href="/admin/doctores" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-user-check"></i> Doctores Activos
+                    </a>
+                    <a href="/admin/doctoresInactivos" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-user-slash"></i> Doctores Inactivos
+                    </a>
+                </div>
+
+                <!-- Inventario -->
+                <a href="#inventario-submenu" class="list-group-item list-group-item-action bg-dark text-white d-flex justify-content-between align-items-center" data-toggle="collapse">
+                    <i class="fas fa-box mr-2"></i> Inventario
+                    <i class="fas fa-chevron-down"></i>
+                </a>
+                <div id="inventario-submenu" class="collapse">
+                    <a href="/admin/marcas" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-tags"></i> Marcas
+                    </a>
+                    <a href="/admin/categorias" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-th-large"></i> Categorías
+                    </a>
+                    <a href="/admin/proveedores" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-truck"></i> Proveedores
+                    </a>
+                    <a href="/admin/productos" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-boxes"></i> Productos
+                    </a>
+                    <a href="/admin/comprasProductos" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-shopping-cart"></i> Compras
+                    </a>
+                    <a href="/admin/salidasProductos" class="list-group-item list-group-item-action bg-dark text-white pl-5">
+                        <i class="fas fa-dolly"></i> Salidas
+                    </a>
+                </div>
+
+                <a href="/admin/cotizaciones" class="list-group-item list-group-item-action bg-dark text-white">
+                    <i class="fas fa-arrow-circle-left"></i> Generar Cotización
+                </a>
+                <a href="/admin/dashboard" class="list-group-item list-group-item-action bg-dark text-white">
+                    <i class="fas fa-arrow-circle-left"></i> Regresar al Panel
+                </a>
+                <a href="/logout" class="list-group-item list-group-item-action bg-danger text-white">
+                    <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+                </a>
+            </div>
+        </div>
+
+
+        <!-- Contenido de la Página -->
+        <div id="page-content-wrapper" class="flex-grow-1">
+            <div class="container-fluid">
+                <h1 class="mt-4">Pacientes</h1>
+                <div class="text-left mb-3">
+                    <a href="/admin/dashboard" class="btn btn-secondary">&larr; Regresar al Panel de Control</a>
+                    <% if (can('pacientes:crear')) { %>
+                        <button class="btn btn-primary" data-toggle="modal" data-target="#addpacienteModal">Agregar Paciente</button>
+                    <% } %>
+                </div>
+
+                <!-- Barra de búsqueda -->
+                <div class="input-group mb-3">
+                    <input type="text" class="form-control" placeholder="Buscar paciente..." id="searchPaciente">
+                </div>
+
+               <!-- Tabla de pacientes -->
+                <div class="card">
+                    <div class="card-header">Listado de Pacientes</div>
+                    <div class="card-body">
+                        <table id="pacienteTable" class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>DPI</th>
+                                    <th>Nombre</th>
+                                    <th>Teléfono</th>
+                                    <th>Email</th>
+                                    <th>Edad</th>
+                                    <th>Tipo de Paciente</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <% pacientes.forEach(function(paciente) { %>
+                                    <tr>
+                                        <td><%= paciente.dpi %></td>
+                                        <td><%= paciente.nombre +" "+ paciente.apellido%></td>
+                                        <td><%= paciente.telefono %></td>
+                                        <td><%= paciente.email %></td>
+                                        <td><%= paciente.edad %></td>
+                                        <td>
+                                            <% if (paciente.tipoPaciente_idtipoPaciente == 1) { %>
+                                                Nuevo Paciente
+                                            <% } else if (paciente.tipoPaciente_idtipoPaciente == 2) { %>
+                                                Paciente Recurrente
+                                            <% } else { %>
+                                                Paciente de Emergencia
+                                            <% } %> 
+                                        </td>
+                                        <td class="d-flex justify-content-around">
+                                            <!-- Botón para ver la información completa del paciente -->
+                                            <button class="btn btn-primary btn-sm" onclick="verInformacion('<%= paciente.idPaciente %>', '<%= paciente.nombre %>', '<%= paciente.apellido %>', '<%= paciente.telefono %>', '<%= paciente.email %>', '<%= paciente.edad %>', '<%= paciente.tipoPaciente_idtipoPaciente %>', '<%= paciente.genero_idGenero %>', '<%= paciente.fechaNacimiento %>', '<%= paciente.direccion %>', '<%= paciente.nit %>', '<%= paciente.dpi %>', '<%= paciente.historialClinico %>', '<%= paciente.fichaMedica %>')" title="Ver Información">
+                                                <i class="fas fa-info-circle"></i>
+                                            </button>
+                                            
+                                            <!-- Botón para ver la ficha médica -->
+                                            <button class="btn btn-secondary btn-sm" onclick="abrirModalFichaMedica('<%= paciente.idPaciente %>')" title="Ver Ficha Médica">
+                                                <i class="fas fa-notes-medical"></i>
+                                            </button>
+
+                                            <% if (can('pacientes:editar')) { %>
+                                                <!-- Botón para editar paciente -->
+                                                <button class="btn btn-warning btn-sm" onclick="editarPaciente('<%= paciente.idPaciente %>', '<%= paciente.nombre %>', '<%= paciente.apellido %>', '<%= paciente.telefono %>', '<%= paciente.email %>', '<%= paciente.edad %>', '<%= paciente.direccion %>', '<%= paciente.nit %>')" title="Editar">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                            <% } %>
+                                            
+                                            <% if (can('pacientes:archivar')) { %>
+                                                <!-- Botón para archivar paciente -->
+                                                <button class="btn btn-dark btn-sm" onclick="archivarPaciente('<%= paciente.idPaciente %>')" title="Archivar">
+                                                    <i class="fas fa-archive"></i>
+                                                </button>
+                                            <% } %>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+<% if (can('pacientes:crear')) { %>
+    <%- include('Pacientes/modals/addPaciente') %>
+<% } %>
+<%- include('Pacientes/modals/infoPaciente') %>
+<% if (can('pacientes:editar')) { %>
+    <%- include('Pacientes/modals/editPaciente') %>
+<% } %>
+
+<div>
+    <form id="archiveForm" method="POST">
+        <input type="hidden" id="archivePatientId" name="idPaciente">
+    </form>
+</div>
+
+<%- include('Pacientes/modals/fichaMedica') %>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/dashboard.js"></script>
+    <script>
+         $(document).ready(function() {
+            var table = $('#pacienteTable').DataTable({
+            destroy: true,
+            paging: true,
+            searching: true,  // Habilita la búsqueda
+            ordering: true,
+            info: true,
+            lengthChange: false,
+            language: {
+                paginate: {
+                        previous: "<",
+                        next: ">"
+                    },
+                    emptyTable: "No hay datos disponibles en la tabla"
+                },
+            order: []  // No establecer un orden por defecto al cargar la tabla
+        });
+
+            // Vincula el campo de búsqueda personalizado al DataTable
+            $('#searchPaciente').on('keyup', function() {
+                table.search(this.value).draw();
+            });
+        });
+
+        function verInformacion(id, nombre, apellido, telefono, email, edad, tipoPaciente, genero, fechaNacimiento, direccion, nit, dpi, historialClinico, fichaMedica) {
+            const formattedFechaNacimiento = new Date(fechaNacimiento).toLocaleDateString('es-ES', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+
+            $('#infopacienteName').text(nombre);
+            $('#infopacienteLastName').text(apellido);
+            $('#infopacienteDpi').text(dpi);
+            $('#infopacientePhone').text(telefono);
+            $('#infopacienteEmail').text(email);
+            $('#infopacienteEdad').text(edad);
+               // Asignar género en función del valor
+    const generoStr = {
+        '1': 'Masculino',
+        '2': 'Femenino',
+        '3': 'Otro'
+    }[genero] || 'Desconocido';
+    $('#infopacienteGenero').text(generoStr);
+            $('#infopacienteFechaNacimiento').text(fechaNacimiento ? formattedFechaNacimiento : 'N/A');
+            $('#infopacienteDireccion').text(direccion);
+            $('#infopacienteNit').text(nit ? nit : 'N/A');
+            const tipoPacienteStr = {
+                '1': 'Nuevo Paciente',
+                '2': 'Paciente Recurrente',
+                '3': 'Paciente de Emergencia'
+            }[tipoPaciente] || 'Desconocido';
+            $('#infopacienteTipoPaciente').text(tipoPacienteStr);
+            $('#infopacienteHistorialClinico').text(historialClinico || 'N/A');
+            $('#infopacienteFichaMedica').text(fichaMedica || 'N/A');
+            $('#infopacienteModal').modal('show');
+        }
+
+
+        // Función para abrir el modal de edición y llenar los datos del paciente
+        function editarPaciente(id, nombre, apellido, telefono, email, edad, direccion, nit) {
+    $('#editpacienteId').val(id);
+    $('#editNombre').val(nombre);
+    $('#editApellido').val(apellido);
+    $('#editTelefono').val(telefono);
+    $('#editEmail').val(email);
+    $('#editEdad').val(edad);
+    $('#editDireccion').val(direccion);
+    $('#editNit').val(nit);
+    $('#editpacienteModal').modal('show');
+}
+
+
+   // Función para calcular la edad automáticamente
+document.getElementById('addFechaNacimiento').addEventListener('change', function() {
+    const fechaNacimiento = new Date(this.value);
+    if (!isNaN(fechaNacimiento)) {
+        const hoy = new Date();
+        let edad = hoy.getFullYear() - fechaNacimiento.getFullYear();
+        const mes = hoy.getMonth() - fechaNacimiento.getMonth();
+        if (mes < 0 || (mes === 0 && hoy.getDate() < fechaNacimiento.getDate())) {
+            edad--;
+        }
+        document.getElementById('addEdad').value = edad;
+    } else {
+        document.getElementById('addEdad').value = '';
+    }
+});
+
+// Fetch data for a specific paciente using idPaciente and display in modal
+function fetchFichaMedica(idPaciente) {
+    if (!idPaciente) {
+        console.error("idPaciente is not defined");
+        return;
+    }
+    
+    fetch(`/api/admin/pacientes/fichamedica/${idPaciente}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status} ${response.statusText}`);
+            }
+            return response.json(); // Attempt to parse JSON response
+        })
+        .then(data => {
+            // Assign received data to the modal element, or "N/A" if data is missing
+            document.getElementById('infopacienteFichaMedica').innerText = data.fichaMedica || "N/A";
+        })
+        .catch(error => {
+            console.error('Error al cargar la ficha médica:', error);
+            document.getElementById('infopacienteFichaMedica').innerText = "Error al cargar la información.";
+        });
+}
+
+// Function to handle button click and open the modal
+function handleButtonClick(idPaciente) {
+    if (idPaciente) {
+        abrirModalFichaMedica(idPaciente);
+    } else {
+        console.error("idPaciente is not defined");
+    }
+}
+
+// Function to open the modal and load medical record data
+function abrirModalFichaMedica(idFicha) {
+    const preguntas = {
+        idFicha: "Id Paciente",
+        enfermedad_corazon: "¿Tiene alguna enfermedad del corazón?",
+        presion_alta_baja: "¿Presión alta o baja?",
+        diabetico: "¿Es diabético?",
+        operaciones_recientes: "¿Ha tenido operaciones recientes?",
+        hepatitis: "¿Ha tenido hepatitis?",
+        enfermedad_higado_rinones: "¿Enfermedades del hígado o riñones?",
+        convulsiones_desmayos: "¿Convulsiones o desmayos?",
+        enfermedad_transmision_sexual: "¿Enfermedades de transmisión sexual?",
+        alergias: "¿Tiene alguna alergia?",
+        enfermedad_respiratoria: "¿Tiene enfermedades respiratorias?",
+        embarazada: "¿Está embarazada?",
+        artritis: "¿Sufre de artritis?",
+        fiebre_reumatica: "¿Fiebre reumática?",
+        hemorragias_espontaneas: "¿Hemorragias espontáneas?",
+        enfermedad_no_mencionada: "¿Tiene alguna otra enfermedad?",
+        alergia_material_odontologico: "¿Alergia a material odontológico?",
+        sangrado_encias: "¿Sangrado de encías?",
+        halitosis: "¿Halitosis?",
+        alergia_medicamento: "¿Alergia a algún medicamento?",
+        aftas: "¿Aftas?",
+        dolor_dental: "¿Dolor dental?",
+        sensibilidad: "¿Sensibilidad dental?",
+        ultima_visita_dentista: "¿Cuándo fue su última visita al dentista?",
+        tratamiento_realizado: "¿Qué tratamiento se le ha realizado?",
+        contactoemergencia_idContactoEmergencia: "Contacto de emergencia"
+    };
+
+    fetch(`/api/admin/pacientes/fichamedica/${idFicha}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Server error: ${response.status} ${response.statusText}`);
+            }
+            return response.text(); // Read as text to handle empty responses
+        })
+        .then(text => {
+            if (!text) {
+                throw new Error("Empty response received from server");
+            }
+            return JSON.parse(text); // Parse JSON only if text is non-empty
+        })
+        .then(data => {
+            if (!data || Object.keys(data).length === 0) {
+                throw new Error("No data available for the specified ID");
+            }
+
+            let contenido = '<table class="table table-bordered table-striped">';
+            contenido += '<thead class="table-dark"><tr><th>Pregunta</th><th>Respuesta</th></tr></thead><tbody>';
+
+            for (const [key, value] of Object.entries(data)) {
+                const pregunta = preguntas[key] || key;
+                const valorTexto = value === 1 ? 'SI' : value === 0 ? 'NO' : value || 'N/A';
+                contenido += `<tr><td><strong>${pregunta}</strong></td><td>${valorTexto}</td></tr>`;
+            }
+
+            contenido += '</tbody></table>';
+            document.getElementById('contenidoFichaMedica').innerHTML = contenido;
+
+            $('#fichaMedicaModal').modal('show');
+        })
+        .catch(error => {
+            console.error('Error al cargar la ficha médica:', error);
+            let errorMessage = "Error al cargar la información. Por favor, inténtelo de nuevo.";
+
+            if (error.message.includes("Empty response received from server")) {
+                errorMessage = "La respuesta del servidor está vacía. Verifica la conexión o intenta más tarde.";
+            } else if (error.message.includes("No data available for the specified ID")) {
+                errorMessage = "No hay datos disponibles para el ID especificado.";
+            } else if (error.message.includes("Server error")) {
+                errorMessage = `Error del servidor: ${error.message}. Contacta al soporte.`;
+            }
+
+            document.getElementById('contenidoFichaMedica').innerHTML = `<p>${errorMessage}</p>`;
+        });
+}
+
+
+// Function to close the modal manually if needed
+function cerrarModal() {
+    $('#fichaMedicaModal').modal('hide');
+}
+
+
+//función para archivar un paciente
+
+function archivarPaciente(idPaciente) {
+    fetch(`/api/admin/pacientes/${idPaciente}/archivar`, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Error al archivar el paciente');
+        }
+        return response.json();
+    })
+    .then(data => {
+        showUiMessage(data.message || 'Paciente archivado correctamente.', 'success');
+        // Aquí puedes recargar la lista de pacientes o actualizar el estado en la interfaz
+        location.reload(); // Esto recarga la página para ver los cambios (opcional)
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showUiMessage('Hubo un problema al archivar el paciente.', 'danger');
+    });
+}
+
+    </script>
+<%- include('partials/uiFeedback') %>
+
+
+
+<%- include('partials/pageLoader') %>
+</body>
+</html>

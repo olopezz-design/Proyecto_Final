@@ -1,0 +1,402 @@
+<%
+  const headerProfile = typeof adminProfile !== 'undefined' ? adminProfile : {};
+  const headerName = headerProfile.displayName || 'Nombre pendiente';
+  const headerInitials = headerProfile.initials || headerName.split(/\s+/).slice(0, 2).map(part => part.charAt(0).toUpperCase()).join('') || 'AD';
+  const headerPhoto = headerProfile.photoUrl || '';
+  const headerRole = headerProfile.roleLabel || 'Usuario';
+  const canFn = typeof can === 'function' ? can : () => true;
+  const movementRows = Array.isArray(movimientos) ? movimientos : [];
+  const productRows = Array.isArray(productos) ? productos : [];
+  const safeJson = value => JSON.stringify(value || []).replace(/</g, '\\u003c');
+  const formatDate = value => {
+    if (!value) return 'Sin fecha';
+    const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (match) return `${match[3]}/${match[2]}/${match[1]}`;
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? 'Sin fecha' : date.toLocaleDateString('es-GT');
+  };
+  const movementType = row => {
+    const type = String(row.tipo || '').toLowerCase();
+    if (type.includes('entrada')) return { label: 'Entrada', className: 'bg-success-subtle text-success', icon: 'ri-arrow-down-line' };
+    if (type.includes('ajuste')) return { label: 'Ajuste', className: 'bg-info-subtle text-info', icon: 'ri-equalizer-line' };
+    return { label: 'Salida', className: 'bg-danger-subtle text-danger', icon: 'ri-arrow-up-line' };
+  };
+  const entradas = movementRows.filter(row => String(row.tipo || '').toLowerCase().includes('entrada')).length;
+  const salidas = movementRows.length - entradas;
+%>
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <base href="/" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Kardex - Inventario</title>
+    <link rel="shortcut icon" type="image/svg+xml" href="/images/cnc-favicon.svg">
+    <link rel="stylesheet" href="assets/fonts/remix/remixicon.css">
+    <link rel="stylesheet" href="assets/css/main.min.css">
+    <link rel="stylesheet" href="assets/vendor/overlay-scroll/OverlayScrollbars.min.css">
+    <style>
+      .profile-initials-badge {
+        align-items: center;
+        background: #f4f1ff;
+        color: #705df3;
+        display: inline-flex;
+        font-weight: 800;
+        justify-content: center;
+      }
+      .inventory-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: .45rem;
+        justify-content: flex-end;
+      }
+      .inventory-nav-link {
+        align-items: center;
+        background: rgba(255, 255, 255, .14);
+        border: 1px solid rgba(255, 255, 255, .28);
+        border-radius: 8px;
+        color: #fff;
+        display: inline-flex;
+        font-weight: 700;
+        gap: .4rem;
+        min-height: 36px;
+        padding: .45rem .7rem;
+      }
+      .inventory-nav-link:hover,
+      .inventory-nav-link.active {
+        background: #fff;
+        color: #5b50d6;
+      }
+      .kardex-summary-grid {
+        display: grid;
+        gap: 1rem;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      }
+      .kardex-stat,
+      .kardex-toolbar,
+      .kardex-row {
+        background: #fff;
+        border: 1px solid #dde2ee;
+        border-radius: 8px;
+      }
+      .kardex-stat {
+        padding: 1rem;
+      }
+      .kardex-stat small {
+        color: #6b7280;
+        display: block;
+      }
+      .kardex-stat strong {
+        display: block;
+        font-size: 1.55rem;
+        line-height: 1.1;
+      }
+      .kardex-toolbar {
+        padding: 1rem;
+      }
+      .kardex-row {
+        padding: 1rem;
+      }
+      .movement-icon {
+        align-items: center;
+        border-radius: 8px;
+        display: inline-flex;
+        flex: 0 0 44px;
+        font-size: 1.25rem;
+        height: 44px;
+        justify-content: center;
+        width: 44px;
+      }
+      .kardex-row[hidden] {
+        display: none !important;
+      }
+    </style>
+    <%- include('partials/searchableSelect') %>
+  </head>
+  <body>
+    <div class="page-wrapper">
+      <div class="main-container">
+        <nav id="sidebar" class="sidebar-wrapper">
+          <div class="brand-container d-flex align-items-center justify-content-between">
+            <div class="app-brand ms-3">
+              <a href="/admin/dash"><img src="/images/cnc-logo-alt.svg" class="logo" alt="C&C Dental Studio"></a>
+            </div>
+            <button type="button" class="pin-sidebar me-3"><i class="ri-menu-line"></i></button>
+          </div>
+          <div class="sidebar-profile">
+            <% if (headerPhoto) { %>
+              <img src="<%= headerPhoto %>" class="rounded-5 border border-primary border-3" alt="Foto de perfil">
+            <% } else { %>
+              <span class="profile-initials-badge rounded-5 border border-primary border-3 img-4x"><%= headerInitials %></span>
+            <% } %>
+            <h6 class="mb-1 profile-name text-nowrap text-truncate text-primary"><%= headerName %></h6>
+            <small class="profile-name text-nowrap text-truncate"><%= headerRole %></small>
+          </div>
+          <div class="sidebarMenuScroll">
+            <%- include('partials/adminSidebar', { activePage: 'inventario', canFn }) %>
+          </div>
+        </nav>
+
+        <div class="app-container">
+          <div class="app-header d-flex align-items-center">
+            <div class="search-container d-xl-block d-none">
+              <input type="text" class="form-control" placeholder="Buscar" id="topSearch">
+              <i class="ri-search-line"></i>
+            </div>
+            <div class="header-actions ms-auto d-flex align-items-center gap-2">
+              <div class="dropdown ms-2">
+                <a id="userSettings" class="dropdown-toggle d-flex align-items-center" href="#!" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <div class="avatar-box">
+                    <% if (headerPhoto) { %>
+                      <img src="<%= headerPhoto %>" class="img-2xx rounded-5 border border-3 border-white" alt="Foto de perfil">
+                    <% } else { %>
+                      <span class="profile-initials-badge img-2xx rounded-5 border border-3 border-white"><%= headerInitials %></span>
+                    <% } %>
+                    <span class="status busy"></span>
+                  </div>
+                </a>
+                <div class="dropdown-menu dropdown-menu-end shadow-lg">
+                  <div class="px-3 py-2"><span class="small"><%= headerRole %></span><h6 class="m-0"><%= headerName %></h6></div>
+                  <div class="dropdown-divider"></div>
+                  <a href="/admin/perfil" class="dropdown-item"><i class="ri-user-line me-2"></i> Perfil</a>
+                  <a href="/logout" class="dropdown-item"><i class="ri-logout-circle-r-line me-2"></i> Cerrar sesión</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="app-hero-header d-flex align-items-center">
+            <ol class="breadcrumb">
+              <li class="breadcrumb-item"><a href="/admin/dash"><i class="ri-home-3-line"></i></a></li>
+              <li class="breadcrumb-item"><a href="/admin/productos">Inventario</a></li>
+              <li class="breadcrumb-item text-primary" aria-current="page">Kardex</li>
+            </ol>
+            <% if (canFn('inventario:salidas')) { %>
+              <button class="btn btn-primary ms-auto" data-bs-toggle="modal" data-bs-target="#movementCreateModal">
+                <i class="ri-subtract-line me-1"></i> Registrar salida
+              </button>
+            <% } %>
+          </div>
+
+          <div class="app-body">
+            <%- include('partials/inventoryNav', { activeInventoryPage: 'kardex', canFn }) %>
+
+            <div class="kardex-summary-grid mb-4">
+              <div class="kardex-stat"><small>Movimientos</small><strong><%= movementRows.length %></strong></div>
+              <div class="kardex-stat"><small>Entradas</small><strong class="text-success"><%= entradas %></strong></div>
+              <div class="kardex-stat"><small>Salidas / ajustes</small><strong class="text-danger"><%= salidas %></strong></div>
+              <div class="kardex-stat"><small>Productos activos</small><strong class="text-primary"><%= productRows.length %></strong></div>
+            </div>
+
+            <div class="kardex-toolbar mb-4">
+              <div class="row gx-3 align-items-center">
+                <div class="col-lg-7 mb-2 mb-lg-0">
+                  <div class="input-group">
+                    <span class="input-group-text bg-white"><i class="ri-search-line text-primary"></i></span>
+                    <input type="text" class="form-control" id="movementSearch" placeholder="Buscar producto, descripción, fecha o tipo">
+                  </div>
+                </div>
+                <div class="col-lg-5 d-flex justify-content-lg-end gap-2 flex-wrap">
+                  <a href="/admin/productos" class="btn btn-outline-primary"><i class="ri-archive-2-line me-1"></i> Ver productos</a>
+                  <a href="/admin/lista-compras" class="btn btn-outline-secondary"><i class="ri-file-list-3-line me-1"></i> Lista de compras</a>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-grid gap-2" id="kardexRows">
+              <% if (!movementRows.length) { %>
+                <div class="text-center text-muted bg-white border rounded-2 py-5">Todavía no hay movimientos de inventario.</div>
+              <% } %>
+              <% movementRows.forEach(row => {
+                const type = movementType(row);
+                const search = [row.nombre_producto, row.descripcion, row.fecha, row.tipo, row.cantidad].join(' ').toLowerCase();
+              %>
+                <article class="kardex-row" data-movement-row data-search="<%= search %>">
+                  <div class="d-flex flex-wrap align-items-center gap-3">
+                    <span class="movement-icon <%= type.className %>"><i class="<%= type.icon %>"></i></span>
+                    <div class="min-w-0">
+                      <div class="d-flex flex-wrap align-items-center gap-2">
+                        <h6 class="mb-0"><%= row.nombre_producto || 'Producto no encontrado' %></h6>
+                        <span class="badge <%= type.className %>"><%= type.label %></span>
+                      </div>
+                      <div class="text-muted small"><%= formatDate(row.fecha) %><%= row.hora && row.hora !== '00:00' ? ` · ${row.hora}` : '' %></div>
+                    </div>
+                    <div class="ms-lg-auto d-flex flex-wrap align-items-center gap-3">
+                      <div>
+                        <small class="text-muted d-block">Cantidad</small>
+                        <strong><%= Number(row.cantidad || 0) %></strong>
+                      </div>
+                      <div>
+                        <small class="text-muted d-block">Stock resultante</small>
+                        <strong><%= row.stock_resultante ?? row.stock_actual ?? '-' %></strong>
+                      </div>
+                      <div class="d-flex gap-2">
+                        <button type="button" class="btn btn-outline-primary btn-sm" data-view-movement="<%= row.id %>"><i class="ri-information-line"></i></button>
+                        <% if (canFn('inventario:salidas')) { %>
+                          <button type="button" class="btn btn-outline-danger btn-sm" data-delete-movement="<%= row.id %>"><i class="ri-delete-bin-line"></i></button>
+                        <% } %>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="text-muted mt-2"><%= row.descripcion || 'Sin descripción registrada.' %></div>
+                </article>
+              <% }) %>
+            </div>
+          </div>
+
+          <div class="app-footer"><span>© C&C Dental Studio 2026</span></div>
+        </div>
+      </div>
+    </div>
+
+    <% if (canFn('inventario:salidas')) { %>
+      <div class="modal fade" id="movementCreateModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <form class="modal-content" action="/admin/salidasProducto" method="POST" id="movementCreateForm">
+            <div class="modal-header">
+              <h5 class="modal-title">Registrar salida de producto</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label for="producto_id" class="form-label">Producto</label>
+                <select class="form-select searchable-native-select" id="producto_id" name="producto_id" required>
+                  <option value="">Seleccione un producto</option>
+                  <% productRows.forEach(product => { %>
+                    <option value="<%= product.id %>"><%= product.nombre %> · stock <%= Number(product.stock || 0) %></option>
+                  <% }) %>
+                </select>
+                <div id="movementProductSearch"></div>
+              </div>
+              <div class="row gx-3">
+                <div class="col-md-6 mb-3">
+                  <label for="cantidad" class="form-label">Cantidad</label>
+                  <input type="number" class="form-control" id="cantidad" name="cantidad" required min="1" step="1" value="1">
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="fecha" class="form-label">Fecha</label>
+                  <input type="date" class="form-control" id="fecha" name="fecha" required>
+                </div>
+              </div>
+              <div class="mb-3">
+                <label for="descripcion" class="form-label">Motivo</label>
+                <textarea class="form-control" id="descripcion" name="descripcion" rows="3" required></textarea>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+              <button type="submit" class="btn btn-primary">Guardar salida</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    <% } %>
+
+    <div class="modal fade" id="movementInfoModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Detalle del movimiento</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body" id="movementInfoBody"></div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <%- include('partials/uiFeedback') %>
+
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/vendor/overlay-scroll/jquery.overlayScrollbars.min.js"></script>
+    <script src="assets/vendor/overlay-scroll/custom-scrollbar.js"></script>
+    <script src="assets/js/custom.js"></script>
+    <script>
+      const movements = <%- safeJson(movementRows) %>;
+      const infoModal = new bootstrap.Modal(document.getElementById('movementInfoModal'));
+      window.initSearchableNativeSelect?.('producto_id', 'movementProductSearch', {
+        placeholder: 'Seleccione un producto',
+        searchPlaceholder: 'Buscar producto',
+      });
+
+      function escapeHtml(value) {
+        return String(value || '').replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
+      }
+      function localToday() {
+        const date = new Date();
+        return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      }
+      function filterMovements(value) {
+        const term = String(value || '').trim().toLowerCase();
+        document.querySelectorAll('[data-movement-row]').forEach(row => {
+          row.hidden = term && !row.dataset.search.includes(term);
+        });
+      }
+      function renderMovementInfo(movement) {
+        const type = String(movement.tipo || 'salida_manual').replace(/_/g, ' ');
+        document.getElementById('movementInfoBody').innerHTML = `
+          <div class="d-grid gap-3">
+            <div class="border rounded-2 p-3">
+              <small class="text-muted d-block">Producto</small>
+              <strong>${escapeHtml(movement.nombre_producto || 'Producto no encontrado')}</strong>
+            </div>
+            <div class="row gx-3">
+              <div class="col-6"><small class="text-muted d-block">Fecha</small><strong>${escapeHtml(movement.fecha || '-')}</strong></div>
+              <div class="col-6"><small class="text-muted d-block">Tipo</small><strong class="text-capitalize">${escapeHtml(type)}</strong></div>
+              <div class="col-6 mt-3"><small class="text-muted d-block">Cantidad</small><strong>${Number(movement.cantidad || 0)}</strong></div>
+              <div class="col-6 mt-3"><small class="text-muted d-block">Stock resultante</small><strong>${movement.stock_resultante ?? movement.stock_actual ?? '-'}</strong></div>
+            </div>
+            <div class="border rounded-2 p-3">
+              <small class="text-muted d-block">Descripción</small>
+              <div>${escapeHtml(movement.descripcion || 'Sin descripción')}</div>
+            </div>
+          </div>`;
+      }
+
+      document.getElementById('fecha') && (document.getElementById('fecha').value = localToday());
+      document.getElementById('movementSearch')?.addEventListener('input', event => filterMovements(event.target.value));
+      document.getElementById('topSearch')?.addEventListener('input', event => filterMovements(event.target.value));
+
+      document.getElementById('kardexRows')?.addEventListener('click', async event => {
+        const viewButton = event.target.closest('[data-view-movement]');
+        const deleteButton = event.target.closest('[data-delete-movement]');
+
+        if (viewButton) {
+          const movement = movements.find(item => Number(item.id) === Number(viewButton.dataset.viewMovement));
+          if (!movement) return;
+          renderMovementInfo(movement);
+          infoModal.show();
+          return;
+        }
+
+        if (deleteButton) {
+          const id = Number(deleteButton.dataset.deleteMovement);
+          confirmUiAction('¿Deseas eliminar este movimiento y ajustar el stock?', async () => {
+            deleteButton.disabled = true;
+            try {
+              const response = await fetch('/admin/eliminarMovimiento', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id }),
+              });
+              const data = await response.json().catch(() => ({}));
+              if (!response.ok || data.success === false) throw new Error(data.message || 'No se pudo eliminar el movimiento.');
+              showUiMessage('Movimiento eliminado y stock actualizado.', 'success');
+              setTimeout(() => window.location.reload(), 650);
+            } catch (error) {
+              deleteButton.disabled = false;
+              showUiMessage(error.message || 'No se pudo eliminar el movimiento.', 'danger');
+            }
+          }, {
+            title: 'Eliminar movimiento',
+            confirmText: 'Eliminar',
+            confirmType: 'danger',
+          });
+        }
+      });
+    </script>
+  </body>
+</html>

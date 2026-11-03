@@ -1,0 +1,736 @@
+<%
+  const data = typeof dashboard !== 'undefined' ? dashboard : {};
+  const profile = data.profile || {};
+  const visibility = data.visibility || {};
+  const stats = data.stats || {};
+  const todayTabs = data.todayTabs || [];
+  const todayAppointments = data.todayAppointments || [];
+  const patientVisits = data.patientVisits || [];
+  const availableDoctors = data.availableDoctors || [];
+  const charts = data.charts || {};
+  const monthSeries = charts.monthSeries || [];
+  const weekPatients = charts.weekPatients || [];
+  const canFn = typeof can === 'function' ? can : () => false;
+  const maxRevenue = Math.max(...monthSeries.map(item => Number(item.revenue || 0)), 1);
+  const maxAppointments = Math.max(...monthSeries.map(item => Number(item.appointments || 0)), 1);
+  const maxWeekPatients = Math.max(...weekPatients.map(item => Number(item.total || 0)), 1);
+  const patientTotal = Number(stats.patients || 0) + Number(stats.archivedPatients || 0);
+  const newPatientPercent = patientTotal ? Math.round((Number(stats.patients || 0) / patientTotal) * 100) : 0;
+  const formatMoney = (value) => `Q${Number(value || 0).toLocaleString('es-GT', { maximumFractionDigits: 0 })}`;
+  const doctorLabel = (doctor) => `Dr. ${doctor.nombre || ''} ${doctor.apellido || ''}`.trim();
+  const patientLabel = (row) => `${row.paciente_nombre || ''} ${row.paciente_apellido || ''}`.trim() || 'Paciente';
+  const statusClass = (status) => ({ 1: 'bg-primary', 2: 'bg-success', 3: 'bg-danger', 4: 'bg-warning' }[Number(status)] || 'bg-secondary');
+  const statusLabel = row => row.estado_nombre || ({ 1: 'Pendiente', 2: 'Atendida', 3: 'Cancelada', 4: 'En consulta' }[Number(row.estadoCita_idestadoCita)] || 'Sin estado');
+  const displayName = profile.displayName || 'Nombre pendiente';
+  const photoUrl = profile.photoUrl || '';
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const initials = displayName
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map(part => part.charAt(0).toUpperCase())
+    .join('') || 'NP';
+%>
+<!DOCTYPE html>
+<html lang="es">
+
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Página Principal - C&C Dental Studio</title>
+    <link rel="shortcut icon" type="image/svg+xml" href="/images/cnc-favicon.svg">
+    <link rel="stylesheet" href="/assets/fonts/remix/remixicon.css">
+    <link rel="stylesheet" href="/assets/css/main.min.css">
+    <link rel="stylesheet" href="/assets/vendor/overlay-scroll/OverlayScrollbars.min.css">
+    <link rel="stylesheet" href="/assets/vendor/daterange/daterange.css">
+    <style>
+      .dashboard-shell {
+        background: #f7fbff;
+      }
+
+      .sidebar-wrapper .app-brand .logo {
+        width: 52px;
+        height: 52px;
+        object-fit: contain;
+      }
+
+      .dashboard-welcome-card .mh-190 {
+        min-height: 190px;
+      }
+
+      .dashboard-welcome-card .card-body {
+        overflow: hidden;
+        position: relative;
+      }
+
+      .dashboard-welcome-card .card-body::before {
+        background: linear-gradient(90deg, rgba(255, 255, 255, .92), rgba(255, 255, 255, .68), rgba(255, 255, 255, .18));
+        bottom: 0;
+        content: "";
+        left: 0;
+        pointer-events: none;
+        position: absolute;
+        right: 0;
+        top: 0;
+      }
+
+      .dashboard-welcome-card .mh-190 {
+        position: relative;
+        z-index: 1;
+      }
+
+      .dashboard-welcome-card .welcome-copy {
+        background: rgba(255, 255, 255, .84);
+        border: 1px solid rgba(115, 103, 240, .18);
+        border-radius: 12px;
+        box-shadow: 0 16px 42px rgba(35, 27, 113, .08);
+        display: inline-block;
+        max-width: 460px;
+        padding: 1rem;
+      }
+
+      .dashboard-welcome-card .welcome-stat {
+        background: rgba(255, 255, 255, .88);
+        border: 1px solid rgba(115, 103, 240, .16);
+        border-radius: 999px;
+        padding: .55rem .9rem;
+      }
+
+      .metric-card,
+      .soft-card {
+        border: 1px solid #d9e2f0;
+        border-radius: 12px;
+        background: #fff;
+      }
+
+      .metric-orb {
+        width: 64px;
+        height: 64px;
+        display: grid;
+        place-items: center;
+        border: 1px solid #7965ff;
+        border-radius: 50%;
+        color: #705df3;
+        background: #f4f1ff;
+        font-size: 1.75rem;
+      }
+
+      .day-pill {
+        border: 0;
+        border-radius: 0 0 8px 8px;
+        background: #eeebff;
+        color: #121212;
+        padding: .8rem 1.1rem;
+      }
+
+      .day-pill.active {
+        background: #705df3;
+        color: #fff;
+      }
+
+      .appointment-card {
+        border: 1px solid #d9e2f0;
+        border-radius: 10px;
+        background: #fff;
+      }
+
+      .avatar-circle {
+        width: 48px;
+        height: 48px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        background: #dff7fb;
+        color: #246c78;
+        font-weight: 700;
+      }
+
+      .profile-initials {
+        width: 70px;
+        height: 70px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        border: 3px solid var(--bs-primary);
+        background: #f4f1ff;
+        color: var(--bs-primary);
+        font-weight: 700;
+        font-size: 1.25rem;
+      }
+
+      .header-initials {
+        width: 44px;
+        height: 44px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        border: 3px solid #fff;
+        background: #f4f1ff;
+        color: var(--bs-primary);
+        font-weight: 700;
+      }
+
+      .profile-photo {
+        width: 70px;
+        height: 70px;
+        object-fit: cover;
+      }
+
+      .header-photo {
+        width: 44px;
+        height: 44px;
+        object-fit: cover;
+      }
+
+      .dashboard-chart {
+        min-height: 260px;
+        display: grid;
+        grid-template-columns: repeat(12, minmax(28px, 1fr));
+        align-items: end;
+        gap: 14px;
+        border-bottom: 1px solid #dfe7f3;
+        padding-top: 36px;
+      }
+
+      .chart-column {
+        display: flex;
+        flex-direction: column;
+        justify-content: end;
+        align-items: center;
+        height: 220px;
+        gap: 8px;
+      }
+
+      .bar-revenue,
+      .bar-appointments {
+        width: 100%;
+        max-width: 44px;
+        border-radius: 6px 6px 0 0;
+      }
+
+      .bar-revenue {
+        background: rgba(112, 93, 243, .35);
+        border: 2px solid #705df3;
+      }
+
+      .bar-appointments {
+        background: #705df3;
+        opacity: .85;
+      }
+
+      .week-chart {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        align-items: end;
+        gap: 18px;
+        height: 230px;
+        border-bottom: 1px solid #dfe7f3;
+      }
+
+      .week-line {
+        width: 100%;
+        min-height: 4px;
+        border-radius: 10px 10px 0 0;
+        background: linear-gradient(180deg, rgba(112, 93, 243, .75), rgba(112, 93, 243, .18));
+      }
+
+      .consultation-ring {
+        width: 150px;
+        height: 150px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        background: conic-gradient(#705df3 <%= newPatientPercent %>%, #e8eef7 0);
+        margin: 1rem auto;
+      }
+
+      .consultation-ring-inner {
+        width: 110px;
+        height: 110px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        background: #f3f1ff;
+      }
+
+      .empty-state {
+        border: 1px dashed #b9c6da;
+        border-radius: 12px;
+        background: #fbfdff;
+        color: #6c7a8d;
+      }
+
+      @media (max-width: 991.98px) {
+        .dashboard-welcome-card .mh-190 {
+          min-height: auto;
+        }
+      }
+    </style>
+  </head>
+
+  <body class="dashboard-shell">
+    <div id="loading-wrapper">
+      <div class="spin-wrapper"><div class="circle"></div><div class="circle"></div></div>
+      <div class="spin-wrapper"><div class="circle"></div><div class="circle"></div></div>
+      <div class="spin-wrapper"><div class="circle"></div><div class="circle"></div></div>
+      <div class="spin-wrapper"><div class="circle"></div><div class="circle"></div></div>
+      <div class="spin-wrapper"><div class="circle"></div><div class="circle"></div></div>
+      <div class="spin-wrapper"><div class="circle"></div><div class="circle"></div></div>
+    </div>
+
+    <div class="page-wrapper">
+      <div class="main-container">
+        <nav id="sidebar" class="sidebar-wrapper">
+          <div class="brand-container d-flex align-items-center justify-content-between">
+            <div class="app-brand ms-3">
+              <a href="/admin/dash">
+                <img src="/images/cnc-logo-alt.svg" class="logo" alt="C&C Dental Studio">
+              </a>
+            </div>
+            <button type="button" class="pin-sidebar me-3">
+              <i class="ri-menu-line"></i>
+            </button>
+          </div>
+
+          <div class="sidebar-profile">
+            <% if (photoUrl) { %>
+              <img src="<%= photoUrl %>" class="profile-photo rounded-5 border border-primary border-3 mb-2" alt="Perfil">
+            <% } else { %>
+              <div class="profile-initials mx-auto mb-2"><%= initials %></div>
+            <% } %>
+            <h6 class="mb-1 profile-name text-nowrap text-truncate text-primary"><%= displayName %></h6>
+            <small class="profile-name text-nowrap text-truncate"><%= profile.roleLabel || 'Equipo' %></small>
+          </div>
+
+          <div class="sidebarMenuScroll">
+            <%- include('partials/adminSidebar', { activePage: 'dashboard', canFn }) %>
+          </div>
+        </nav>
+
+        <div class="app-container">
+          <div class="app-header d-flex align-items-center">
+            <div class="brand-container-sm d-xl-none d-flex align-items-center">
+              <div class="app-brand">
+                <a href="/admin/dash">
+                  <img src="/images/cnc-logo-alt.svg" class="logo" alt="C&C Dental Studio">
+                </a>
+              </div>
+              <button type="button" class="toggle-sidebar">
+                <i class="ri-menu-line"></i>
+              </button>
+            </div>
+
+            <div class="search-container d-xl-block d-none mx-3">
+              <input type="text" class="form-control" id="searchData" placeholder="Buscar">
+              <i class="ri-search-line"></i>
+            </div>
+
+            <div class="header-actions">
+              <div class="d-lg-flex d-none gap-2">
+                <div class="dropdown">
+                  <a class="dropdown-toggle header-icon" href="#!" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="ri-star-line"></i>
+                  </a>
+                  <div class="dropdown-menu dropdown-menu-end dropdown-300">
+                    <h5 class="fw-semibold px-3 py-2 text-primary">Accesos rápidos</h5>
+                    <div class="d-flex justify-content-center gap-3 px-3 pb-3">
+                      <% if (canFn('pacientes:ver')) { %>
+                        <a href="/admin/pacientes" class="text-center">
+                          <div class="icon-box lg bg-primary-subtle rounded-5 mb-1"><i class="ri-user-heart-line text-primary fs-4"></i></div>
+                          Pacientes
+                        </a>
+                      <% } %>
+                      <% if (canFn('citas:ver')) { %>
+                        <a href="/admin/citas" class="text-center">
+                          <div class="icon-box lg bg-primary-subtle rounded-5 mb-1"><i class="ri-calendar-check-line text-primary fs-4"></i></div>
+                          Citas
+                        </a>
+                      <% } %>
+                      <% if (canFn('pagos:ver')) { %>
+                        <a href="/admin/pago" class="text-center">
+                          <div class="icon-box lg bg-primary-subtle rounded-5 mb-1"><i class="ri-money-dollar-circle-line text-primary fs-4"></i></div>
+                          Pagos
+                        </a>
+                      <% } %>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="dropdown">
+                  <a class="dropdown-toggle header-icon" href="#!" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="ri-notification-3-line"></i>
+                    <% if ((stats.pendingPayments || 0) > 0) { %><span class="count-label"></span><% } %>
+                  </a>
+                  <div class="dropdown-menu dropdown-menu-end dropdown-300">
+                    <h5 class="fw-semibold px-3 py-2 text-primary">Alertas</h5>
+                    <div class="p-3">
+                      <% if (visibility.showFinance && (stats.pendingPayments || 0) > 0) { %>
+                        <div class="d-flex py-2">
+                          <i class="ri-bill-line text-warning fs-4 me-3"></i>
+                          <div><h6 class="mb-1">Saldos pendientes</h6><p class="mb-0 small"><%= formatMoney(stats.pendingPayments) %> por revisar.</p></div>
+                        </div>
+                      <% } else { %>
+                        <p class="mb-0 small text-muted">No hay alertas pendientes.</p>
+                      <% } %>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="dropdown ms-3">
+                <a id="userSettings" class="dropdown-toggle d-flex align-items-center" href="#!" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <div class="avatar-box">
+                    <% if (photoUrl) { %>
+                      <img src="<%= photoUrl %>" class="header-photo rounded-5 border border-3 border-white" alt="Perfil">
+                    <% } else { %>
+                      <div class="header-initials"><%= initials %></div>
+                    <% } %>
+                  </div>
+                </a>
+                <div class="dropdown-menu dropdown-menu-end shadow-lg">
+                  <div class="px-3 py-2">
+                    <span class="small"><%= profile.roleLabel || 'Equipo' %></span>
+                    <h6 class="m-0"><%= displayName %></h6>
+                  </div>
+                  <div class="mx-3 my-2 d-grid">
+                    <a href="/admin/perfil" class="btn btn-light mb-2">
+                      <i class="ri-user-line me-1"></i> Perfil
+                    </a>
+                    <% if (canFn('configuracion:ver')) { %>
+                      <a href="/admin/settings" class="btn btn-light mb-2">
+                        <i class="ri-settings-3-line me-1"></i> Configuración
+                      </a>
+                    <% } %>
+                    <a href="/logout" class="btn btn-danger">Cerrar sesión</a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="app-hero-header d-flex align-items-center">
+            <ol class="breadcrumb">
+              <li class="breadcrumb-item"><a href="/admin/dash"><i class="ri-home-3-line"></i></a></li>
+              <li class="breadcrumb-item text-primary" aria-current="page">Panel principal</li>
+            </ol>
+            <div class="ms-auto d-lg-flex d-none flex-row">
+              <div class="input-group">
+                <span class="input-group-text bg-primary-lighten">
+                  <i class="ri-calendar-2-line text-primary"></i>
+                </span>
+                <input type="text" id="abc" class="form-control custom-daterange">
+              </div>
+            </div>
+          </div>
+
+          <div class="app-body">
+            <div class="row gx-4">
+              <div class="col-sm-12">
+                <div class="card mb-4 bg-3 dashboard-welcome-card">
+                  <div class="card-body">
+                    <div class="mh-190">
+                      <div class="py-3 px-2">
+                        <div class="text-primary welcome-copy">
+                          <h6>Bienvenido,</h6>
+                          <h3 class="mb-1"><%= displayName %></h3>
+                          <p class="fw-normal">Este es tu resumen de trabajo para C&C Dental Studio.</p>
+                        </div>
+                        <div class="mt-4 d-flex gap-4 flex-wrap">
+                  <% if (visibility.showAppointments) { %>
+                    <div class="d-flex align-items-center gap-3 welcome-stat">
+                      <div class="icon-box bg-white lg rounded-5"><i class="ri-stethoscope-line fs-3 text-primary"></i></div>
+                      <div>
+                        <h2 class="m-0 lh-1"><%= stats.appointmentsToday || 0 %></h2>
+                        <p class="m-0">Citas hoy</p>
+                      </div>
+                    </div>
+                  <% } %>
+                  <% if (visibility.showClinical) { %>
+                    <div class="d-flex align-items-center gap-3 welcome-stat">
+                      <div class="icon-box bg-white lg rounded-5"><i class="ri-heart-pulse-line fs-3 text-primary"></i></div>
+                      <div>
+                        <h2 class="m-0 lh-1"><%= stats.consultations || 0 %></h2>
+                        <p class="m-0">Consultas registradas</p>
+                      </div>
+                    </div>
+                  <% } %>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="row gx-3">
+              <% if (visibility.showPatients) { %>
+                <div class="col-xl-4 col-sm-6 col-12">
+                  <div class="metric-card p-3 mb-3">
+                    <div class="d-flex align-items-center gap-3">
+                      <div class="metric-orb"><i class="ri-user-heart-line"></i></div>
+                      <div>
+                        <h2 class="mb-0"><%= stats.patients || 0 %></h2>
+                        <span>Pacientes</span>
+                      </div>
+                    </div>
+                    <span class="badge bg-light text-primary mt-3">Activos en sistema</span>
+                  </div>
+                </div>
+              <% } %>
+
+              <% if (visibility.showAppointments) { %>
+                <div class="col-xl-4 col-sm-6 col-12">
+                  <div class="metric-card p-3 mb-3">
+                    <div class="d-flex align-items-center gap-3">
+                      <div class="metric-orb"><i class="ri-calendar-check-line"></i></div>
+                      <div>
+                        <h2 class="mb-0"><%= stats.appointmentsMonth || 0 %></h2>
+                        <span>Citas del mes</span>
+                      </div>
+                    </div>
+                    <span class="badge bg-light text-primary mt-3">Agenda actual</span>
+                  </div>
+                </div>
+              <% } %>
+
+              <% if (visibility.showFinance) { %>
+                <div class="col-xl-4 col-sm-6 col-12">
+                  <div class="metric-card p-3 mb-3">
+                    <div class="d-flex align-items-center gap-3">
+                      <div class="metric-orb"><i class="ri-money-dollar-circle-line"></i></div>
+                      <div>
+                        <h2 class="mb-0"><%= formatMoney(stats.revenueMonth) %></h2>
+                        <span>Ingresos del mes</span>
+                      </div>
+                    </div>
+                    <span class="badge bg-light text-primary mt-3">Pagos registrados</span>
+                  </div>
+                </div>
+              <% } %>
+            </div>
+
+            <% if (visibility.showAppointments) { %>
+              <div class="soft-card p-3 mb-4">
+                <div class="d-flex justify-content-center flex-wrap gap-1 mb-4">
+                  <% todayTabs.forEach((tab) => { %>
+                    <span class="day-pill <%= tab.active ? 'active' : '' %>"><%= tab.label %></span>
+                  <% }) %>
+                </div>
+                <h5 class="text-center mb-4">Citas de hoy</h5>
+                <% if (todayAppointments.length) { %>
+                  <div class="row gx-3 justify-content-center">
+                    <% todayAppointments.forEach((appointment) => { %>
+                      <div class="col-xl-3 col-md-4 col-sm-6 col-12">
+                        <div class="appointment-card p-3 mb-3">
+                          <div class="d-flex align-items-center gap-3">
+                            <div class="avatar-circle"><%= patientLabel(appointment).slice(0, 1).toUpperCase() %></div>
+                            <div class="flex-grow-1">
+                              <h6 class="mb-1"><%= patientLabel(appointment) %></h6>
+                              <small><%= appointment.motivoCita || 'Cita dental' %></small>
+                            </div>
+                            <span class="badge <%= statusClass(appointment.estadoCita_idestadoCita) %>"><%= appointment.horaCita || '--:--' %></span>
+                          </div>
+                        </div>
+                      </div>
+                    <% }) %>
+                  </div>
+                <% } else { %>
+                  <div class="empty-state p-4 text-center">No hay citas registradas para hoy.</div>
+                <% } %>
+              </div>
+            <% } %>
+
+            <% if (visibility.showFinance) { %>
+              <div class="soft-card p-3 mb-4">
+                <h5 class="mb-4">Resumen financiero</h5>
+                <div class="row gx-3">
+                  <div class="col-xl-3 col-sm-6 col-12">
+                    <div class="border rounded-3 p-3 mb-3">
+                      <div class="d-flex align-items-center gap-3">
+                        <i class="ri-pie-chart-2-line text-primary fs-1"></i>
+                        <div><h4 class="mb-0"><%= formatMoney(stats.revenueMonth) %></h4><small>Ingresos del mes</small></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-xl-3 col-sm-6 col-12">
+                    <div class="border rounded-3 p-3 mb-3">
+                      <div class="d-flex align-items-center gap-3">
+                        <i class="ri-bill-line text-warning fs-1"></i>
+                        <div><h4 class="mb-0"><%= formatMoney(stats.pendingPayments) %></h4><small>Saldos pendientes</small></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-xl-3 col-sm-6 col-12">
+                    <div class="border rounded-3 p-3 mb-3">
+                      <div class="d-flex align-items-center gap-3">
+                        <i class="ri-calendar-event-line text-success fs-1"></i>
+                        <div><h4 class="mb-0"><%= stats.appointmentsMonth || 0 %></h4><small>Citas del mes</small></div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="col-xl-3 col-sm-6 col-12">
+                    <div class="border rounded-3 p-3 mb-3">
+                      <div class="d-flex align-items-center gap-3">
+                        <i class="ri-team-line text-info fs-1"></i>
+                        <div><h4 class="mb-0"><%= stats.activeDoctors || 0 %></h4><small>Doctores activos</small></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <% } %>
+
+            <div class="row gx-3">
+              <% if (visibility.showFinance || visibility.showAppointments) { %>
+                <div class="col-xl-8 col-12">
+                  <div class="soft-card p-3 mb-4">
+                    <h5 class="mb-4">Ingresos y citas</h5>
+                    <div class="dashboard-chart">
+                      <% monthSeries.forEach((month) => { %>
+                        <div class="chart-column">
+                          <div class="bar-revenue" title="Ingresos" style="height: <%= Math.max((Number(month.revenue || 0) / maxRevenue) * 180, 4) %>px"></div>
+                          <div class="bar-appointments" title="Citas" style="height: <%= Math.max((Number(month.appointments || 0) / maxAppointments) * 90, 4) %>px"></div>
+                          <small><%= month.label %></small>
+                        </div>
+                      <% }) %>
+                    </div>
+                    <div class="d-flex justify-content-center gap-3 mt-3">
+                      <span><i class="ri-circle-fill text-primary"></i> Ingresos</span>
+                      <span><i class="ri-circle-fill text-secondary"></i> Citas</span>
+                    </div>
+                  </div>
+                </div>
+              <% } %>
+
+              <% if (visibility.showPatients) { %>
+                <div class="col-xl-4 col-12">
+                  <div class="soft-card p-3 mb-4">
+                    <h5 class="mb-3">Consultas</h5>
+                    <div class="consultation-ring">
+                      <div class="consultation-ring-inner text-center">
+                        <div>
+                          <span class="text-primary">Activos</span>
+                          <h4 class="mb-0"><%= newPatientPercent %>%</h4>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="row gx-2">
+                      <div class="col-6">
+                        <div class="border rounded-pill p-2"><i class="ri-men-line text-primary"></i> <strong><%= stats.malePatients || 0 %></strong> Masculino</div>
+                      </div>
+                      <div class="col-6">
+                        <div class="border rounded-pill p-2"><i class="ri-women-line text-danger"></i> <strong><%= stats.femalePatients || 0 %></strong> Femenino</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              <% } %>
+            </div>
+
+            <div class="row gx-3">
+              <% if (visibility.showPatients) { %>
+                <div class="col-xl-6 col-12">
+                  <div class="soft-card p-3 mb-4">
+                    <h5 class="mb-4">Pacientes por semana</h5>
+                    <div class="week-chart">
+                      <% weekPatients.forEach((day) => { %>
+                        <div class="text-center">
+                          <div class="week-line" style="height: <%= Math.max((Number(day.total || 0) / maxWeekPatients) * 190, 5) %>px"></div>
+                          <small><%= day.label %></small>
+                        </div>
+                      <% }) %>
+                    </div>
+                  </div>
+                </div>
+              <% } %>
+
+              <% if (visibility.showDoctors) { %>
+                <div class="col-xl-6 col-12">
+                  <div class="soft-card p-3 mb-4">
+                    <h5 class="mb-4">Doctores disponibles</h5>
+                    <% if (availableDoctors.length) { %>
+                      <div class="row gx-3">
+                        <% availableDoctors.forEach((doctor) => { %>
+                          <div class="col-md-6 col-12">
+                            <a class="appointment-card p-3 mb-3 d-block text-decoration-none text-body"
+                               href="/admin/doctores/perfil/<%= doctor.iddoctor %>"
+                               aria-label="Ver perfil de <%= doctorLabel(doctor) %>">
+                              <div class="d-flex align-items-center gap-3">
+                                <div class="avatar-circle"><%= (doctor.nombre || 'D').slice(0, 1).toUpperCase() %></div>
+                                <div class="flex-grow-1">
+                                  <h6 class="mb-1"><%= doctorLabel(doctor) %></h6>
+                                  <small><%= doctor.citas_hoy || 0 %> citas hoy</small>
+                                </div>
+                                <i class="ri-arrow-right-s-line text-primary fs-3"></i>
+                              </div>
+                            </a>
+                          </div>
+                        <% }) %>
+                      </div>
+                    <% } else { %>
+                      <div class="empty-state p-4 text-center">Aún no hay doctores activos registrados.</div>
+                    <% } %>
+                  </div>
+                </div>
+              <% } %>
+            </div>
+
+            <% if (visibility.showAppointments || visibility.showClinical) { %>
+              <div class="soft-card p-3 mb-4">
+                <h5 class="mb-4">Próximas visitas</h5>
+                <% if (patientVisits.length) { %>
+                  <div class="table-responsive">
+                    <table class="table align-middle">
+                      <thead>
+                        <tr>
+                          <th>#</th>
+                          <th>Paciente</th>
+                          <th>Edad</th>
+                          <th>Doctor</th>
+                          <th>Fecha</th>
+                          <th>Hora</th>
+                          <th>Motivo</th>
+                          <th>Estado</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <% patientVisits.forEach((visit, index) => { %>
+                          <tr>
+                            <td><%= String(index + 1).padStart(2, '0') %></td>
+                            <td><%= patientLabel(visit) %></td>
+                            <td><%= visit.edad || 'N/D' %></td>
+                            <td><%= `Dr. ${visit.doctor_nombre || ''} ${visit.doctor_apellido || ''}`.trim() %></td>
+                            <td><%= visit.fechaCita ? new Date(visit.fechaCita).toLocaleDateString('es-GT') : 'N/D' %></td>
+                            <td><%= visit.horaCita || '--:--' %></td>
+                            <td><span class="badge bg-light text-primary"><%= visit.motivoCita || 'Consulta' %></span></td>
+                            <td><span class="badge <%= statusClass(visit.estadoCita_idestadoCita) %>"><%= statusLabel(visit) %></span></td>
+                          </tr>
+                        <% }) %>
+                      </tbody>
+                    </table>
+                  </div>
+                <% } else { %>
+                  <div class="empty-state p-4 text-center">No hay próximas visitas para mostrar.</div>
+                <% } %>
+              </div>
+            <% } %>
+          </div>
+
+          <div class="app-footer">
+            <span>© C&C Dental Studio 2026</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script src="/assets/js/jquery.min.js"></script>
+    <script src="/assets/js/bootstrap.bundle.min.js"></script>
+    <script src="/assets/js/moment.min.js"></script>
+    <script src="/assets/vendor/overlay-scroll/jquery.overlayScrollbars.min.js"></script>
+    <script src="/assets/vendor/overlay-scroll/custom-scrollbar.js"></script>
+    <script src="/assets/vendor/daterange/daterange.js"></script>
+    <script src="/assets/vendor/daterange/custom-daterange.js"></script>
+    <script src="/assets/js/custom.js"></script>
+  </body>
+
+</html>

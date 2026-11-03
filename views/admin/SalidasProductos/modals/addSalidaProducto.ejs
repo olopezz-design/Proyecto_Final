@@ -1,0 +1,37 @@
+<!-- Modal para Salidas de Producto -->
+<div class="modal fade" id="addProductoModal" tabindex="-1" aria-labelledby="addProductoModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addProductoModalLabel">Registrar Salida de Producto</h5>
+                <button type="button" class="close" id="closeModalButton" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Formulario para registrar la salida -->
+                <form id="formSalidaProducto" action="/admin/salidasProducto" method="POST">
+                    <div class="mb-3">
+                        <label for="productoSelect" class="form-label">Producto</label>
+                        <select id="productoSelect" class="form-control" name="producto_id" required>
+                            <option value="">Seleccione un producto</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="cantidad" class="form-label">Cantidad</label>
+                        <input type="number" class="form-control" id="cantidad" name="cantidad" required min="1">
+                    </div>
+                    <div class="mb-3">
+                        <label for="fecha" class="form-label">Fecha</label>
+                        <input type="date" class="form-control" id="fecha" name="fecha" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="descripcion" class="form-label">Descripción (Motivo de la Resta)</label>
+                        <textarea class="form-control" id="descripcion" name="descripcion" rows="3" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Registrar Salida</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

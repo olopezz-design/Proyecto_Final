@@ -1,0 +1,35 @@
+<!-- Modal para ver la información de la categoría -->
+<div class="modal fade" id="verCategoriaModal" tabindex="-1" aria-labelledby="verCategoriaModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="verCategoriaModalLabel">Información de la Categoría</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Mostrar los detalles de la categoría en filas -->
+                <div class="row mb-3">
+                    <div class="col-4 font-weight-bold">ID:</div>
+                    <div class="col-8" id="idCategoriaInfo"></div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-4 font-weight-bold">Nombre:</div>
+                    <div class="col-8" id="nombreCategoriaInfo"></div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-4 font-weight-bold">Descripción:</div>
+                    <div class="col-8" id="descripcionCategoriaInfo"></div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-4 font-weight-bold">Símbolo:</div>
+                    <div class="col-8" id="simboloCategoriaInfo"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>

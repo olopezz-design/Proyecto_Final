@@ -1,0 +1,52 @@
+<!-- Modal para editar paciente -->
+<div class="modal fade" id="editpacienteModal" tabindex="-1" aria-labelledby="editpacienteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="editpacienteModalLabel"><i class="fas fa-user-edit"></i> Editar paciente</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editPacienteForm" action="/admin/pacientes/editar" method="POST">
+                    <input type="hidden" id="editpacienteId" name="idPaciente">
+
+                    <div class="form-group mb-3">
+                        <label for="editNombre" class="form-label"><i class="fas fa-user"></i> Nombre/s</label>
+                        <input type="text" class="form-control" id="editNombre" name="nombre" readonly>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="editApellido" class="form-label"><i class="fas fa-user-tag"></i> Apellido/s</label>
+                        <input type="text" class="form-control" id="editApellido" name="apellido" readonly>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="editTelefono" class="form-label"><i class="fas fa-phone"></i> Teléfono</label>
+                        <input type="text" class="form-control" id="editTelefono" name="telefono" required>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="editEmail" class="form-label"><i class="fas fa-envelope"></i> Email</label>
+                        <input type="email" class="form-control" id="editEmail" name="email" required>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="editDireccion" class="form-label"><i class="fas fa-map-marker-alt"></i> Dirección</label>
+                        <input type="text" class="form-control" id="editDireccion" name="direccion" required>
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="editNit" class="form-label"><i class="fas fa-id-card"></i> NIT</label>
+                        <input type="text" class="form-control" id="editNit" name="nit" required>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success btn-block"><i class="fas fa-save"></i> Guardar Cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

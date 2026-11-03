@@ -1,0 +1,50 @@
+<!-- Modal para agregar proveedor -->
+<div class="modal fade" id="addProveedorModal" tabindex="-1" role="dialog" aria-labelledby="addProveedorModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addProveedorModalLabel">Agregar Proveedor</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="formAgregarProveedor">
+                    <div class="form-group">
+                        <label for="nombreProveedor">Nombre empresa</label>
+                        <input type="text" class="form-control" id="nombreProveedor" name="nombre" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="nitProveedor">NIT</label>
+                        <input type="text" class="form-control" id="nitProveedor" name="nit">
+                    </div>
+                    <div class="form-group">
+                        <label for="emailProveedor">Correo empresa</label>
+                        <input type="email" class="form-control" id="emailProveedor" name="email">
+                    </div>
+                    <div class="form-group">
+                        <label for="telefonoProveedor">Teléfono empresa</label>
+                        <input type="text" class="form-control" id="telefonoProveedor" name="telefono">
+                    </div>
+                    <div class="form-group">
+                        <label for="direccionProveedor">Dirección</label>
+                        <input type="text" class="form-control" id="direccionProveedor" name="direccion">
+                    </div>
+                    <div class="form-group">
+                        <label for="observacionesProveedor">Observaciones</label>
+                        <textarea class="form-control" id="observacionesProveedor" name="observaciones" rows="3"></textarea>
+                    </div>
+
+                    <div class="border rounded p-3 mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <strong>Contactos</strong>
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="agregarContactoProveedor('contactosProveedorRows')"><i class="fas fa-plus mr-1"></i> Agregar contacto</button>
+                        </div>
+                        <div id="contactosProveedorRows"></div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

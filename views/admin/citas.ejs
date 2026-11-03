@@ -1,0 +1,403 @@
+<%
+  const headerProfile = typeof adminProfile !== 'undefined' ? adminProfile : {};
+  const headerName = headerProfile.displayName || 'Nombre pendiente';
+  const headerInitials = headerProfile.initials || headerName.split(/\s+/).slice(0, 2).map(part => part.charAt(0).toUpperCase()).join('') || 'DR';
+  const headerPhoto = headerProfile.photoUrl || '';
+  const headerRole = headerProfile.roleLabel || 'Usuario';
+  const canFn = typeof can === 'function' ? can : () => true;
+  const list = Array.isArray(citas) ? citas : [];
+  const patients = Array.isArray(pacientes) ? pacientes : [];
+  const doctors = Array.isArray(doctores) ? doctores : [];
+  const statuses = Array.isArray(estadosCita) ? estadosCita : [
+    { idestadoCita: 1, nombre: 'Pendiente' },
+    { idestadoCita: 2, nombre: 'Atendida' },
+    { idestadoCita: 3, nombre: 'Cancelada' }
+  ];
+  const selectedFilters = typeof filters !== 'undefined' && filters ? filters : {};
+  const toLocalDate = value => {
+    if (!value) return '';
+    if (value instanceof Date) return new Date(value.getFullYear(), value.getMonth(), value.getDate());
+    const text = String(value);
+    const match = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (match) return new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+    return new Date(value);
+  };
+  const normalizeDate = value => {
+    if (!value) return '';
+    if (!(value instanceof Date)) {
+      const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (match) return `${match[1]}-${match[2]}-${match[3]}`;
+    }
+    const date = toLocalDate(value);
+    if (!date || Number.isNaN(date.getTime())) return '';
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${date.getFullYear()}-${month}-${day}`;
+  };
+  const formatDate = value => {
+    if (!value) return 'Sin fecha';
+    const date = toLocalDate(value);
+    return !date || Number.isNaN(date.getTime()) ? 'Sin fecha' : date.toLocaleDateString('es-GT', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+  const formatTime = value => String(value || '').slice(0, 5) || '--:--';
+  const statusName = cita => cita.estado_nombre || statuses.find(item => Number(item.idestadoCita) === Number(cita.estadoCita_idestadoCita))?.nombre || 'Sin estado';
+  const statusClass = cita => {
+    const status = Number(cita.estadoCita_idestadoCita);
+    if (status === 2) return 'bg-success-subtle text-success';
+    if (status === 3) return 'bg-danger-subtle text-danger';
+    return 'bg-warning-subtle text-warning';
+  };
+  const selected = (value, current) => String(value) === String(current || '') ? 'selected' : '';
+  const stats = {
+    total: list.length,
+    pendientes: list.filter(item => Number(item.estadoCita_idestadoCita) === 1).length,
+    atendidas: list.filter(item => Number(item.estadoCita_idestadoCita) === 2).length,
+    canceladas: list.filter(item => Number(item.estadoCita_idestadoCita) === 3).length,
+  };
+%>
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <base href="/" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Citas - C&C Dental Studio</title>
+    <link rel="shortcut icon" type="image/svg+xml" href="/images/cnc-favicon.svg">
+    <link rel="stylesheet" href="assets/fonts/remix/remixicon.css">
+    <link rel="stylesheet" href="assets/css/main.min.css">
+    <link rel="stylesheet" href="assets/vendor/overlay-scroll/OverlayScrollbars.min.css">
+    <link rel="stylesheet" href="assets/vendor/datatables/dataTables.bs5.css">
+    <link rel="stylesheet" href="assets/vendor/datatables/dataTables.bs5-custom.css">
+    <style>
+      .profile-initials-badge,
+      .appointment-avatar {
+        align-items: center;
+        background: #f4f1ff;
+        color: #705df3;
+        display: inline-flex;
+        font-weight: 800;
+        justify-content: center;
+      }
+      .appointment-counter {
+        background: #f4f1ff;
+        border-radius: 12px;
+        color: #705df3;
+        font-size: .82rem;
+        padding: .55rem .75rem;
+      }
+      .appointment-avatar {
+        border-radius: 50%;
+        flex: 0 0 38px;
+        height: 38px;
+        width: 38px;
+      }
+      .appointment-filter {
+        border: 1px solid #dde2ee;
+        border-radius: 8px;
+        padding: 1rem;
+      }
+      .appointment-action {
+        height: 32px;
+        width: 32px;
+      }
+      .table td,
+      .table th {
+        white-space: nowrap;
+      }
+      .table .text-wrap-cell {
+        min-width: 220px;
+        white-space: normal;
+      }
+    </style>
+    <%- include('partials/searchableSelect') %>
+  </head>
+  <body>
+    <div class="page-wrapper">
+      <div class="main-container">
+        <nav id="sidebar" class="sidebar-wrapper">
+          <div class="brand-container d-flex align-items-center justify-content-between">
+            <div class="app-brand ms-3">
+              <a href="/admin/dash"><img src="/images/cnc-logo-alt.svg" class="logo" alt="C&C Dental Studio"></a>
+            </div>
+            <button type="button" class="pin-sidebar me-3"><i class="ri-menu-line"></i></button>
+          </div>
+          <div class="sidebar-profile">
+            <% if (headerPhoto) { %>
+              <img src="<%= headerPhoto %>" class="rounded-5 border border-primary border-3" alt="Foto de perfil">
+            <% } else { %>
+              <span class="profile-initials-badge rounded-5 border border-primary border-3 img-4x"><%= headerInitials %></span>
+            <% } %>
+            <h6 class="mb-1 profile-name text-nowrap text-truncate text-primary"><%= headerName %></h6>
+            <small class="profile-name text-nowrap text-truncate"><%= headerRole %></small>
+          </div>
+          <div class="sidebarMenuScroll">
+            <%- include('partials/adminSidebar', { activePage: 'citas', canFn }) %>
+          </div>
+        </nav>
+
+        <div class="app-container">
+          <div class="app-header d-flex align-items-center">
+            <div class="d-flex">
+              <div class="search-container d-xl-block d-none">
+                <input type="text" class="form-control" id="globalAppointmentSearch" placeholder="Buscar cita">
+                <i class="ri-search-line"></i>
+              </div>
+            </div>
+            <div class="header-actions ms-auto d-flex align-items-center gap-2">
+              <button type="button" class="btn btn-icon btn-light rounded-5"><i class="ri-notification-3-line"></i></button>
+              <div class="dropdown ms-2">
+                <a id="userSettings" class="dropdown-toggle d-flex align-items-center" href="#!" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <div class="avatar-box">
+                    <% if (headerPhoto) { %>
+                      <img src="<%= headerPhoto %>" class="img-2xx rounded-5 border border-3 border-white" alt="Foto de perfil">
+                    <% } else { %>
+                      <span class="profile-initials-badge img-2xx rounded-5 border border-3 border-white"><%= headerInitials %></span>
+                    <% } %>
+                    <span class="status busy"></span>
+                  </div>
+                </a>
+                <div class="dropdown-menu dropdown-menu-end shadow-lg">
+                  <div class="px-3 py-2"><span class="small"><%= headerRole %></span><h6 class="m-0"><%= headerName %></h6></div>
+                  <div class="dropdown-divider"></div>
+                  <a href="/admin/perfil" class="dropdown-item"><i class="ri-user-line me-2"></i> Perfil</a>
+                  <a href="/admin/settings" class="dropdown-item"><i class="ri-settings-3-line me-2"></i> Configuración</a>
+                  <div class="dropdown-divider"></div>
+                  <div class="mx-3 my-2 d-grid"><a href="/logout" class="btn btn-danger">Cerrar sesión</a></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="app-hero-header d-flex align-items-center">
+            <ol class="breadcrumb">
+              <li class="breadcrumb-item"><a href="/admin/dash"><i class="ri-home-3-line"></i></a></li>
+              <li class="breadcrumb-item text-primary" aria-current="page">Citas</li>
+            </ol>
+          </div>
+
+          <div class="app-body">
+            <div class="card mb-4">
+              <div class="card-header">
+                <div class="d-flex flex-wrap align-items-center gap-3">
+                  <h5 class="card-title m-0">Agenda de citas</h5>
+                  <div class="ms-auto d-flex flex-wrap align-items-center gap-2">
+                    <span class="appointment-counter"><strong><%= stats.total %></strong> total</span>
+                    <span class="appointment-counter"><strong><%= stats.pendientes %></strong> pendientes</span>
+                    <span class="appointment-counter"><strong><%= stats.atendidas %></strong> atendidas</span>
+                    <span class="appointment-counter"><strong><%= stats.canceladas %></strong> canceladas</span>
+                    <% if (canFn('citas:crear')) { %>
+                      <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addcitaModal">
+                        <i class="ri-calendar-event-line me-1"></i> Nueva cita
+                      </button>
+                    <% } %>
+                  </div>
+                </div>
+              </div>
+              <div class="card-body">
+                <form action="/admin/citas" method="POST" class="appointment-filter mb-4">
+                  <div class="row g-3 align-items-end">
+                    <div class="col-xl-3 col-md-6">
+                      <label class="form-label" for="fechaInicio">Fecha inicio</label>
+                      <input type="date" class="form-control" id="fechaInicio" name="fechaInicio" value="<%= normalizeDate(selectedFilters.fechaInicio) %>">
+                    </div>
+                    <div class="col-xl-3 col-md-6">
+                      <label class="form-label" for="fechaFin">Fecha fin</label>
+                      <input type="date" class="form-control" id="fechaFin" name="fechaFin" value="<%= normalizeDate(selectedFilters.fechaFin) %>">
+                    </div>
+                    <div class="col-xl-3 col-md-6">
+                      <label class="form-label" for="estadoCita">Estado</label>
+                      <select id="estadoCita" name="estadoCita" class="form-select">
+                        <option value="todas" <%= selected('todas', selectedFilters.estadoCita || 'todas') %>>Todos</option>
+                        <% statuses.forEach(status => { %>
+                          <option value="<%= status.idestadoCita %>" <%= selected(status.idestadoCita, selectedFilters.estadoCita) %>><%= status.nombre %></option>
+                        <% }) %>
+                      </select>
+                    </div>
+                    <div class="col-xl-3 col-md-6 d-flex gap-2">
+                      <button type="submit" class="btn btn-success flex-grow-1"><i class="ri-filter-3-line me-1"></i> Filtrar</button>
+                      <a href="/admin/citas" class="btn btn-light">Limpiar</a>
+                    </div>
+                  </div>
+                </form>
+
+                <div class="table-responsive">
+                  <table id="appointmentsTable" class="table m-0 align-middle">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Fecha</th>
+                        <th>Hora</th>
+                        <th>Paciente</th>
+                        <th>Doctor</th>
+                        <th>Motivo</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <% list.forEach(cita => {
+                        const pacienteNombre = `${cita.nombrePaciente || ''} ${cita.apellidoPaciente || ''}`.trim() || 'Paciente sin nombre';
+                        const doctorNombre = `${cita.nombreDoctor || ''} ${cita.apellidoDoctor || ''}`.trim() || 'Doctor sin nombre';
+                        const initials = pacienteNombre.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0].toUpperCase()).join('') || 'P';
+                        const isClosed = Number(cita.estadoCita_idestadoCita) === 2 || Number(cita.estadoCita_idestadoCita) === 3;
+                      %>
+                        <tr>
+                          <td>#<%= cita.idcita %></td>
+                          <td data-order="<%= normalizeDate(cita.fechaCita) %>"><%= formatDate(cita.fechaCita) %></td>
+                          <td><%= formatTime(cita.horaCita) %></td>
+                          <td>
+                            <div class="d-flex align-items-center gap-2">
+                              <span class="appointment-avatar"><%= initials %></span>
+                              <span><%= pacienteNombre %></span>
+                            </div>
+                          </td>
+                          <td><%= doctorNombre %></td>
+                          <td class="text-wrap-cell"><%= cita.motivoCita || 'Sin motivo registrado' %></td>
+                          <td><span class="badge <%= statusClass(cita) %>"><%= statusName(cita) %></span></td>
+                          <td>
+                            <div class="d-inline-flex gap-1">
+                              <button
+                                type="button"
+                                class="btn btn-outline-primary btn-sm appointment-action js-view-appointment"
+                                title="Ver cita"
+                                data-fecha="<%= formatDate(cita.fechaCita) %>"
+                                data-hora="<%= formatTime(cita.horaCita) %>"
+                                data-motivo="<%= cita.motivoCita || '' %>"
+                                data-notas="<%= cita.notasAdicionales || '' %>"
+                                data-estado="<%= statusName(cita) %>"
+                                data-paciente="<%= pacienteNombre %>"
+                                data-doctor="<%= doctorNombre %>">
+                                <i class="ri-information-line"></i>
+                              </button>
+                              <% if (canFn('citas:atender')) { %>
+                                <button
+                                  type="button"
+                                  class="btn btn-outline-success btn-sm appointment-action js-update-appointment"
+                                  title="Marcar atendida"
+                                  data-action="atender"
+                                  data-appointment-id="<%= cita.idcita %>"
+                                  <%= isClosed ? 'disabled' : '' %>>
+                                  <i class="ri-check-line"></i>
+                                </button>
+                              <% } %>
+                              <% if (canFn('citas:cancelar')) { %>
+                                <button
+                                  type="button"
+                                  class="btn btn-outline-danger btn-sm appointment-action js-update-appointment"
+                                  title="Cancelar cita"
+                                  data-action="cancelar"
+                                  data-appointment-id="<%= cita.idcita %>"
+                                  <%= isClosed ? 'disabled' : '' %>>
+                                  <i class="ri-close-line"></i>
+                                </button>
+                              <% } %>
+                            </div>
+                          </td>
+                        </tr>
+                      <% }) %>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="app-footer"><span>© C&C Dental Studio 2026</span></div>
+        </div>
+      </div>
+    </div>
+
+    <% if (canFn('citas:crear')) { %>
+      <%- include('Citas/modals/addCita', { pacientes: patients, doctores: doctors }) %>
+    <% } %>
+    <%- include('Citas/modals/infoCita') %>
+    <%- include('partials/uiFeedback') %>
+
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/vendor/overlay-scroll/jquery.overlayScrollbars.min.js"></script>
+    <script src="assets/vendor/overlay-scroll/custom-scrollbar.js"></script>
+    <script src="assets/vendor/datatables/dataTables.min.js"></script>
+    <script src="assets/vendor/datatables/dataTables.bootstrap.min.js"></script>
+    <script src="assets/js/custom.js"></script>
+    <script>
+      (function () {
+        const table = window.jQuery && $('#appointmentsTable').DataTable({
+          deferRender: true,
+          destroy: true,
+          paging: true,
+          searching: true,
+          ordering: true,
+          info: true,
+          lengthChange: false,
+          language: {
+            emptyTable: 'No hay citas registradas',
+            info: 'Mostrando _START_ a _END_ de _TOTAL_ citas',
+            infoEmpty: 'Sin citas para mostrar',
+            search: 'Buscar:',
+            zeroRecords: 'No se encontraron citas',
+            paginate: { previous: '<', next: '>' }
+          },
+          order: [[1, 'desc'], [2, 'desc']]
+        });
+
+        document.getElementById('globalAppointmentSearch')?.addEventListener('input', event => {
+          if (table) table.search(event.target.value).draw();
+        });
+
+        document.querySelectorAll('.js-view-appointment').forEach(button => {
+          button.addEventListener('click', () => {
+            document.getElementById('infoCitaFecha').textContent = button.dataset.fecha || 'Sin fecha';
+            document.getElementById('infoCitaHora').textContent = button.dataset.hora || '--:--';
+            document.getElementById('infoCitaMotivo').textContent = button.dataset.motivo || 'Sin motivo registrado';
+            document.getElementById('infoCitaNotas').textContent = button.dataset.notas || 'Sin notas adicionales';
+            document.getElementById('infoCitaEstado').textContent = button.dataset.estado || 'Sin estado';
+            document.getElementById('infoCitaPaciente').textContent = button.dataset.paciente || 'Paciente sin nombre';
+            document.getElementById('infoCitaDoctor').textContent = button.dataset.doctor || 'Doctor sin nombre';
+            const modal = document.getElementById('infoCitaModal');
+            if (modal && window.bootstrap) new bootstrap.Modal(modal).show();
+          });
+        });
+
+        async function updateAppointment(button) {
+          const id = button.dataset.appointmentId;
+          const action = button.dataset.action;
+          const endpoint = action === 'atender'
+            ? `/api/admin/citas/${id}/atender`
+            : `/api/admin/citas/${id}/cancelar`;
+          const options = action === 'atender'
+            ? { title: 'Marcar cita atendida', confirmText: 'Marcar atendida', confirmType: 'success', body: JSON.stringify({ estado: 2 }) }
+            : { title: 'Cancelar cita', confirmText: 'Cancelar cita', confirmType: 'danger' };
+
+          const run = async () => {
+            button.disabled = true;
+            try {
+              const response = await fetch(endpoint, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: options.body
+              });
+              const data = await response.json().catch(() => ({}));
+              if (!response.ok || data.success === false) throw new Error(data.message || 'No se pudo actualizar la cita.');
+              showUiMessage(action === 'atender' ? 'Cita marcada como atendida.' : 'Cita cancelada correctamente.', 'success');
+              setTimeout(() => window.location.reload(), 650);
+            } catch (error) {
+              button.disabled = false;
+              showUiMessage(error.message || 'Hubo un problema al actualizar la cita.', 'danger');
+            }
+          };
+
+          confirmUiAction(
+            action === 'atender' ? '¿Deseas marcar esta cita como atendida?' : '¿Deseas cancelar esta cita?',
+            run,
+            options
+          );
+        }
+
+        document.querySelectorAll('.js-update-appointment').forEach(button => {
+          button.addEventListener('click', () => updateAppointment(button));
+        });
+      })();
+    </script>
+  </body>
+</html>

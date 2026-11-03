@@ -1,0 +1,134 @@
+<%
+  const active = typeof activePage !== 'undefined' ? activePage : '';
+  const canAccess = typeof canFn === 'function' ? canFn : () => true;
+  const menuItems = [
+    { key: 'dashboard', label: 'Panel principal', href: '/admin/dash', icon: 'ri-home-6-line', permission: 'dashboard:ver' },
+    { key: 'citas', label: 'Citas', href: '/admin/appointments', icon: 'ri-calendar-check-line', permission: 'citas:ver' },
+    { key: 'pacientes', label: 'Pacientes', href: '/admin/pacientes', icon: 'ri-user-heart-line', permission: 'pacientes:ver' },
+    { key: 'lista-compras', label: 'Lista de compras', href: '/admin/lista-compras', icon: 'ri-file-list-3-line', permission: 'inventario:ver' },
+    { key: 'inventario', label: 'Inventario', href: '/admin/productos', icon: 'ri-archive-line', permission: 'inventario:ver' },
+    { key: 'pagos', label: 'Pagos', href: '/admin/pago', icon: 'ri-money-dollar-circle-line', permission: 'pagos:ver' },
+    { key: 'portafolio', label: 'Portafolio', href: '/admin/gallery', icon: 'ri-gallery-line', permission: 'portafolio:ver' },
+  ].filter(item => canAccess(item.permission));
+%>
+<style>
+  .app-container,
+  .app-body,
+  .app-header,
+  .app-hero-header {
+    min-width: 0;
+  }
+  .app-header {
+    gap: .75rem;
+  }
+  .app-header .header-actions {
+    min-width: 0;
+  }
+  .app-hero-header {
+    gap: .75rem;
+  }
+  .app-hero-header .breadcrumb {
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+  .app-hero-header .breadcrumb-item {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .inventory-nav {
+    max-width: 100%;
+    min-width: 0;
+  }
+  .table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  @media (max-width: 991.98px) {
+    .app-header {
+      align-items: flex-start !important;
+      flex-wrap: wrap;
+      min-height: auto;
+      padding: .75rem 1rem;
+    }
+    .app-header .header-actions {
+      flex: 1 1 100%;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+    .inventory-nav {
+      justify-content: flex-start;
+      overflow-x: auto;
+      padding-bottom: .25rem;
+      width: 100%;
+    }
+    .inventory-nav-link {
+      flex: 0 0 auto;
+      white-space: nowrap;
+    }
+    .app-hero-header {
+      align-items: flex-start !important;
+      flex-direction: column;
+      padding: .85rem 1rem;
+      position: relative;
+      top: auto;
+    }
+    .app-hero-header .ms-auto {
+      margin-left: 0 !important;
+    }
+    .app-body {
+      padding: 1rem;
+    }
+    .card-header,
+    .card-body {
+      min-width: 0;
+    }
+  }
+  @media (max-width: 575.98px) {
+    .app-body {
+      padding: .75rem;
+    }
+    .app-footer {
+      padding-left: .75rem;
+      padding-right: .75rem;
+    }
+    .app-header .header-actions {
+      justify-content: flex-start;
+    }
+    .app-header .avatar-box img,
+    .app-header .avatar-box .profile-initials-badge {
+      height: 38px !important;
+      width: 38px !important;
+    }
+    .app-hero-header .btn,
+    .app-hero-header .badge {
+      white-space: normal;
+    }
+    .modal-dialog {
+      margin: .5rem;
+      max-width: calc(100% - 1rem);
+    }
+    .modal-content {
+      max-height: calc(100dvh - 1rem);
+    }
+    .modal-body {
+      overflow: auto;
+    }
+    .card-body {
+      padding: 1rem;
+    }
+    .d-flex.flex-wrap.gap-4 {
+      gap: .9rem !important;
+    }
+  }
+</style>
+<ul class="sidebar-menu">
+  <% menuItems.forEach(item => { %>
+    <li class="<%= active === item.key ? 'active current-page' : '' %>">
+      <a href="<%= item.href %>">
+        <i class="<%= item.icon %>"></i>
+        <span class="menu-text"><%= item.label %></span>
+      </a>
+    </li>
+  <% }) %>
+</ul>

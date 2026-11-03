@@ -1,0 +1,126 @@
+<div class="modal fade" id="editDoctorModal" tabindex="-1" aria-labelledby="editDoctorModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-info text-white">
+        <h5 class="modal-title" id="editDoctorModalLabel"><i class="fas fa-user-md"></i> Editar Doctor</h5>
+        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="editDoctorForm">
+          <input type="hidden" id="editDoctorId" name="iddoctor">
+
+          <table class="table table-bordered">
+            <thead class="thead-light">
+              <tr><th colspan="2" class="text-center">Información personal</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong><i class="fas fa-user"></i> Nombre</strong></td>
+                <td><input type="text" class="form-control" id="editNombre" name="nombre" required></td>
+              </tr>
+              <tr>
+                <td><strong><i class="fas fa-user-tag"></i> Apellido</strong></td>
+                <td><input type="text" class="form-control" id="editApellido" name="apellido" required></td>
+              </tr>
+              <tr>
+                <td><strong><i class="fas fa-phone"></i> Teléfono</strong></td>
+                <td><input type="text" class="form-control" id="editTelefono" name="telefono"></td>
+              </tr>
+              <tr>
+                <td><strong><i class="fas fa-envelope"></i> Email</strong></td>
+                <td><input type="email" class="form-control" id="editEmail" name="email"></td>
+              </tr>
+              <tr>
+                <td><strong><i class="fas fa-map-marker-alt"></i> Dirección</strong></td>
+                <td><input type="text" class="form-control" id="editDomicilio" name="domicilio"></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <table class="table table-bordered">
+            <thead class="thead-light">
+              <tr><th colspan="2" class="text-center">Detalles profesionales</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong><i class="fas fa-user-md"></i> Especialidad</strong></td>
+                <td>
+                  <select id="editEspecialidad" name="especialidad_idespecialidad" class="form-control" required>
+                    <option value="1">Dentista General</option>
+                    <option value="2">Ortodoncista</option>
+                    <option value="3">Cirujano Maxilofacial</option>
+                    <option value="4">Endodoncia</option>
+                    <option value="5">Periodoncia</option>
+                    <option value="6">Odontólogo Cosmético</option>
+                    <option value="7">Odontólogo Restaurador</option>
+                    <option value="8">Prótesis Dental</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td><strong><i class="fas fa-id-card"></i> DPI</strong></td>
+                <td><input type="text" class="form-control" id="editDPI" name="dpi"></td>
+              </tr>
+              <tr>
+                <td><strong><i class="fas fa-calendar"></i> Fecha de nacimiento</strong></td>
+                <td><input type="date" class="form-control" id="editFechaNacimiento" name="fechaNacimiento"></td>
+              </tr>
+              <tr>
+                <td><strong><i class="fas fa-venus-mars"></i> Género</strong></td>
+                <td>
+                  <select id="editGenero" name="genero_idGenero" class="form-control" required>
+                    <option value="1">Masculino</option>
+                    <option value="2">Femenino</option>
+                    <option value="3">Otro</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td><strong><i class="fas fa-tint"></i> Tipo de sangre</strong></td>
+                <td><input type="text" class="form-control" id="editTipoSangre" name="tipoSangre" maxlength="5"></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <% if (can('doctores:horarios')) { %>
+          <table class="table table-bordered">
+            <thead class="thead-light">
+              <tr>
+                <th class="text-center"><i class="fas fa-clock"></i> Horario laboral</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>
+                  <div id="editDoctorSchedules" class="d-flex flex-column"></div>
+                  <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="addDoctorScheduleRow">
+                    <i class="fas fa-plus"></i> Agregar horario
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <% } %>
+
+          <table class="table table-bordered">
+            <thead class="thead-light">
+              <tr><th class="text-center"><i class="fas fa-sticky-note"></i> Observaciones</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><textarea class="form-control" id="editObservacion" name="observacion" rows="3"></textarea></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="d-flex justify-content-end">
+            <button type="button" class="btn btn-secondary mr-2" data-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-success"><i class="fas fa-save"></i> Guardar Cambios</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

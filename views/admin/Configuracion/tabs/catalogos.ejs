@@ -1,0 +1,103 @@
+<div class="catalog-grid mb-4">
+  <aside>
+    <div class="settings-card-soft p-3">
+      <span class="settings-kicker">Catálogos</span>
+      <h5 class="mb-3">Módulos disponibles</h5>
+      <div class="list-group catalog-list" id="catalogList">
+        <% (catalogs || []).forEach(function(catalog, index) { %>
+          <button type="button" class="list-group-item list-group-item-action <%= index === 0 ? 'active' : '' %>" data-catalog="<%= catalog %>">
+            <span class="fw-semibold text-capitalize"><%= catalog.replace(/_/g, ' ') %></span>
+          </button>
+        <% }); %>
+      </div>
+    </div>
+  </aside>
+
+  <section>
+    <div class="settings-card-soft p-3 mb-3">
+      <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-3">
+        <div>
+          <span class="settings-kicker">Editor</span>
+          <h5 class="mb-1" id="catalogTitle">Seleccione un catálogo</h5>
+          <p class="text-muted mb-0">Agrega, edita o desactiva registros. El sistema solo guarda los campos disponibles para cada catálogo.</p>
+        </div>
+        <button type="button" class="btn btn-outline-primary" id="reloadCatalog">
+          <i class="ri-refresh-line"></i> Actualizar
+        </button>
+      </div>
+      <div class="settings-status alert" id="catalogStatus"></div>
+      <form id="catalogForm" autocomplete="off">
+        <input type="hidden" id="catalogId">
+        <div class="row gx-3">
+          <div class="col-lg-4">
+            <div class="mb-3">
+              <label class="form-label" for="catalogNombre">Nombre</label>
+              <input type="text" class="form-control" id="catalogNombre" name="nombre" maxlength="150" required>
+            </div>
+          </div>
+          <div class="col-lg-4">
+            <div class="mb-3">
+              <label class="form-label" for="catalogDescripcion">Descripción</label>
+              <input type="text" class="form-control" id="catalogDescripcion" name="descripcion" maxlength="255">
+            </div>
+          </div>
+          <div class="col-lg-2">
+            <div class="mb-3">
+              <label class="form-label" for="catalogSimbolo" id="catalogExtraLabel">Símbolo</label>
+              <input type="text" class="form-control" id="catalogSimbolo" name="simbolo" maxlength="12">
+            </div>
+          </div>
+          <div class="col-lg-2 d-flex align-items-center">
+            <div class="form-check form-switch mt-3">
+              <input class="form-check-input" type="checkbox" id="catalogActivo" checked>
+              <label class="form-check-label" for="catalogActivo">Activo</label>
+            </div>
+          </div>
+        </div>
+        <div class="d-flex justify-content-end gap-2">
+          <button type="button" class="btn btn-outline-secondary" id="cancelCatalogEdit" style="display:none;">Cancelar edición</button>
+          <button type="submit" class="btn btn-primary" id="saveCatalog">Guardar registro</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="table-outer">
+      <div class="table-responsive">
+        <table class="table truncate align-middle m-0">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nombre</th>
+              <th>Descripción</th>
+              <th id="catalogExtraHeader">Símbolo</th>
+              <th>Estado</th>
+              <th class="config-table-actions">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="catalogRows"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="modal fade" id="catalogDeleteModal" tabindex="-1" aria-labelledby="catalogDeleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div>
+          <h5 class="modal-title" id="catalogDeleteModalLabel">Desactivar registro</h5>
+          <small class="text-muted">El registro dejará de mostrarse como activo.</small>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        ¿Deseas desactivar este registro?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <button type="button" class="btn btn-danger" id="confirmCatalogDelete">Desactivar</button>
+      </div>
+    </div>
+  </div>
+</div>

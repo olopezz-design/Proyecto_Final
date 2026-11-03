@@ -1,0 +1,1197 @@
+<%
+  const headerProfile = typeof adminProfile !== 'undefined' ? adminProfile : {};
+  const headerName = headerProfile.displayName || 'Nombre pendiente';
+  const headerInitials = headerProfile.initials || headerName.split(/\s+/).slice(0, 2).map(part => part.charAt(0).toUpperCase()).join('') || 'DR';
+  const headerPhoto = headerProfile.photoUrl || '';
+  const headerRole = headerProfile.roleLabel || 'Usuario';
+  const canFn = typeof can === 'function' ? can : () => true;
+  const c = consulta || {};
+  const p = paciente || {};
+  const doctorData = doctor || {};
+  const meds = Array.isArray(medicamentos) ? medicamentos : [];
+  const files = Array.isArray(archivos) ? archivos : [];
+  const prescriptionFile = files.find(file => String(file.ruta || '').includes('/recetas/'));
+  const quotes = Array.isArray(cotizaciones) ? cotizaciones : [];
+  const serviceOptions = Array.isArray(servicios) ? servicios : [];
+  const treatmentOptions = Array.isArray(tiposServicios) ? tiposServicios : [];
+  const inventoryProducts = Array.isArray(productosInventario) ? productosInventario : [];
+  const materialItems = Array.isArray(materialesConsumidos) ? materialesConsumidos : [];
+  const inventoryReady = Boolean(inventarioConsultaListo);
+  const visits = Array.isArray(ultimasVisitas) ? ultimasVisitas : [];
+  const history = Array.isArray(historial) ? historial : [];
+  const isLocked = String(c.estado || '').toLowerCase() === 'finalizada';
+  const fullName = `${p.nombre || ''} ${p.apellido || ''}`.trim() || 'Paciente';
+  const patientInitials = fullName.split(/\s+/).filter(Boolean).slice(0, 2).map(part => part[0].toUpperCase()).join('') || 'P';
+  const doctorName = `${doctorData.nombre || ''} ${doctorData.apellido || ''}`.trim() || 'Doctor sin asignar';
+  const dateForInput = value => {
+    if (!value) return '';
+    if (value instanceof Date) return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
+    const match = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return match ? `${match[1]}-${match[2]}-${match[3]}` : '';
+  };
+  const formatDate = value => {
+    if (!value) return 'Sin fecha';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? 'Sin fecha' : date.toLocaleDateString('es-GT', { day: '2-digit', month: 'short', year: 'numeric' });
+  };
+  const formatTime = value => String(value || '').slice(0, 5) || '--:--';
+  const formatMoney = value => `Q${Number(value || 0).toFixed(2)}`;
+  const disabled = isLocked ? 'disabled' : '';
+  const readonly = isLocked ? 'readonly' : '';
+  const quoteTaxRate = 0.12;
+  const safeJson = value => JSON.stringify(value).replace(/</g, '\\u003c');
+  const backUrl = `/admin/doc-appointments?fecha=${encodeURIComponent(dateForInput(c.fechaCita))}`;
+  const topMolar = 'M 46 0 C 44 23 66 19 60 60 C 48 73 36 62 33 57 C 25 67 8 69 5 60 C 0 20 19 23 18 0 C 22.6667 7.3333 27.3333 14.6667 32 22 Z';
+  const topCanine = 'M 25 0 C 30 15 50 20 45 60 C 27 60 17 77 26 52 C 25 77 22 60 0 60 C 0 20 20 15 25 0 Z';
+  const topPremolar = 'M 25 0 C 30 15 50 20 45 60 C 25 72 22 77 25 65 C 29 77 25 72 0 60 C 0 20 20 15 25 0 Z';
+  const topIncisor = 'M 25 0 C 30 15 50 20 41 56 C 38 62 10 62 9 56 C 0 20 20 15 25 0 Z';
+  const topWide = 'M 25 0 C 30 15 50 20 50 60 C 46 74 11 68 1 60 C 0 20 20 15 25 0 Z';
+  const lowerCanine = 'M 25 0 C 20 25 47 21 45 60 C 30 63 6 78 34 56 C 18 79 18 63 0 60 C -4 20 20 15 25 0 Z';
+  const lowerPremolar = 'M 25 0 C 30 15 50 20 46 60 C 45 62 43 63 41 63 C 28 63 42 56 31 60 C 29.3333 62.6667 26 66 19 60 C 13 58 21 64 5 60 C 0 20 20 15 25 0 Z';
+  const lowerWide = 'M 25 0 C 30 15 50 20 46 60 C 45 62 43 63 41 63 C 36 64 38 56 32 63 C 32 65 25 67 20 63 C 16 56 16 69 5 60 C 0 20 20 15 25 0 Z';
+  const lowerIncisor = 'M 25 0 C 30 15 40 22 40 60 C 34 60 15 60 10 60 C 10 22 20 15 25 0 Z';
+  const toothRows = [
+    [
+      { value: '1', label: '1', path: topMolar }, { value: '2', label: '2', path: topMolar }, { value: '3', label: '3', path: topMolar },
+      { value: '4', label: '4a', path: topCanine }, { value: '5', label: '5b', path: topPremolar }, { value: '6', label: '6c', path: topPremolar },
+      { value: '7', label: '7d', path: topIncisor }, { value: '8', label: '8e', path: topWide }, { value: '9', label: '9f', path: topWide },
+      { value: '10', label: '10g', path: topIncisor }, { value: '11', label: '11h', path: topPremolar }, { value: '12', label: '12i', path: topPremolar },
+      { value: '13', label: '13j', path: topCanine }, { value: '14', label: '14', path: topMolar }, { value: '15', label: '15', path: topMolar }, { value: '16', label: '16', path: topMolar },
+    ],
+    [
+      { value: '32', label: '32', path: topMolar, lower: true }, { value: '31', label: '31', path: topMolar, lower: true }, { value: '30', label: '30', path: topMolar, lower: true },
+      { value: '29', label: '29t', path: lowerCanine, lower: true }, { value: '28', label: '28s', path: lowerPremolar, lower: true }, { value: '27', label: '27r', path: lowerWide, lower: true },
+      { value: '26', label: '26q', path: topIncisor, lower: true }, { value: '25', label: '25p', path: lowerIncisor, lower: true }, { value: '24', label: '24o', path: lowerIncisor, lower: true },
+      { value: '23', label: '23n', path: topIncisor, lower: true }, { value: '22', label: '22m', path: lowerWide, lower: true }, { value: '21', label: '21l', path: lowerPremolar, lower: true },
+      { value: '20', label: '20k', path: lowerCanine, lower: true }, { value: '19', label: '19', path: topMolar, lower: true }, { value: '18', label: '18', path: topMolar, lower: true }, { value: '17', label: '17', path: topMolar, lower: true },
+    ],
+  ];
+%>
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <base href="/" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Consulta activa - C&C Dental Studio</title>
+    <link rel="shortcut icon" type="image/svg+xml" href="/images/cnc-favicon.svg">
+    <link rel="stylesheet" href="assets/fonts/remix/remixicon.css">
+    <link rel="stylesheet" href="assets/css/main.min.css">
+    <link rel="stylesheet" href="assets/vendor/overlay-scroll/OverlayScrollbars.min.css">
+    <style>
+      .profile-initials-badge,
+      .patient-photo {
+        align-items: center;
+        background: #f4f1ff;
+        color: #705df3;
+        display: inline-flex;
+        font-weight: 800;
+        justify-content: center;
+      }
+      .patient-photo {
+        border: 2px solid #7367f0;
+        border-radius: 50%;
+        flex: 0 0 72px;
+        font-size: 1.45rem;
+        height: 72px;
+        width: 72px;
+      }
+      .consultation-sidebar {
+        position: sticky;
+        top: 1rem;
+      }
+      .patient-data-row {
+        align-items: center;
+        border-bottom: 1px solid #eef1f7;
+        display: flex;
+        gap: .8rem;
+        padding: .8rem 0;
+      }
+      .patient-data-row:last-child {
+        border-bottom: 0;
+      }
+      .patient-data-row i {
+        align-items: center;
+        background: #f4f1ff;
+        border-radius: 50%;
+        color: #7367f0;
+        display: inline-flex;
+        flex: 0 0 38px;
+        height: 38px;
+        justify-content: center;
+        width: 38px;
+      }
+      .consultation-textarea {
+        min-height: 132px;
+        resize: vertical;
+      }
+      .autosave-indicator {
+        min-height: 20px;
+      }
+      .medication-row,
+      .material-row,
+      .procedure-row,
+      .history-item {
+        border: 1px solid #dde2ee;
+        border-radius: 8px;
+        padding: 1rem;
+      }
+      .tooth-board {
+        border: 1px solid #dde2ee;
+        border-radius: 8px;
+        overflow-x: auto;
+        padding: 1rem;
+      }
+      .tooth-row {
+        display: flex;
+        gap: .15rem;
+        justify-content: center;
+        min-width: 790px;
+      }
+      .tooth-button {
+        align-items: center;
+        background: transparent;
+        border: 0;
+        color: #1f2937;
+        display: inline-flex;
+        height: 74px;
+        justify-content: center;
+        padding: 0;
+        width: 48px;
+      }
+      .tooth-button svg {
+        height: 74px;
+        overflow: visible;
+        width: 48px;
+      }
+      .tooth-button path {
+        fill: #e1e1e1;
+        stroke: transparent;
+        transition: fill .2s ease, stroke .2s ease, transform .2s ease;
+      }
+      .tooth-button text {
+        fill: #111827;
+        font-size: 12px;
+        font-weight: 800;
+        pointer-events: none;
+      }
+      .tooth-button.active path,
+      .tooth-button:hover path {
+        fill: #7367f0;
+        stroke: #5e50d8;
+        stroke-width: 2px;
+        transform: scale(1.04);
+      }
+      .tooth-button.active text,
+      .tooth-button:hover text {
+        fill: #7367f0;
+      }
+      .quote-total-box {
+        background: #fbfbff;
+        border: 1px solid #dde2ee;
+        border-radius: 8px;
+        padding: 1rem;
+      }
+      .file-pill {
+        align-items: center;
+        border: 1px solid #dde2ee;
+        border-radius: 8px;
+        display: flex;
+        gap: .8rem;
+        padding: .8rem;
+      }
+      .patient-name-full {
+        line-height: 1.25;
+        overflow-wrap: anywhere;
+        white-space: normal;
+      }
+      .quantity-input {
+        -moz-appearance: textfield;
+        appearance: textfield;
+        min-width: 64px;
+      }
+      .quantity-input::-webkit-inner-spin-button,
+      .quantity-input::-webkit-outer-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+      .quantity-input::placeholder {
+        color: #9aa4b2;
+        opacity: 1;
+      }
+      @media (max-width: 767.98px) {
+        .consultation-sidebar {
+          position: static;
+        }
+        .tooth-row {
+          justify-content: flex-start;
+        }
+      }
+    </style>
+    <%- include('partials/searchableSelect') %>
+  </head>
+  <body>
+    <div class="page-wrapper">
+      <div class="main-container">
+        <nav id="sidebar" class="sidebar-wrapper">
+          <div class="brand-container d-flex align-items-center justify-content-between">
+            <div class="app-brand ms-3">
+              <a href="/admin/dash"><img src="/images/cnc-logo-alt.svg" class="logo" alt="C&C Dental Studio"></a>
+            </div>
+            <button type="button" class="pin-sidebar me-3"><i class="ri-menu-line"></i></button>
+          </div>
+          <div class="sidebar-profile">
+            <% if (headerPhoto) { %>
+              <img src="<%= headerPhoto %>" class="rounded-5 border border-primary border-3" alt="Foto de perfil">
+            <% } else { %>
+              <span class="profile-initials-badge rounded-5 border border-primary border-3 img-4x"><%= headerInitials %></span>
+            <% } %>
+            <h6 class="mb-1 profile-name text-nowrap text-truncate text-primary"><%= headerName %></h6>
+            <small class="profile-name text-nowrap text-truncate"><%= headerRole %></small>
+          </div>
+          <div class="sidebarMenuScroll">
+            <%- include('partials/adminSidebar', { activePage: 'citas', canFn }) %>
+          </div>
+        </nav>
+
+        <div class="app-container">
+          <div class="app-header d-flex align-items-center">
+            <div class="d-flex">
+              <div class="search-container d-xl-block d-none">
+                <input type="text" class="form-control" placeholder="Buscar">
+                <i class="ri-search-line"></i>
+              </div>
+            </div>
+            <div class="header-actions ms-auto d-flex align-items-center gap-2">
+              <a href="<%= backUrl %>" class="btn btn-outline-primary"><i class="ri-arrow-left-line me-1"></i> Citas</a>
+              <div class="dropdown ms-2">
+                <a id="userSettings" class="dropdown-toggle d-flex align-items-center" href="#!" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                  <div class="avatar-box">
+                    <% if (headerPhoto) { %>
+                      <img src="<%= headerPhoto %>" class="img-2xx rounded-5 border border-3 border-white" alt="Foto de perfil">
+                    <% } else { %>
+                      <span class="profile-initials-badge img-2xx rounded-5 border border-3 border-white"><%= headerInitials %></span>
+                    <% } %>
+                    <span class="status busy"></span>
+                  </div>
+                </a>
+                <div class="dropdown-menu dropdown-menu-end shadow-lg">
+                  <div class="px-3 py-2"><span class="small"><%= headerRole %></span><h6 class="m-0"><%= headerName %></h6></div>
+                  <div class="dropdown-divider"></div>
+                  <a href="/admin/perfil" class="dropdown-item"><i class="ri-user-line me-2"></i> Perfil</a>
+                  <a href="/admin/settings" class="dropdown-item"><i class="ri-settings-3-line me-2"></i> Configuración</a>
+                  <div class="dropdown-divider"></div>
+                  <div class="mx-3 my-2 d-grid"><a href="/logout" class="btn btn-danger">Cerrar sesión</a></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="app-hero-header d-flex align-items-center">
+            <ol class="breadcrumb">
+              <li class="breadcrumb-item"><a href="/admin/dash"><i class="ri-home-3-line"></i></a></li>
+              <li class="breadcrumb-item"><a href="/admin/appointments">Citas</a></li>
+              <li class="breadcrumb-item text-primary" aria-current="page">Consulta activa</li>
+            </ol>
+            <div class="ms-auto d-none d-md-flex align-items-center gap-2">
+              <span class="badge <%= isLocked ? 'bg-success' : 'bg-primary' %>"><%= isLocked ? 'Finalizada' : 'En consulta' %></span>
+              <span class="text-muted">#APT<%= String(c.cita_idcita || '').padStart(3, '0') %></span>
+            </div>
+          </div>
+
+          <div class="app-body">
+            <% if (isLocked) { %>
+              <div class="alert alert-success d-flex align-items-center gap-2">
+                <i class="ri-lock-line"></i>
+                <span>Consulta finalizada. La información queda bloqueada y disponible en historial.</span>
+              </div>
+            <% } %>
+
+            <div class="row gx-4">
+              <div class="col-xl-3 col-lg-4 col-12">
+                <div class="card consultation-sidebar mb-4">
+                  <div class="card-body">
+                    <div class="d-flex align-items-center gap-3 mb-3">
+                      <span class="patient-photo"><%= patientInitials %></span>
+                      <div class="min-w-0">
+                        <h5 class="mb-1 patient-name-full"><%= fullName %></h5>
+                        <div class="text-muted">Paciente #<%= p.idPaciente || '-' %></div>
+                      </div>
+                    </div>
+
+                    <div class="patient-data-row">
+                      <i class="ri-calendar-line"></i>
+                      <div><small class="text-muted d-block">Edad</small><strong><%= p.edad || 'N/D' %></strong></div>
+                    </div>
+                    <div class="patient-data-row">
+                      <i class="ri-phone-line"></i>
+                      <div><small class="text-muted d-block">Teléfono</small><strong><%= p.telefono || 'Sin teléfono' %></strong></div>
+                    </div>
+                    <div class="patient-data-row">
+                      <i class="ri-drop-line"></i>
+                      <div><small class="text-muted d-block">Tipo de sangre</small><strong><%= p.tipoSangre || 'N/D' %></strong></div>
+                    </div>
+                    <div class="patient-data-row align-items-start">
+                      <i class="ri-alert-line"></i>
+                      <div>
+                        <small class="text-muted d-block">Alergias</small>
+                        <% if (Array.isArray(p.alergias) && p.alergias.length) { %>
+                          <button class="btn btn-sm bg-danger-subtle text-danger px-2 py-1 mt-1" type="button" data-bs-toggle="collapse" data-bs-target="#patientAllergyList">
+                            Alergias registradas <i class="ri-arrow-down-s-line"></i>
+                          </button>
+                          <div class="collapse mt-2" id="patientAllergyList">
+                            <div class="d-grid gap-2">
+                              <% p.alergias.forEach(group => { %>
+                                <div class="border rounded-2 p-2">
+                                  <div class="fw-semibold small mb-1"><%= group.tipo %></div>
+                                  <% (group.detalles || []).forEach(detail => { %>
+                                    <span class="badge bg-danger-subtle text-danger me-1 mb-1"><%= detail %></span>
+                                  <% }) %>
+                                </div>
+                              <% }) %>
+                            </div>
+                          </div>
+                        <% } else { %>
+                          <strong>Sin registro</strong>
+                        <% } %>
+                      </div>
+                    </div>
+
+                    <hr>
+                    <h6 class="mb-3">Últimas visitas</h6>
+                    <% if (!visits.length) { %>
+                      <p class="text-muted mb-0">Sin visitas previas.</p>
+                    <% } %>
+                    <div class="d-grid gap-2">
+                      <% visits.forEach(visit => { %>
+                        <div class="border rounded-2 p-2">
+                          <div class="fw-semibold"><%= formatDate(visit.fechaCita) %> <%= formatTime(visit.horaCita) %></div>
+                          <small class="text-muted"><%= visit.motivoCita || 'Consulta' %></small>
+                        </div>
+                      <% }) %>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-xl-9 col-lg-8 col-12">
+                <div class="card mb-4">
+                  <div class="card-body">
+                    <div class="d-flex flex-wrap align-items-center gap-3">
+                      <div class="icon-box lg bg-primary-subtle rounded-5">
+                        <i class="ri-stethoscope-line fs-3 text-primary"></i>
+                      </div>
+                      <div>
+                        <h4 class="mb-1">Consulta activa</h4>
+                        <div class="text-muted"><%= formatDate(c.fechaCita) %> · <%= formatTime(c.horaCita) %> · <%= doctorName %></div>
+                      </div>
+                      <div class="ms-auto d-flex flex-wrap gap-2">
+                        <span id="autosaveStatus" class="autosave-indicator text-muted small align-self-center"></span>
+                        <% if (!isLocked && canFn('citas:atender')) { %>
+                          <button type="button" class="btn btn-success" id="finishConsultationBtn"><i class="ri-check-double-line me-1"></i> Finalizar consulta</button>
+                        <% } %>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="card">
+                  <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs" id="consultationTabs" role="tablist">
+                      <li class="nav-item" role="presentation"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-notas" type="button" role="tab">Notas</button></li>
+                      <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-diagnostico" type="button" role="tab">Diagnóstico</button></li>
+                      <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-materiales" type="button" role="tab">Materiales</button></li>
+                      <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-receta" type="button" role="tab">Receta</button></li>
+                      <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-cotizacion" type="button" role="tab">Cotización</button></li>
+                      <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-archivos" type="button" role="tab">Archivos</button></li>
+                      <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-historial" type="button" role="tab">Historial</button></li>
+                    </ul>
+                  </div>
+                  <div class="card-body">
+                    <div class="tab-content">
+                      <div class="tab-pane fade show active" id="tab-notas" role="tabpanel">
+                        <div class="row gx-4">
+                          <div class="col-md-6 mb-3">
+                            <label class="form-label">Motivo de consulta</label>
+                            <textarea class="form-control consultation-textarea" data-autosave-field="motivoConsulta" <%= readonly %>><%= c.motivoConsulta || c.motivoCita || '' %></textarea>
+                          </div>
+                          <div class="col-md-6 mb-3">
+                            <label class="form-label">Síntomas</label>
+                            <textarea class="form-control consultation-textarea" data-autosave-field="sintomas" <%= readonly %>><%= c.sintomas || '' %></textarea>
+                          </div>
+                          <div class="col-md-6 mb-3">
+                            <label class="form-label">Observaciones</label>
+                            <textarea class="form-control consultation-textarea" data-autosave-field="observaciones" <%= readonly %>><%= c.observaciones || c.notasAdicionales || '' %></textarea>
+                          </div>
+                          <div class="col-md-6 mb-3">
+                            <label class="form-label">Evolución</label>
+                            <textarea class="form-control consultation-textarea" data-autosave-field="evolucion" <%= readonly %>><%= c.evolucion || '' %></textarea>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="tab-pane fade" id="tab-diagnostico" role="tabpanel">
+                        <div class="row gx-4">
+                          <div class="col-md-6 mb-3">
+                            <label class="form-label">Diagnóstico principal</label>
+                            <textarea class="form-control consultation-textarea" data-autosave-field="diagnosticoPrincipal" <%= readonly %>><%= c.diagnosticoPrincipal || '' %></textarea>
+                          </div>
+                          <div class="col-md-6 mb-3">
+                            <label class="form-label">Diagnóstico secundario</label>
+                            <textarea class="form-control consultation-textarea" data-autosave-field="diagnosticoSecundario" <%= readonly %>><%= c.diagnosticoSecundario || '' %></textarea>
+                          </div>
+                          <div class="col-12 mb-3">
+                            <label class="form-label">Tratamiento</label>
+                            <textarea class="form-control consultation-textarea" data-autosave-field="tratamiento" <%= readonly %>><%= c.tratamiento || '' %></textarea>
+                          </div>
+                          <div class="col-md-4 mb-3">
+                            <label class="form-label">Próxima cita</label>
+                            <input type="date" class="form-control" data-autosave-field="proximaCita" value="<%= dateForInput(c.proximaCita) %>" <%= disabled %>>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div class="tab-pane fade" id="tab-materiales" role="tabpanel">
+                        <% if (!inventoryReady) { %>
+                          <div class="alert alert-warning">
+                            Falta crear la tabla de materiales consumidos para activar el descuento automático al finalizar consulta.
+                          </div>
+                        <% } %>
+                        <div class="d-flex align-items-center justify-content-between gap-2 mb-3">
+                          <div>
+                            <h5 class="mb-1">Materiales utilizados</h5>
+                            <small class="text-muted">Estos productos se descontarán del inventario cuando finalices la consulta.</small>
+                          </div>
+                          <button type="button" class="btn btn-primary" id="addMaterialBtn" <%= disabled %> <%= inventoryReady ? '' : 'disabled' %>><i class="ri-add-line me-1"></i> Agregar material</button>
+                        </div>
+                        <div class="d-grid gap-2" id="materialRows">
+                          <% if (!materialItems.length) { %>
+                            <div class="text-muted py-3 empty-material">No hay materiales agregados.</div>
+                          <% } %>
+                          <% materialItems.forEach(item => { %>
+                            <div class="material-row" data-material-row>
+                              <div class="row gx-3 align-items-end">
+                                <div class="col-md-2 mb-2">
+                                  <label class="form-label">Servicio</label>
+                                  <select class="form-select" data-material-field="servicioId" <%= disabled %>>
+                                    <option value="">Seleccionar</option>
+                                    <% serviceOptions.forEach(option => { %>
+                                      <option value="<%= option.idservicio %>" <%= Number(option.idservicio) === Number(item.servicio_idservicio) ? 'selected' : '' %>><%= option.nombre %></option>
+                                    <% }) %>
+                                  </select>
+                                </div>
+                                <div class="col-md-2 mb-2">
+                                  <label class="form-label">Tratamiento</label>
+                                  <select class="form-select" data-material-field="tratamientoId" <%= disabled %>>
+                                    <option value="">Seleccionar</option>
+                                    <% treatmentOptions.forEach(option => { %>
+                                      <option value="<%= option.idtiposervicio %>" <%= Number(option.idtiposervicio) === Number(item.tiposervicio_idtiposervicio) ? 'selected' : '' %>><%= option.nombre %></option>
+                                    <% }) %>
+                                  </select>
+                                </div>
+                                <div class="col-md-3 mb-2">
+                                  <label class="form-label">Material</label>
+                                  <select class="form-select" data-material-field="productoId" <%= disabled %>>
+                                    <option value="">Seleccionar</option>
+                                    <% inventoryProducts.forEach(product => { %>
+                                      <option value="<%= product.id %>" <%= Number(product.id) === Number(item.producto_id) ? 'selected' : '' %>><%= product.nombre %> · stock <%= Number(product.stock_actual || 0) %></option>
+                                    <% }) %>
+                                  </select>
+                                </div>
+                                <div class="col-md-2 col-xl-1 mb-2"><label class="form-label">Cant.</label><input type="number" min="0.01" step="0.01" inputmode="decimal" class="form-control quantity-input" data-material-field="cantidad" placeholder="0" value="<%= item.cantidad ? Number(item.cantidad) : '' %>" <%= disabled %>></div>
+                                <div class="col-md-3 mb-2"><label class="form-label">Motivo</label><input class="form-control" data-material-field="motivo" value="<%= item.motivo || '' %>" <%= disabled %>></div>
+                                <div class="col-md-1 mb-2 d-grid"><button type="button" class="btn btn-outline-danger js-remove-material" <%= disabled %>><i class="ri-delete-bin-line"></i></button></div>
+                              </div>
+                            </div>
+                          <% }) %>
+                        </div>
+                      </div>
+
+                      <div class="tab-pane fade" id="tab-receta" role="tabpanel">
+                        <div class="d-flex align-items-center justify-content-between gap-2 mb-3">
+                          <h5 class="mb-0">Medicamentos</h5>
+                          <div class="d-flex gap-2">
+                            <a href="<%= prescriptionFile ? prescriptionFile.ruta : '#!' %>" target="_blank" class="btn btn-outline-primary <%= prescriptionFile ? '' : 'd-none' %>" id="prescriptionPdfLink"><i class="ri-file-pdf-2-line me-1"></i> Receta PDF</a>
+                            <button type="button" class="btn btn-primary" id="addMedicationBtn" <%= disabled %>><i class="ri-add-line me-1"></i> Agregar medicamento</button>
+                          </div>
+                        </div>
+                        <div class="d-grid gap-2" id="medicationRows">
+                          <% if (!meds.length) { %>
+                            <div class="text-muted py-3 empty-medication">No hay medicamentos agregados.</div>
+                          <% } %>
+                          <% meds.forEach(item => { %>
+                            <div class="medication-row" data-medication-row>
+                              <div class="row gx-3 align-items-end">
+                                <div class="col-md-3 mb-2"><label class="form-label">Nombre</label><input class="form-control" data-med-field="nombre" value="<%= item.nombre || '' %>" <%= disabled %>></div>
+                                <div class="col-md-3 mb-2"><label class="form-label">Dosis</label><input class="form-control" data-med-field="dosis" value="<%= item.dosis || '' %>" <%= disabled %>></div>
+                                <div class="col-md-3 mb-2"><label class="form-label">Frecuencia</label><input class="form-control" data-med-field="frecuencia" value="<%= item.frecuencia || '' %>" <%= disabled %>></div>
+                                <div class="col-md-2 mb-2"><label class="form-label">Duración</label><input class="form-control" data-med-field="duracion" value="<%= item.duracion || '' %>" <%= disabled %>></div>
+                                <div class="col-md-1 mb-2 d-grid"><button type="button" class="btn btn-outline-danger js-remove-med" <%= disabled %>><i class="ri-delete-bin-line"></i></button></div>
+                              </div>
+                            </div>
+                          <% }) %>
+                        </div>
+                      </div>
+
+                      <div class="tab-pane fade" id="tab-cotizacion" role="tabpanel">
+                        <div class="d-flex align-items-center justify-content-between gap-2 mb-3">
+                          <h5 class="mb-0">Cotización</h5>
+                          <button type="button" class="btn btn-primary" id="newQuoteBtn" <%= disabled %>><i class="ri-add-line me-1"></i> Nueva cotización</button>
+                        </div>
+
+                        <div class="quote-builder <%= quotes.length && !isLocked ? 'd-none' : '' %>" id="quoteBuilder">
+                          <div class="tooth-board mb-3">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+                              <div>
+                                <h6 class="mb-1">Selecciona dientes</h6>
+                                <small class="text-muted">Los dientes seleccionados se asignan al procedimiento activo.</small>
+                              </div>
+                              <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <span class="badge bg-primary-subtle text-primary" id="selectedToothLabel">Sin dientes seleccionados</span>
+                                <button type="button" class="btn btn-outline-primary btn-sm" id="selectAllTeethBtn" <%= disabled %>>Todos</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="clearTeethBtn" <%= disabled %>>Limpiar</button>
+                              </div>
+                            </div>
+                            <div class="d-grid gap-2">
+                              <% toothRows.forEach(row => { %>
+                                <div class="tooth-row">
+                                  <% row.forEach(tooth => { %>
+                                    <button type="button" class="tooth-button" data-tooth-value="<%= tooth.label %>" data-tooth-id="<%= tooth.value %>" <%= disabled %>>
+                                      <svg viewBox="<%= tooth.lower ? '-5 0 65 85' : '-5 -15 65 85' %>" aria-hidden="true">
+                                        <path d="<%= tooth.path %>" <%= tooth.lower ? 'transform="translate(0, 70) scale(1, -1)"' : '' %>></path>
+                                        <text x="<%= tooth.lower ? 32 : 30 %>" y="<%= tooth.lower ? 85 : -5 %>" text-anchor="middle"><%= tooth.label %></text>
+                                      </svg>
+                                    </button>
+                                  <% }) %>
+                                </div>
+                              <% }) %>
+                            </div>
+                          </div>
+
+                          <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                            <h6 class="mb-0">Procedimientos</h6>
+                            <button type="button" class="btn btn-outline-primary btn-sm" id="addProcedureBtn" <%= disabled %>><i class="ri-add-line me-1"></i> Agregar procedimiento</button>
+                          </div>
+                          <div class="d-grid gap-2 mb-3" id="procedureRows"></div>
+                          <div class="row gx-4 align-items-start">
+                            <div class="col-lg-7"></div>
+                            <div class="col-lg-5">
+                              <div class="quote-total-box">
+                                <div class="d-flex justify-content-between mb-2"><span>Subtotal</span><strong id="quoteSubtotal">Q0.00</strong></div>
+                                <div class="d-flex justify-content-between mb-2"><span>IVA 12%</span><strong id="quoteTaxes">Q0.00</strong></div>
+                                <div class="d-flex justify-content-between fs-5 text-primary"><span>Total</span><strong id="quoteTotal">Q0.00</strong></div>
+                                <button type="button" class="btn btn-success w-100 mt-3" id="saveQuoteBtn" <%= disabled %>><i class="ri-save-line me-1"></i> Guardar cotización</button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <hr>
+                        <h6 class="mb-3">Cotizaciones creadas</h6>
+                        <% if (!quotes.length) { %>
+                          <p class="text-muted mb-0">Aún no hay cotizaciones para esta consulta.</p>
+                        <% } %>
+                        <div class="d-grid gap-2">
+                          <% quotes.forEach(item => {
+                            const subtotal = Number(item.subtotal || item.detalles.reduce((sum, detail) => sum + Number(detail.costo_servicio || (Number(detail.cantidad || 1) * Number(detail.precio || 0)) || 0), 0));
+                            const impuestos = Number(item.impuestos || (subtotal * quoteTaxRate));
+                            const total = Number(item.costo_total || (subtotal + impuestos));
+                          %>
+                            <div class="border rounded-2 p-3">
+                              <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                                <div>
+                                  <div class="fw-semibold">Cotización</div>
+                                  <small class="text-muted"><%= formatDate(item.fecha_cotizacion) %> · <%= item.detalles.length %> procedimiento(s)</small>
+                                  <div class="small text-muted mt-1">Subtotal <%= formatMoney(subtotal) %> · IVA 12% <%= formatMoney(impuestos) %></div>
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                  <strong class="text-primary"><%= formatMoney(total) %></strong>
+                                  <a class="btn btn-outline-primary btn-sm" href="/admin/consultas/activas/<%= c.idconsultaActiva %>/cotizaciones/<%= item.id_cotizacion %>/documento" target="_blank"><i class="ri-file-pdf-2-line me-1"></i> Documento</a>
+                                  <% if (isLocked) { %>
+                                    <a class="btn btn-primary btn-sm" href="/admin/pago?cita=<%= c.cita_idcita %>"><i class="ri-bank-card-line me-1"></i> Cobrar</a>
+                                  <% } %>
+                                </div>
+                              </div>
+                            </div>
+                          <% }) %>
+                        </div>
+                      </div>
+
+                      <div class="tab-pane fade" id="tab-archivos" role="tabpanel">
+                        <form id="attachmentForm" class="row gx-3 align-items-end mb-4" enctype="multipart/form-data">
+                          <div class="col-md-8 mb-2">
+                            <label class="form-label">Archivo</label>
+                            <input type="file" class="form-control" name="archivo" accept="image/*,application/pdf" <%= disabled %>>
+                          </div>
+                          <div class="col-md-4 mb-2 d-grid">
+                            <button type="submit" class="btn btn-primary" <%= disabled %>><i class="ri-upload-cloud-line me-1"></i> Subir archivo</button>
+                          </div>
+                        </form>
+                        <% if (!files.length) { %>
+                          <p class="text-muted mb-0">Sin archivos adjuntos.</p>
+                        <% } %>
+                        <div class="d-grid gap-2">
+                          <% files.forEach(file => { %>
+                            <a class="file-pill text-decoration-none" href="<%= file.ruta %>" target="_blank">
+                              <i class="<%= String(file.mime_type || '').includes('pdf') ? 'ri-file-pdf-2-line' : 'ri-image-line' %> fs-4 text-primary"></i>
+                              <div class="min-w-0">
+                                <div class="fw-semibold text-truncate"><%= file.nombre_original %></div>
+                                <small class="text-muted"><%= formatDate(file.created_at) %></small>
+                              </div>
+                            </a>
+                          <% }) %>
+                        </div>
+                      </div>
+
+                      <div class="tab-pane fade" id="tab-historial" role="tabpanel">
+                        <% if (!history.length) { %>
+                          <p class="text-muted mb-0">Sin consultas previas registradas.</p>
+                        <% } %>
+                        <div class="d-grid gap-2">
+                          <% history.forEach((item, index) => {
+                            const collapseId = `historyDetails${index}`;
+                            const itemDoctor = `${item.doctor_nombre || ''} ${item.doctor_apellido || ''}`.trim() || 'Doctor sin registro';
+                          %>
+                            <div class="history-item">
+                              <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+                                <div>
+                                  <div class="fw-semibold"><%= formatDate(item.fecha) %></div>
+                                  <small class="text-muted"><%= itemDoctor %></small>
+                                  <div class="mt-2"><%= item.diagnostico ? String(item.diagnostico).slice(0, 120) : 'Sin diagnóstico registrado' %></div>
+                                </div>
+                                <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#<%= collapseId %>">Ver detalles</button>
+                              </div>
+                              <div class="collapse mt-3" id="<%= collapseId %>">
+                                <div class="bg-light rounded-2 p-3 white-space-pre-line"><%= item.diagnostico || 'Sin detalles adicionales.' %></div>
+                              </div>
+                            </div>
+                          <% }) %>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="app-footer"><span>© C&C Dental Studio 2026</span></div>
+        </div>
+      </div>
+    </div>
+
+    <%- include('partials/uiFeedback') %>
+
+    <script src="assets/js/jquery.min.js"></script>
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script src="assets/vendor/overlay-scroll/jquery.overlayScrollbars.min.js"></script>
+    <script src="assets/vendor/overlay-scroll/custom-scrollbar.js"></script>
+    <script src="assets/js/custom.js"></script>
+    <script>
+      (function () {
+        const consultationId = '<%= c.idconsultaActiva %>';
+        const locked = <%- safeJson(isLocked) %>;
+        const backUrl = '<%= backUrl %>';
+        const serviceOptions = <%- safeJson(serviceOptions) %>;
+        const treatmentOptions = <%- safeJson(treatmentOptions) %>;
+        const inventoryProducts = <%- safeJson(inventoryProducts) %>;
+        const inventoryReady = <%- safeJson(inventoryReady) %>;
+        const quoteTaxRate = <%= quoteTaxRate %>;
+        const autosaveStatus = document.getElementById('autosaveStatus');
+        let autosaveTimer = null;
+        let medicationTimer = null;
+        let materialTimer = null;
+        let activeProcedureRow = null;
+        let searchableRowId = 0;
+
+        function setStatus(text, type) {
+          if (!autosaveStatus) return;
+          autosaveStatus.textContent = text || '';
+          autosaveStatus.className = `autosave-indicator small ${type ? `text-${type}` : 'text-muted'}`;
+        }
+
+        function escapeHtml(value) {
+          return String(value || '').replace(/[&<>"']/g, char => ({
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;',
+          }[char]));
+        }
+
+        async function requestJson(url, options = {}) {
+          const response = await fetch(url, {
+            headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+            ...options,
+          });
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok || data.success === false) throw new Error(data.message || data.error || 'No se pudo completar la acción.');
+          return data;
+        }
+
+        function collectConsultationFields() {
+          const body = {};
+          document.querySelectorAll('[data-autosave-field]').forEach(field => {
+            body[field.dataset.autosaveField] = field.value;
+          });
+          return body;
+        }
+
+        function saveConsultationFields() {
+          if (locked) return Promise.resolve();
+          const body = collectConsultationFields();
+          setStatus('Guardando...', 'muted');
+          return requestJson(`/api/admin/consultas/activas/${consultationId}`, {
+            method: 'PATCH',
+            body: JSON.stringify(body),
+          }).then(() => {
+            setStatus('Guardado', 'success');
+          }).catch(error => {
+            setStatus('No guardado', 'danger');
+            showUiMessage(error.message, 'danger');
+          });
+        }
+
+        document.querySelectorAll('[data-autosave-field]').forEach(field => {
+          field.addEventListener('input', () => {
+            setStatus('Cambios pendientes', 'muted');
+            window.clearTimeout(autosaveTimer);
+            autosaveTimer = window.setTimeout(saveConsultationFields, 700);
+          });
+        });
+
+        function createMedicationRow() {
+          const row = document.createElement('div');
+          row.className = 'medication-row';
+          row.dataset.medicationRow = 'true';
+          row.innerHTML = `
+            <div class="row gx-3 align-items-end">
+              <div class="col-md-3 mb-2"><label class="form-label">Nombre</label><input class="form-control" data-med-field="nombre"></div>
+              <div class="col-md-3 mb-2"><label class="form-label">Dosis</label><input class="form-control" data-med-field="dosis"></div>
+              <div class="col-md-3 mb-2"><label class="form-label">Frecuencia</label><input class="form-control" data-med-field="frecuencia"></div>
+              <div class="col-md-2 mb-2"><label class="form-label">Duración</label><input class="form-control" data-med-field="duracion"></div>
+              <div class="col-md-1 mb-2 d-grid"><button type="button" class="btn btn-outline-danger js-remove-med"><i class="ri-delete-bin-line"></i></button></div>
+            </div>`;
+          return row;
+        }
+
+        function collectMedications() {
+          return Array.from(document.querySelectorAll('[data-medication-row]')).map(row => ({
+            nombre: row.querySelector('[data-med-field="nombre"]')?.value || '',
+            dosis: row.querySelector('[data-med-field="dosis"]')?.value || '',
+            frecuencia: row.querySelector('[data-med-field="frecuencia"]')?.value || '',
+            duracion: row.querySelector('[data-med-field="duracion"]')?.value || '',
+          })).filter(item => item.nombre || item.dosis || item.frecuencia || item.duracion);
+        }
+
+        function saveMedications() {
+          if (locked) return Promise.resolve();
+          return requestJson(`/api/admin/consultas/activas/${consultationId}/medicamentos`, {
+            method: 'PUT',
+            body: JSON.stringify({ medicamentos: collectMedications() }),
+          }).then(data => {
+            if (data.prescriptionFile?.publicPath) {
+              const link = document.getElementById('prescriptionPdfLink');
+              if (link) {
+                link.href = data.prescriptionFile.publicPath;
+                link.classList.remove('d-none');
+              }
+            }
+            return data;
+          }).catch(error => {
+            showUiMessage(error.message, 'danger');
+            throw error;
+          });
+        }
+
+        function queueMedicationSave() {
+          window.clearTimeout(medicationTimer);
+          medicationTimer = window.setTimeout(saveMedications, 600);
+        }
+
+        document.getElementById('addMedicationBtn')?.addEventListener('click', () => {
+          document.querySelector('.empty-medication')?.remove();
+          const row = createMedicationRow();
+          document.getElementById('medicationRows')?.appendChild(row);
+          row.querySelector('input')?.focus();
+          queueMedicationSave();
+        });
+
+        document.getElementById('medicationRows')?.addEventListener('input', event => {
+          if (event.target.matches('[data-med-field]')) queueMedicationSave();
+        });
+        document.getElementById('medicationRows')?.addEventListener('click', event => {
+          const button = event.target.closest('.js-remove-med');
+          if (!button) return;
+          button.closest('[data-medication-row]')?.remove();
+          queueMedicationSave();
+        });
+
+        function createMaterialRow() {
+          const serviceOptionsHtml = serviceOptions.map(item => `<option value="${item.idservicio}">${escapeHtml(item.nombre)}</option>`).join('');
+          const treatmentOptionsHtml = treatmentOptions.map(item => `<option value="${item.idtiposervicio}">${escapeHtml(item.nombre)}</option>`).join('');
+          const productOptionsHtml = inventoryProducts.map(item => `<option value="${item.id}">${escapeHtml(item.nombre)} · stock ${Number(item.stock_actual || 0)}</option>`).join('');
+          const row = document.createElement('div');
+          row.className = 'material-row';
+          row.dataset.materialRow = 'true';
+          row.innerHTML = `
+            <div class="row gx-3 align-items-end">
+              <div class="col-md-2 mb-2"><label class="form-label">Servicio</label><select class="form-select" data-material-field="servicioId"><option value="">Seleccionar</option>${serviceOptionsHtml}</select></div>
+              <div class="col-md-2 mb-2"><label class="form-label">Tratamiento</label><select class="form-select" data-material-field="tratamientoId"><option value="">Seleccionar</option>${treatmentOptionsHtml}</select></div>
+              <div class="col-md-3 mb-2"><label class="form-label">Material</label><select class="form-select" data-material-field="productoId"><option value="">Seleccionar</option>${productOptionsHtml}</select></div>
+              <div class="col-md-2 col-xl-1 mb-2"><label class="form-label">Cant.</label><input type="number" min="0.01" step="0.01" inputmode="decimal" class="form-control quantity-input" data-material-field="cantidad" placeholder="0"></div>
+              <div class="col-md-3 mb-2"><label class="form-label">Motivo</label><input class="form-control" data-material-field="motivo" value="Material utilizado en consulta"></div>
+              <div class="col-md-1 mb-2 d-grid"><button type="button" class="btn btn-outline-danger js-remove-material"><i class="ri-delete-bin-line"></i></button></div>
+            </div>`;
+          return row;
+        }
+
+        function collectMaterials() {
+          return Array.from(document.querySelectorAll('[data-material-row]')).map(row => ({
+            servicioId: Number(row.querySelector('[data-material-field="servicioId"]')?.value || 0) || null,
+            tratamientoId: Number(row.querySelector('[data-material-field="tratamientoId"]')?.value || 0) || null,
+            productoId: Number(row.querySelector('[data-material-field="productoId"]')?.value || 0),
+            cantidad: Number(row.querySelector('[data-material-field="cantidad"]')?.value || 0),
+            motivo: row.querySelector('[data-material-field="motivo"]')?.value || '',
+          })).filter(item => item.productoId && item.cantidad > 0);
+        }
+
+        function saveMaterials() {
+          if (locked || !inventoryReady) return Promise.resolve();
+          return requestJson(`/api/admin/consultas/activas/${consultationId}/materiales`, {
+            method: 'PUT',
+            body: JSON.stringify({ materiales: collectMaterials() }),
+          }).catch(error => {
+            showUiMessage(error.message, 'danger');
+            throw error;
+          });
+        }
+
+        function queueMaterialSave() {
+          window.clearTimeout(materialTimer);
+          materialTimer = window.setTimeout(saveMaterials, 600);
+        }
+
+        function bindRowSearchableSelect(row, selector, placeholder, searchPlaceholder) {
+          const select = row?.querySelector(selector);
+          if (!select || select.dataset.searchableReady === 'true') return null;
+          const wrapper = document.createElement('div');
+          wrapper.id = `consultaSearchable${++searchableRowId}`;
+          select.insertAdjacentElement('afterend', wrapper);
+          select.dataset.searchableReady = 'true';
+          const control = window.initSearchableNativeSelect?.(select, wrapper, {
+            placeholder,
+            searchPlaceholder,
+          });
+          if (select.disabled) control?.disable();
+          return control;
+        }
+
+        function initMaterialSearches(row) {
+          bindRowSearchableSelect(row, '[data-material-field="servicioId"]', 'Seleccionar servicio', 'Buscar servicio');
+          bindRowSearchableSelect(row, '[data-material-field="tratamientoId"]', 'Seleccionar tratamiento', 'Buscar tratamiento');
+          bindRowSearchableSelect(row, '[data-material-field="productoId"]', 'Seleccionar material', 'Buscar material');
+        }
+
+        function initProcedureSearches(row) {
+          bindRowSearchableSelect(row, '[data-procedure-field="tipoServicio"]', 'Seleccionar tratamiento', 'Buscar tratamiento');
+          bindRowSearchableSelect(row, '[data-procedure-field="servicio"]', 'Seleccionar servicio', 'Buscar servicio');
+        }
+
+        document.getElementById('addMaterialBtn')?.addEventListener('click', () => {
+          if (!inventoryReady) return;
+          document.querySelector('.empty-material')?.remove();
+          const row = createMaterialRow();
+          document.getElementById('materialRows')?.appendChild(row);
+          initMaterialSearches(row);
+          row.querySelector('.ss-btn')?.focus();
+          queueMaterialSave();
+        });
+        document.querySelectorAll('[data-material-row]').forEach(initMaterialSearches);
+        document.getElementById('materialRows')?.addEventListener('input', event => {
+          if (event.target.matches('[data-material-field]')) queueMaterialSave();
+        });
+        document.getElementById('materialRows')?.addEventListener('change', event => {
+          if (event.target.matches('[data-material-field]')) queueMaterialSave();
+        });
+        document.getElementById('materialRows')?.addEventListener('click', event => {
+          const button = event.target.closest('.js-remove-material');
+          if (!button) return;
+          button.closest('[data-material-row]')?.remove();
+          queueMaterialSave();
+        });
+
+        function createProcedureRow() {
+          const treatmentOptionsHtml = treatmentOptions.map(item => `<option value="${item.idtiposervicio}">${escapeHtml(item.nombre)}</option>`).join('');
+          const serviceOptionsHtml = serviceOptions.map(item => `<option value="${item.idservicio}">${escapeHtml(item.nombre)}</option>`).join('');
+          const row = document.createElement('div');
+          row.className = 'procedure-row';
+          row.dataset.procedureRow = 'true';
+          row.dataset.teeth = '[]';
+          row.innerHTML = `
+            <div class="row gx-3 align-items-end">
+              <div class="col-md-2 mb-2">
+                <label class="form-label">Dientes</label>
+                <input type="hidden" data-procedure-field="dientes" value="[]">
+                <button type="button" class="btn btn-outline-primary w-100 js-focus-procedure" data-tooth-label>Elegir</button>
+              </div>
+              <div class="col-md-2 mb-2"><label class="form-label">Tratamiento</label><select class="form-select" data-procedure-field="tipoServicio"><option value="">Seleccionar</option>${treatmentOptionsHtml}</select></div>
+              <div class="col-md-2 mb-2"><label class="form-label">Servicio</label><select class="form-select" data-procedure-field="servicio"><option value="">Seleccionar</option>${serviceOptionsHtml}</select></div>
+              <div class="col-md-2 mb-2"><label class="form-label">Descripción</label><input class="form-control" data-procedure-field="descripcion"></div>
+              <div class="col-md-2 col-xl-1 mb-2"><label class="form-label">Cant.</label><input type="number" min="1" step="1" inputmode="numeric" class="form-control quantity-input" data-procedure-field="cantidad" placeholder="0"></div>
+              <div class="col-md-2 mb-2"><label class="form-label">Precio</label><input type="number" min="0.01" step="0.01" inputmode="decimal" class="form-control quantity-input" data-procedure-field="precio" placeholder="0"></div>
+              <div class="col-md-1 mb-2 d-grid"><button type="button" class="btn btn-outline-danger js-remove-procedure"><i class="ri-delete-bin-line"></i></button></div>
+            </div>`;
+          return row;
+        }
+
+        function ensureProcedureRow() {
+          const container = document.getElementById('procedureRows');
+          let row = activeProcedureRow || container?.querySelector('[data-procedure-row]');
+          if (!row && container) {
+            row = createProcedureRow();
+            container.appendChild(row);
+            initProcedureSearches(row);
+          }
+          activeProcedureRow = row;
+          return row;
+        }
+
+        function readRowTeeth(row) {
+          const raw = row?.querySelector('[data-procedure-field="dientes"]')?.value || '[]';
+          if (raw === '1-32') return '1-32';
+          try {
+            const parsed = JSON.parse(raw);
+            return Array.isArray(parsed) ? parsed : [];
+          } catch {
+            return [];
+          }
+        }
+
+        function writeRowTeeth(row, teeth) {
+          const input = row?.querySelector('[data-procedure-field="dientes"]');
+          if (!input) return;
+          input.value = teeth === '1-32' ? '1-32' : JSON.stringify(teeth);
+          const button = row.querySelector('[data-tooth-label]');
+          if (button) {
+            if (teeth === '1-32') {
+              button.textContent = 'Todos';
+            } else if (teeth.length) {
+              button.textContent = teeth.length > 2 ? `${teeth.length} dientes` : teeth.join(', ');
+            } else {
+              button.textContent = 'Elegir';
+            }
+          }
+        }
+
+        function refreshToothSelection() {
+          const teeth = readRowTeeth(activeProcedureRow);
+          const all = teeth === '1-32';
+          const selected = new Set(all ? [] : teeth);
+          document.querySelectorAll('.tooth-button').forEach(button => {
+            button.classList.toggle('active', all || selected.has(button.dataset.toothValue) || selected.has(button.dataset.toothId));
+          });
+          const label = document.getElementById('selectedToothLabel');
+          if (!label) return;
+          if (all) {
+            label.textContent = 'Todos los dientes';
+          } else if (selected.size) {
+            label.textContent = Array.from(selected).join(', ');
+          } else {
+            label.textContent = 'Sin dientes seleccionados';
+          }
+        }
+
+        function toggleTooth(tooth) {
+          const row = ensureProcedureRow();
+          if (!row) return;
+          let teeth = readRowTeeth(row);
+          if (teeth === '1-32') teeth = [];
+          const exists = teeth.includes(tooth);
+          teeth = exists ? teeth.filter(item => item !== tooth) : teeth.concat(tooth);
+          writeRowTeeth(row, teeth);
+          refreshToothSelection();
+          updateQuoteTotals();
+        }
+
+        function selectAllTeeth() {
+          const row = ensureProcedureRow();
+          if (!row) return;
+          writeRowTeeth(row, '1-32');
+          refreshToothSelection();
+          updateQuoteTotals();
+        }
+
+        function clearTeeth() {
+          const row = ensureProcedureRow();
+          if (!row) return;
+          writeRowTeeth(row, []);
+          refreshToothSelection();
+          updateQuoteTotals();
+        }
+
+        function collectProcedures() {
+          return Array.from(document.querySelectorAll('[data-procedure-row]')).map(row => ({
+            dientes: readRowTeeth(row),
+            tipoServicio: row.querySelector('[data-procedure-field="tipoServicio"]')?.value || '',
+            servicio: row.querySelector('[data-procedure-field="servicio"]')?.value || '',
+            descripcion: row.querySelector('[data-procedure-field="descripcion"]')?.value || '',
+            cantidad: Number(row.querySelector('[data-procedure-field="cantidad"]')?.value || 1),
+            precio: Number(row.querySelector('[data-procedure-field="precio"]')?.value || 0),
+          })).filter(item => {
+            const teeth = item.dientes === '1-32' ? ['1-32'] : item.dientes;
+            return teeth.length || item.tipoServicio || item.servicio || item.descripcion || item.precio;
+          });
+        }
+
+        function applyServicePrice(row) {
+          const serviceId = Number(row?.querySelector('[data-procedure-field="servicio"]')?.value || 0);
+          const priceInput = row?.querySelector('[data-procedure-field="precio"]');
+          if (!serviceId || !priceInput) return;
+          const service = serviceOptions.find(item => Number(item.idservicio) === serviceId);
+          const basePrice = Number(service?.precio || 0);
+          const currentPrice = Number(priceInput.value || 0);
+          if (basePrice > 0 && (currentPrice <= 0 || priceInput.dataset.autofilledPrice === 'true')) {
+            priceInput.value = basePrice.toFixed(2);
+            priceInput.dataset.autofilledPrice = 'true';
+          }
+        }
+
+        function updateQuoteTotals() {
+          const subtotal = collectProcedures().reduce((sum, item) => {
+            const teethCount = item.dientes === '1-32' ? 1 : Math.max(item.dientes.length, 1);
+            return sum + (Math.max(item.cantidad, 1) * Math.max(item.precio, 0) * teethCount);
+          }, 0);
+          const taxes = subtotal * quoteTaxRate;
+          document.getElementById('quoteSubtotal').textContent = `Q${subtotal.toFixed(2)}`;
+          document.getElementById('quoteTaxes').textContent = `Q${taxes.toFixed(2)}`;
+          document.getElementById('quoteTotal').textContent = `Q${(subtotal + taxes).toFixed(2)}`;
+        }
+
+        document.getElementById('newQuoteBtn')?.addEventListener('click', () => {
+          document.getElementById('quoteBuilder')?.classList.remove('d-none');
+          document.getElementById('procedureRows').innerHTML = '';
+          activeProcedureRow = null;
+          ensureProcedureRow();
+          refreshToothSelection();
+          updateQuoteTotals();
+        });
+
+        document.getElementById('addProcedureBtn')?.addEventListener('click', () => {
+          const row = createProcedureRow();
+          document.getElementById('procedureRows')?.appendChild(row);
+          initProcedureSearches(row);
+          activeProcedureRow = row;
+          refreshToothSelection();
+          row.querySelector('.ss-btn')?.focus();
+          updateQuoteTotals();
+        });
+
+        document.getElementById('procedureRows')?.addEventListener('focusin', event => {
+          const row = event.target.closest('[data-procedure-row]');
+          if (row) {
+            activeProcedureRow = row;
+            refreshToothSelection();
+          }
+        });
+        document.getElementById('procedureRows')?.addEventListener('input', event => {
+          if (event.target.matches('[data-procedure-field="precio"]')) {
+            event.target.dataset.autofilledPrice = 'false';
+          }
+          updateQuoteTotals();
+        });
+        document.getElementById('procedureRows')?.addEventListener('change', event => {
+          const row = event.target.closest('[data-procedure-row]');
+          if (event.target.matches('[data-procedure-field="servicio"]')) applyServicePrice(row);
+          updateQuoteTotals();
+        });
+        document.getElementById('procedureRows')?.addEventListener('click', event => {
+          const focusButton = event.target.closest('.js-focus-procedure');
+          if (focusButton) activeProcedureRow = focusButton.closest('[data-procedure-row]');
+          if (focusButton) refreshToothSelection();
+          const removeButton = event.target.closest('.js-remove-procedure');
+          if (!removeButton) return;
+          removeButton.closest('[data-procedure-row]')?.remove();
+          activeProcedureRow = document.querySelector('[data-procedure-row]');
+          refreshToothSelection();
+          updateQuoteTotals();
+        });
+
+        document.querySelectorAll('.tooth-button').forEach(button => {
+          button.addEventListener('click', () => toggleTooth(button.dataset.toothValue));
+        });
+        document.getElementById('selectAllTeethBtn')?.addEventListener('click', selectAllTeeth);
+        document.getElementById('clearTeethBtn')?.addEventListener('click', clearTeeth);
+
+        document.getElementById('saveQuoteBtn')?.addEventListener('click', async () => {
+          const procedimientos = collectProcedures();
+          const missing = procedimientos.some(item => {
+            const teeth = item.dientes === '1-32' ? ['1-32'] : item.dientes;
+            return !teeth.length || !item.tipoServicio || !item.servicio || !item.precio;
+          });
+          if (!procedimientos.length || missing) {
+            showUiMessage('Selecciona dientes, tratamiento, servicio y precio en cada procedimiento.', 'warning');
+            return;
+          }
+          try {
+            await requestJson(`/api/admin/consultas/activas/${consultationId}/cotizaciones`, {
+              method: 'POST',
+              body: JSON.stringify({ procedimientos }),
+            });
+            showUiMessage('Cotización creada correctamente.', 'success');
+            setTimeout(() => window.location.reload(), 700);
+          } catch (error) {
+            showUiMessage(error.message, 'danger');
+          }
+        });
+
+        if (!document.querySelector('[data-procedure-row]') && !locked) {
+          ensureProcedureRow();
+        }
+        refreshToothSelection();
+        updateQuoteTotals();
+
+        document.getElementById('attachmentForm')?.addEventListener('submit', async event => {
+          event.preventDefault();
+          const form = event.currentTarget;
+          const input = form.querySelector('input[type="file"]');
+          if (!input?.files?.length) {
+            showUiMessage('Selecciona un archivo.', 'warning');
+            return;
+          }
+          try {
+            const response = await fetch(`/api/admin/consultas/activas/${consultationId}/archivos`, {
+              method: 'POST',
+              body: new FormData(form),
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok || data.success === false) throw new Error(data.message || data.error || 'No se pudo subir el archivo.');
+            showUiMessage('Archivo adjuntado correctamente.', 'success');
+            setTimeout(() => window.location.reload(), 700);
+          } catch (error) {
+            showUiMessage(error.message, 'danger');
+          }
+        });
+
+        document.getElementById('finishConsultationBtn')?.addEventListener('click', () => {
+          confirmUiAction('¿Deseas finalizar esta consulta? Después quedará bloqueada.', async () => {
+            try {
+              window.clearTimeout(autosaveTimer);
+              window.clearTimeout(medicationTimer);
+              window.clearTimeout(materialTimer);
+              await saveConsultationFields();
+              await saveMedications();
+              await saveMaterials();
+              await requestJson(`/api/admin/consultas/activas/${consultationId}/finalizar`, { method: 'POST', body: '{}' });
+              showUiMessage('Consulta finalizada correctamente.', 'success');
+              setTimeout(() => window.location.href = backUrl, 700);
+            } catch (error) {
+              showUiMessage(error.message, 'danger');
+            }
+          }, { title: 'Finalizar consulta', confirmText: 'Finalizar', confirmType: 'success' });
+        });
+      })();
+    </script>
+  </body>
+</html>

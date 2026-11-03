@@ -1,0 +1,233 @@
+<%
+  const generosList = Array.isArray(generos) ? generos : [];
+  const tiposList = Array.isArray(tiposPaciente) ? tiposPaciente : [];
+  const data = formData || {};
+  const value = name => data[name] || '';
+  const selected = (a, b) => Number(a) === Number(b) ? 'selected' : '';
+  const checked = name => Number(data[name] || 0) === 1 ? 'checked' : '';
+  const detailValue = name => (data.fichaDetalles && data.fichaDetalles[name]) || data[`${name}_detalle`] || '';
+  const medicalFields = [
+    ['enfermedad_corazon', '¿Padece de alguna enfermedad del corazón?', 'Indique diagnóstico o tratamiento actual'],
+    ['presion_alta_baja', '¿Padece de presión alta o baja?', 'Indique si es alta o baja y si está controlada'],
+    ['diabetico', '¿Es diabético/a?', 'Indique tipo, tratamiento o control actual'],
+    ['operaciones_recientes', '¿Ha tenido operaciones en los últimos 6 meses?', 'Indique qué operación y cuándo fue'],
+    ['hepatitis', '¿Ha tenido hepatitis?', 'Indique tipo o fecha aproximada'],
+    ['enfermedad_higado_rinones', '¿Padece de alguna enfermedad de los riñones o hígado?', 'Indique cuál enfermedad'],
+    ['convulsiones_desmayos', '¿Sufre de convulsiones o desmayos?', 'Indique cuándo ocurrió o con qué frecuencia'],
+    ['enfermedad_transmision_sexual', '¿Ha tenido o tiene alguna enfermedad de transmisión sexual?', 'Indique detalle clínico relevante'],
+    ['alergias', '¿Padece de alergias?', 'Indique a qué es alérgico'],
+    ['enfermedad_respiratoria', '¿Padece de alguna enfermedad respiratoria?', 'Indique cuál enfermedad respiratoria'],
+    ['embarazada', '¿Se encuentra embarazada?', 'Indique semanas o meses de embarazo'],
+    ['artritis', '¿Padece de artritis?', ''],
+    ['fiebre_reumatica', '¿Padece o ha padecido fiebre reumática?', ''],
+    ['hemorragias_espontaneas', '¿Sufre de hemorragias espontáneas?', 'Indique cuándo o en qué situación'],
+    ['enfermedad_no_mencionada', '¿Padece de alguna enfermedad no mencionada anteriormente?', 'Indique cuál enfermedad'],
+    ['alergia_material_odontologico', '¿Es alérgico/a a algún material odontológico?', 'Indique material, anestesia, látex u otro'],
+    ['sangrado_encias', '¿Le sangran las encías?', ''],
+    ['halitosis', '¿Padece de halitosis o mal aliento?', ''],
+    ['alergia_medicamento', '¿Es alérgico/a a algún medicamento?', 'Indique cuáles medicamentos'],
+    ['aftas', '¿Tiene fuegos o aftas dentro o fuera de la boca?', 'Indique frecuencia o ubicación'],
+    ['dolor_dental', '¿Tiene dolor dental?', 'Indique ubicación y desde cuándo'],
+    ['sensibilidad', '¿Tiene sensibilidad dental?', 'Indique a qué presenta sensibilidad']
+  ];
+%>
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <base href="/" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pre-registro de paciente - C&C Dental Studio</title>
+    <link rel="shortcut icon" type="image/svg+xml" href="/images/cnc-favicon.svg">
+    <link rel="stylesheet" href="assets/fonts/remix/remixicon.css">
+    <link rel="stylesheet" href="assets/css/main.min.css">
+    <style>
+      body {
+        background:
+          radial-gradient(circle at 12% 12%, rgba(42, 190, 194, .24), transparent 32%),
+          linear-gradient(135deg, #f7fcff 0%, #eef7f8 52%, #f8f7ff 100%);
+        min-height: 100vh;
+      }
+      .public-shell {
+        margin: 0 auto;
+        max-width: 1120px;
+        padding: 32px 16px;
+      }
+      .public-card {
+        border: 1px solid #dce8f5;
+        border-radius: 24px;
+        box-shadow: 0 24px 60px rgba(36, 58, 90, .12);
+        overflow: hidden;
+      }
+      .public-header {
+        background: linear-gradient(135deg, #0d4d78, #2bc1c1);
+        color: #fff;
+        padding: 28px;
+      }
+      .medical-question-card {
+        border: 1px solid #dde2ee;
+        border-radius: 14px;
+        min-height: 64px;
+        padding: .85rem 1rem;
+      }
+      .medical-detail { display: none; }
+      .medical-detail.is-visible { display: block; }
+    </style>
+  </head>
+  <body>
+    <main class="public-shell">
+      <div class="public-card bg-white">
+        <div class="public-header">
+          <div class="d-flex align-items-center gap-3">
+            <img src="/images/cnc-logo-alt.svg" alt="C&C Dental Studio" style="height:56px;width:auto;">
+            <div>
+              <h1 class="h3 mb-1">Pre-registro de paciente</h1>
+              <p class="mb-0 opacity-75">Completa tus datos antes de tu visita a C&C Dental Studio.</p>
+            </div>
+          </div>
+        </div>
+        <div class="p-4 p-lg-5">
+          <% if (completed) { %>
+            <div class="text-center py-5">
+              <div class="btn btn-icon btn-success rounded-5 mb-3"><i class="ri-check-line"></i></div>
+              <h2 class="h4">Formulario enviado</h2>
+              <p class="text-muted mb-0">La clínica revisará tu información para completar tu registro.</p>
+            </div>
+          <% } else if (!token) { %>
+            <div class="alert alert-warning mb-0"><%= error || 'El enlace no está disponible.' %></div>
+          <% } else { %>
+            <% if (error) { %><div class="alert alert-danger"><%= error %></div><% } %>
+            <form action="/pacientes/pre-registro/<%= token %>" method="post">
+              <div class="custom-tabs-container patient-tabs">
+                <ul class="nav nav-tabs" role="tablist">
+                  <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#datos" role="tab"><i class="ri-user-line"></i> Información</a></li>
+                  <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#ficha" role="tab"><i class="ri-heart-pulse-line"></i> Ficha médica</a></li>
+                  <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#contacto" role="tab"><i class="ri-phone-line"></i> Emergencia</a></li>
+                </ul>
+                <div class="tab-content pt-4">
+                  <div class="tab-pane fade show active" id="datos" role="tabpanel">
+                    <div class="row gx-3">
+                      <div class="col-md-6 mb-3"><label class="form-label">Nombre *</label><input name="nombre" class="form-control" value="<%= value('nombre') %>" required></div>
+                      <div class="col-md-6 mb-3"><label class="form-label">Apellido *</label><input name="apellido" class="form-control" value="<%= value('apellido') %>" required></div>
+                      <div class="col-md-4 mb-3"><label class="form-label">Fecha nacimiento *</label><input type="date" name="fechaNacimiento" class="form-control" value="<%= value('fechaNacimiento') %>" data-birthdate required></div>
+                      <div class="col-md-2 mb-3"><label class="form-label">Edad</label><input type="number" name="edad" min="0" class="form-control" value="<%= value('edad') %>" data-age readonly></div>
+                      <div class="col-md-3 mb-3"><label class="form-label">Tipo de sangre</label><input name="tipoSangre" class="form-control" maxlength="5" value="<%= value('tipoSangre') %>" placeholder="Ej. O+"></div>
+                      <div class="col-md-3 mb-3"><label class="form-label">Género *</label><select name="genero_idGenero" class="form-select" required><option value="">Seleccionar</option><% generosList.forEach(g => { %><option value="<%= g.idGenero %>" <%= selected(g.idGenero, data.genero_idGenero) %>><%= g.nombre %></option><% }) %></select></div>
+                      <div class="col-md-3 mb-3"><label class="form-label">Tipo *</label><select name="tipoPaciente_idtipoPaciente" class="form-select" required><option value="">Seleccionar</option><% tiposList.forEach(t => { %><option value="<%= t.idtipoPaciente %>" <%= selected(t.idtipoPaciente, data.tipoPaciente_idtipoPaciente) %>><%= t.nombre %></option><% }) %></select></div>
+                      <div class="col-md-6 mb-3"><label class="form-label">Correo *</label><input type="email" name="email" class="form-control" value="<%= value('email') %>" required></div>
+                      <div class="col-md-6 mb-3"><label class="form-label">Teléfono *</label><input name="telefono" class="form-control" value="<%= value('telefono') %>" required></div>
+                      <div class="col-md-6 mb-3"><label class="form-label">DPI</label><input name="dpi" class="form-control" value="<%= value('dpi') %>"><div class="form-text">Opcional, especialmente si es menor de edad.</div></div>
+                      <div class="col-md-6 mb-3"><label class="form-label">NIT</label><input name="nit" class="form-control" value="<%= value('nit') %>"><div class="form-text">Opcional, especialmente si es menor de edad.</div></div>
+                      <div class="col-12 mb-3"><label class="form-label">Dirección *</label><input name="direccion" class="form-control" value="<%= value('direccion') %>" required></div>
+                    </div>
+                  </div>
+                  <div class="tab-pane fade" id="ficha" role="tabpanel">
+                    <div class="alert alert-info">Responde todas las preguntas. Si marcas “Sí” y se solicita detalle, completa la explicación.</div>
+                    <div class="alert alert-danger d-none" data-form-errors></div>
+                    <div class="row">
+                      <% medicalFields.forEach(([name, label, prompt]) => { %>
+                        <div class="col-lg-6 mb-3">
+                          <div class="medical-question-card">
+                            <div class="d-flex align-items-center justify-content-between gap-3">
+                              <span><%= label %></span>
+                              <div class="btn-group" role="group" aria-label="<%= label %>">
+                                <input class="btn-check" type="radio" name="<%= name %>" value="1" id="<%= name %>_si" data-medical-toggle="<%= name %>" <%= checked(name) %> required>
+                                <label class="btn btn-outline-primary btn-sm" for="<%= name %>_si">Sí</label>
+                                <input class="btn-check" type="radio" name="<%= name %>" value="0" id="<%= name %>_no" data-medical-toggle="<%= name %>" <%= !checked(name) && typeof data[name] !== 'undefined' ? 'checked' : '' %> required>
+                                <label class="btn btn-outline-secondary btn-sm" for="<%= name %>_no">No</label>
+                              </div>
+                            </div>
+                            <% if (prompt) { %>
+                              <div class="medical-detail <%= checked(name) ? 'is-visible' : '' %>" data-medical-detail="<%= name %>">
+                                <label class="form-label small text-muted mt-2 mb-1"><%= prompt %></label>
+                                <input class="form-control" name="<%= name %>_detalle" value="<%= detailValue(name) %>" maxlength="500">
+                              </div>
+                            <% } %>
+                          </div>
+                        </div>
+                      <% }) %>
+                      <div class="col-md-6 mb-3"><label class="form-label">Última visita al dentista</label><input name="ultima_visita_dentista" class="form-control" value="<%= value('ultima_visita_dentista') %>"></div>
+                      <div class="col-md-6 mb-3"><label class="form-label">Tratamiento realizado</label><input name="tratamiento_realizado" class="form-control" value="<%= value('tratamiento_realizado') %>"></div>
+                    </div>
+                  </div>
+                  <div class="tab-pane fade" id="contacto" role="tabpanel">
+                    <div class="row gx-3">
+                      <div class="col-md-4 mb-3"><label class="form-label">Nombre *</label><input name="contactoemergencia_nombre" class="form-control" value="<%= value('contactoemergencia_nombre') %>" required></div>
+                      <div class="col-md-4 mb-3"><label class="form-label">Teléfono *</label><input name="contactoemergencia_numero" class="form-control" value="<%= value('contactoemergencia_numero') %>" required></div>
+                      <div class="col-md-4 mb-3"><label class="form-label">Parentesco *</label><input name="contactoemergencia_parentesco" class="form-control" value="<%= value('contactoemergencia_parentesco') %>" required></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="d-flex justify-content-end gap-2 mt-4">
+                <button class="btn btn-primary" type="submit">Enviar formulario</button>
+              </div>
+            </form>
+          <% } %>
+        </div>
+      </div>
+    </main>
+    <script src="assets/js/bootstrap.bundle.min.js"></script>
+    <script>
+      const calculateAgeFromBirthdate = value => {
+        if (!value) return '';
+        const birth = new Date(`${value}T00:00:00`);
+        if (Number.isNaN(birth.getTime())) return '';
+        const today = new Date();
+        let age = today.getFullYear() - birth.getFullYear();
+        const monthDiff = today.getMonth() - birth.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) age -= 1;
+        return age >= 0 ? age : '';
+      };
+
+      const birthdateInput = document.querySelector('[data-birthdate]');
+      const ageInput = document.querySelector('[data-age]');
+      const syncAge = () => {
+        if (ageInput) ageInput.value = calculateAgeFromBirthdate(birthdateInput?.value || '');
+      };
+      birthdateInput?.addEventListener('change', syncAge);
+      syncAge();
+
+      document.querySelectorAll('[data-medical-toggle]').forEach(toggle => {
+        const syncDetail = () => {
+          const detail = document.querySelector(`[data-medical-detail="${toggle.dataset.medicalToggle}"]`);
+          if (!detail) return;
+          const selectedYes = document.querySelector(`[name="${toggle.name}"][value="1"]`)?.checked;
+          detail.classList.toggle('is-visible', !!selectedYes);
+          if (!selectedYes) {
+            const input = detail.querySelector('input, textarea');
+            if (input) input.value = '';
+          }
+        };
+        toggle.addEventListener('change', syncDetail);
+        syncDetail();
+      });
+
+      document.querySelector('form')?.addEventListener('submit', event => {
+        syncAge();
+        const form = event.currentTarget;
+        const errors = [];
+        form.querySelectorAll('[required]').forEach(input => {
+          if (input.type === 'radio') return;
+          if (!input.value.trim()) errors.push(input.closest('.mb-3')?.querySelector('.form-label')?.textContent?.replace('*', '').trim() || 'Campo obligatorio');
+        });
+        const answeredGroups = new Set();
+        form.querySelectorAll('[data-medical-toggle]').forEach(input => answeredGroups.add(input.name));
+        answeredGroups.forEach(name => {
+          const selected = form.querySelector(`[name="${name}"]:checked`);
+          if (!selected) errors.push(`Pregunta médica sin responder: ${form.querySelector(`label[for="${name}_si"]`)?.closest('.medical-question-card')?.querySelector('span')?.textContent || name}`);
+          const detail = form.querySelector(`[data-medical-detail="${name}"] input`);
+          if (selected?.value === '1' && detail && !detail.value.trim()) errors.push(`Falta explicación: ${detail.closest('.medical-detail')?.querySelector('label')?.textContent || name}`);
+        });
+        const box = form.querySelector('[data-form-errors]');
+        if (errors.length) {
+          event.preventDefault();
+          box.classList.remove('d-none');
+          box.innerHTML = `<strong>Completa lo siguiente:</strong><ul class="mb-0 mt-2">${errors.map(error => `<li>${error}</li>`).join('')}</ul>`;
+          box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      });
+    </script>
+    <%- include('../admin/partials/pageLoader') %>
+  </body>
+</html>

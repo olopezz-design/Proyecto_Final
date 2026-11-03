@@ -1,0 +1,68 @@
+<%
+  const users = Array.isArray(configUsers) ? configUsers : [];
+%>
+<section class="settings-card-soft p-4" id="settingsUsersSection">
+  <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+    <div>
+      <p class="settings-kicker mb-1">Control de usuarios</p>
+      <h4 class="mb-1">Usuarios y doctores vinculados</h4>
+      <p class="text-muted mb-0">Activa o inactiva accesos para controlar quién puede iniciar sesión en el sistema.</p>
+    </div>
+    <span class="badge bg-primary-subtle text-primary" id="settingsUsersCount"><%= users.length %> usuarios</span>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table align-middle">
+      <thead>
+        <tr>
+          <th>Doctor / Usuario</th>
+          <th>Rol</th>
+          <th>Especialidad</th>
+          <th>Contacto</th>
+          <th>Estado</th>
+          <th class="text-end">Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="settingsUsersRows">
+        <% if (!users.length) { %>
+          <tr>
+            <td colspan="6" class="text-center text-muted py-4">Todavía no hay usuarios registrados.</td>
+          </tr>
+        <% } %>
+        <% users.forEach(user => {
+          const isActive = Number(user.estadoUsuario_idestadoUsuario) === 1;
+          const doctorName = `${user.doctor_nombre || ''} ${user.doctor_apellido || ''}`.trim() || 'Doctor no vinculado';
+        %>
+          <tr data-user-row="<%= user.idusuario %>">
+            <td>
+              <div class="fw-semibold"><%= doctorName %></div>
+              <small class="text-muted"><%= user.user %></small>
+            </td>
+            <td><span class="badge bg-light text-dark"><%= user.rol_nombre || 'Sin rol' %></span></td>
+            <td><%= user.especialidad_nombre || 'Pendiente' %></td>
+            <td>
+              <div><%= user.telefono || '-' %></div>
+              <small class="text-muted"><%= user.email || '-' %></small>
+            </td>
+            <td>
+              <span class="badge <%= isActive ? 'bg-success-subtle text-success' : 'bg-danger-subtle text-danger' %>" data-user-status>
+                <%= isActive ? 'Activo' : 'Inactivo' %>
+              </span>
+            </td>
+            <td class="text-end">
+              <a href="<%= user.iddoctor ? `/admin/doctores/perfil/${user.iddoctor}` : '#!' %>" class="btn btn-sm btn-outline-primary <%= user.iddoctor ? '' : 'disabled' %>" <%= user.iddoctor ? '' : 'aria-disabled="true"' %>>
+                Ver perfil
+              </a>
+              <button type="button"
+                class="btn btn-sm <%= isActive ? 'btn-outline-danger' : 'btn-outline-success' %>"
+                data-user-toggle="<%= user.idusuario %>"
+                data-next-state="<%= isActive ? 2 : 1 %>">
+                <%= isActive ? 'Inactivar' : 'Activar' %>
+              </button>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</section>

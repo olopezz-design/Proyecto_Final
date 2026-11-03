@@ -1,0 +1,89 @@
+<!-- Modal para agregar nueva consulta -->
+<div class="modal fade" id="addConsultaModal" tabindex="-1" role="dialog" aria-labelledby="addConsultaModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="addConsultaModalLabel">Agregar Nueva Consulta</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="addConsultaForm">
+                    <!-- ID de la Cita -->
+                    <div class="form-group">
+                        <label for="idcita">Seleccionar cita:</label>
+                        <select class="form-control" id="idcita" required>
+                            <option value="">Seleccionar cita</option>
+                            <% if (citas && citas.length) { %>
+                                <% citas.forEach(function (item) { %>
+                                    <option value="<%= item.idcita %>"><%= item.fechaCita + " " + item.horaCita %></option>
+                                <% }); %>
+                            <% } else { %>
+                                <option value="">No hay citas disponibles</option>
+                            <% } %>
+                        </select>
+                        <span class="text-danger error-message" id="errorCitaId" style="display: none;">Este campo es obligatorio.</span>
+                    </div>
+
+                    <!-- Tipo de Servicio -->
+                    <div class="form-group">
+                        <label for="tipoServicio">Tipo de Servicio:</label>
+                        <select class="form-control" id="tipoServicio" required>
+                            <option value="">Seleccionar Tipo de Servicio</option>
+                            <% tiposServicios.forEach(function(tipo) { %>
+                                <option value="<%= tipo.idtiposervicio %>"><%= tipo.nombre %></option>
+                            <% }); %>
+                        </select>
+                        <span class="text-danger error-message" id="errorTipoServicio" style="display: none;">Este campo es obligatorio.</span>
+                    </div>
+
+                    <!-- Servicio -->
+                    <div class="form-group">
+                        <label for="servicioSearch">Servicio:</label>
+                        <select class="form-control" id="servicioSearch" required>
+                            <option value="">Seleccionar Servicio</option>
+                            <% servicios.forEach(function(servicio) { %>
+                                <option value="<%= servicio.idservicio %>"><%= servicio.nombre %></option>
+                            <% }); %>
+                        </select>
+                        <span class="text-danger error-message" id="errorServicioSearch" style="display: none;">Este campo es obligatorio.</span>
+                    </div>
+
+                    <!-- Número de Pieza Dental -->
+                    <div class="form-group">
+                        <label for="piezaDental">No. Pieza Dental:</label>
+                        <input type="text" class="form-control" id="piezaDental" placeholder="Ej. 11, 12, 13...">
+                    </div>
+
+                    <!-- Descripción de la Consulta -->
+                    <div class="form-group">
+                        <label for="descripcionConsulta">Descripción de la Consulta:</label>
+                        <textarea class="form-control" id="descripcionConsulta" rows="3" required></textarea>
+                        <span class="text-danger error-message" id="errorDescripcionConsulta" style="display: none;">Este campo es obligatorio.</span>
+                    </div>
+
+                    <!-- Próxima Cita -->
+                    <div class="form-group">
+                        <label for="proximaCita">Próxima Cita (Opcional):</label>
+                        <input type="date" class="form-control" id="proximaCita">
+                    </div>
+
+                    <!-- Doctor -->
+                    <div class="form-group">
+                        <label for="doctorSelect">Doctor(es):</label>
+                        <select class="form-control" id="doctorSelect" required>
+                            <option value="" disabled selected>Seleccione un Estado</option>
+                            <% doctores.forEach(function(doctor) { %>
+                                <option value="<%= doctor.iddoctor %>"><%= doctor.nombre + " " + doctor.apellido %></option>
+                            <% }); %>
+                        </select>
+                        <span class="text-danger error-message" id="errorDoctorSelect" style="display: none;">Selecciona al menos un doctor.</span>
+                    </div>
+
+                    <button type="button" class="btn btn-primary" id="guardarconsulta">Guardar Consulta</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

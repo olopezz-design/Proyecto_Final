@@ -1,0 +1,35 @@
+<!-- Modal para editar categoría -->
+<div class="modal fade" id="editCategoriaModal" tabindex="-1" role="dialog" aria-labelledby="editCategoriaModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editCategoriaModalLabel">Editar Categoría</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <!-- Formulario para editar la categoría -->
+                <form id="editCategoriaForm">
+                    <input type="hidden" id="categoriaId" name="idcategoria">
+                    <div class="form-group">
+                        <label for="editCategoriaNombre">Nombre</label>
+                        <input type="text" class="form-control" id="editCategoriaNombre" name="nombre" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editCategoriaDescripcion">Descripción</label>
+                        <textarea class="form-control" id="editCategoriaDescripcion" name="descripcion" rows="3" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="editCategoriaSimbolo">Símbolo</label>
+                        <input type="text" class="form-control" id="editCategoriaSimbolo" name="simbolo" maxlength="12" placeholder="Ej. RX, +, #">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="submitEditCategoriaBtn">Guardar cambios</button>
+            </div>
+        </div>
+    </div>
+</div>

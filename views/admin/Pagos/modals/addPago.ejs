@@ -1,0 +1,72 @@
+<!-- Modal para agregar pago -->
+<div class="modal fade" id="addpagoModal" tabindex="-1" aria-labelledby="addPagoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="addPagoLabel">Agregar Pago</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="addPagoForm" class="p-3">
+                <div class="modal-body">
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="fecha">Fecha de Pago</label>
+                            <input type="date" class="form-control" id="fecha" name="fecha" required>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="consulta_id">Consulta Asociada</label>
+                            <select class="form-control" id="consulta_id" name="consulta_id" required>
+                                <option value="">Seleccione una consulta</option>
+                                <% consultas.forEach(function(consulta) { %>
+                                    <option value="<%= consulta.idconsulta %>"><%= consulta.idconsulta %> ( <%= consulta.descripcion %>)</option>
+                                <% }); %>
+                            </select>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="lugar">Lugar</label>
+                            <input type="text" class="form-control" id="lugar" name="lugar" placeholder="Ej. Oficina principal" required>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="idtipoPago">Tipo de Pago</label>
+                            <select id="idtipoPago" name="idtipoPago" class="form-control" required>
+                                <option value="">Seleccione un tipo de pago</option>
+                                <% tiposPago.forEach(function(tipopago) { %>
+                                    <option value="<%= tipopago.idmetodo_pago %>"><%= tipopago.nombre %></option>
+                                <% }); %>
+                            </select>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="form-row">
+                        <div class="form-group col-md-4">
+                            <label for="saldo">Saldo Total</label>
+                            <input type="number" step="0.01" class="form-control" id="saldo" name="saldo" placeholder="0.00" required max="1000000000">
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="abono">Abono</label>
+                            <input type="number" step="0.01" class="form-control" id="abono" name="abono" placeholder="0.00" required max="1000000000">
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="nocuota">No. Cuota</label>
+                            <input type="number" class="form-control" id="nocuota" name="nocuota" placeholder="1" required max="1000000000">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Pago</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
