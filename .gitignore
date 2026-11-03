@@ -1,5 +1,38 @@
+# Dependencias
 node_modules/
-env/.env
+
+# Variables de entorno y secretos
 .env
-uploads/
+.env.*
+!.env.example
+env/.env
+env/.env.*
+!env/.env.example
+
+# Repositorio y herramientas locales
+.git/
 .DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs y archivos temporales
+*.log
+logs/
+tmp/
+temp/
+*.tmp
+*.swp
+*.swo
+
+# Respaldos locales
+*.bak
+*.old
+*.zip
+backup/
+backups/
+
+# Cobertura y archivos generados
+coverage/
+.nyc_output/
+uploads/
