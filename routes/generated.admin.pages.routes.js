@@ -18,7 +18,6 @@ router.get('/admin/edit-appointment', isAuthenticated, pageGuard('edit-appointme
 router.get('/admin/edit-doctors', isAuthenticated, pageGuard('edit-doctors'), (req, res) => res.render('admin/edit-doctors'));
 router.get('/admin/edit-patient', isAuthenticated, pageGuard('edit-patient'), (req, res) => res.render('admin/edit-patient'));
 router.get('/admin/forgot-password', isAuthenticated, pageGuard('forgot-password'), (req, res) => res.render('admin/forgot-password'));
-router.get('/admin/my-patients', isAuthenticated, pageGuard('my-patients'), (req, res) => res.render('admin/my-patients'));
 router.get('/admin/page-not-found', isAuthenticated, pageGuard('page-not-found'), (req, res) => res.render('admin/page-not-found'));
 router.get('/admin/patient-dashboard', isAuthenticated, pageGuard('patient-dashboard'), (req, res) => res.render('admin/patient-dashboard'));
 router.get('/admin/patients-list', isAuthenticated, pageGuard('patients-list'), (req, res) => res.render('admin/patients-list'));
