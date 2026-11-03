@@ -425,7 +425,9 @@ Verificar el funcionamiento de los módulos principales de C&C Dental Studio, co
 
 **Resultado esperado:** Conservar el nuevo motivo después de guardar.
 
-**Resultado obtenido:** Se comprobó que la pantalla de edición abre y carga los datos. No se confirmó posteriormente que el nuevo motivo quedara almacenado.
+**Resultado obtenido:** Se modificó el motivo de la cita #APT005, se guardaron los cambios y se actualizó la página. Se comprobó que el nuevo motivo permaneció registrado correctamente.
+
+**Estado:** APROBADO.
 
 **Estado:** Pendiente de confirmar persistencia.
 
